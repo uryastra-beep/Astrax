@@ -39,7 +39,7 @@ CAVA_CONFIG2="$HOME/.config/cava/config-widget2"
 
 mkdir -p "$CACHE_DIR" "$(dirname "$POWER_STATE_FILE")"
 
-pidfile_for() { echo "$CACHE_DIR/quickshell-$1.pid"; }
+pidfile_for() { widgets2_pidfile_for "$1"; }   # see widget-opti-common.sh
 logfile_for() { echo "$CACHE_DIR/widgets2-$1.log"; }
 
 get_pid() {
@@ -49,7 +49,7 @@ get_pid() {
     local pid
     pid=$(cat "$f" 2>/dev/null)
     [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-    kill -0 "$pid" 2>/dev/null || { rm -f "$f"; return 1; }
+    pid_is_widget "$pid" widgets2 || { rm -f "$f"; return 1; }
     printf '%s\n' "$pid"
 }
 
@@ -162,7 +162,7 @@ do_play() {
         return 0
     fi
     if start_process "$mon"; then
-        echo "widgets2 activos -> $mon"
+        echo "widgets2 active -> $mon"
     else
         return 1
     fi
@@ -173,7 +173,7 @@ do_pause() {
     for mon in $(running_monitors); do
         kill -STOP "$(get_pid "$mon")"
     done
-    echo "widgets2 pausados"
+    echo "widgets2 paused"
 }
 
 # off turns off ALL instances (every screen) -- "off" was always
@@ -207,7 +207,7 @@ do_restart() {
     for mon in $mons; do
         start_process "$mon"
     done
-    echo "widgets2 reiniciados -> $(echo "$mons" | tr '\n' ' ')"
+    echo "widgets2 restarted -> $(echo "$mons" | tr '\n' ' ')"
 }
 
 do_status() {

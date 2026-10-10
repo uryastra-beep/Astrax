@@ -97,8 +97,8 @@ hl.bind("XF86AudioMute", hl.dsp.exec_cmd("serpantinum volume mute-toggle"), { lo
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("serpantinum volume lower"), { repeating = true, locked = true })
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("serpantinum volume raise"), { repeating = true, locked = true })
 
-hl.bind(mainMod .. " + F", hl.dsp.exec_cmd("firefox"))
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("nautilus"))
+hl.bind(mainMod .. " + F", hl.dsp.exec_cmd(BROWSER))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(FILE_MANAGER))
 hl.bind(mainMod .. " + RETURN", hl.dsp.exec_cmd(terminal))
 
 -- SUPER+R: pin/unpin the focused window (window_lock.py). Replaces "serpantinum reload".
@@ -149,6 +149,9 @@ hl.bind(mainMod .. " + CONTROL + V", hl.dsp.exec_cmd("serpantinum msg toggle vol
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd("caelestia clipboard"))
 hl.bind(mainMod .. " + H", hl.dsp.exec_cmd("serpantinum msg toggle guide"))
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("serpantinum msg toggle autohide"))
+-- ALT+SUPER+A -> show/hide the bar "Lyrics" module (bar.lyricsHidden, handled in
+-- Main.qml handleCommand)
+hl.bind(mainMod .. " + ALT + A", hl.dsp.exec_cmd("serpantinum msg toggle lyrics"))
 -- emoji picker: standalone caelestia command (fuzzel --dmenu), doesn't
 -- depend on the caelestia shell running.
 hl.bind(mainMod .. " + period", hl.dsp.exec_cmd("caelestia emoji -p"))

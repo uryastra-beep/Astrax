@@ -27,7 +27,7 @@ custom-shader = shaders/serp-trail.glsl
 custom-shader = shaders/serp-pop.glsl
 custom-shader-animation = true
 
-# varios
+# misc
 mouse-hide-while-typing = true
 copy-on-select = false
 scrollback-limit = 10000000

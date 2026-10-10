@@ -45,7 +45,7 @@ case "${1:-status}" in
     off)
         apply_off
         echo off > "$STATE_FILE"
-        echo "sharp-transparent OFF -- rounding restaurado, blur on"
+        echo "sharp-transparent OFF -- rounding restored, blur on"
         ;;
     toggle)
         if [ "$(state)" = "on" ]; then exec "$0" off; else exec "$0" on; fi

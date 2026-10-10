@@ -12,7 +12,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hypr_ipc import hyprctl_json, move_window_exact_lua, batch_async, dispatch
+from hypr_ipc import hyprctl_json, move_window_exact_lua, batch_async, dispatch, monitor_logical_size
 
 STEP = 90
 
@@ -21,11 +21,12 @@ def get_monitor_bounds():
     monitors = hyprctl_json(["monitors"]) or []
     for m in monitors:
         if m.get("focused"):
+            w, h = monitor_logical_size(m)
             return {
                 "left":   m["x"],
-                "right":  m["x"] + m["width"],
+                "right":  m["x"] + w,
                 "top":    m["y"],
-                "bottom": m["y"] + m["height"],
+                "bottom": m["y"] + h,
             }
     return {"left": 0, "right": 1920, "top": 0, "bottom": 1080}
 

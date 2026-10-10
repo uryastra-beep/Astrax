@@ -161,7 +161,7 @@ ShellRoot {
                     root.usageRev++;
                 }
             } catch (e) {
-                console.warn("astrax-launcher: usage.json ilegible:", e);
+                console.warn("astrax-launcher: unreadable usage.json:", e);
             }
         }
         onLoadFailed: root.usageRev++
@@ -178,7 +178,7 @@ ShellRoot {
                     root.refreshDisplay();
                 }
             } catch (e) {
-                console.warn("astrax-launcher: pinned.json ilegible:", e);
+                console.warn("astrax-launcher: unreadable pinned.json:", e);
             }
         }
     }

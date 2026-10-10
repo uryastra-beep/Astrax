@@ -5,7 +5,7 @@ import math
 from evdev import InputDevice, list_devices, ecodes
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hypr_ipc import move_window_exact_lua, batch_async
+from hypr_ipc import move_window_exact_lua, batch_async, monitor_logical_size
 
 # expected path: ~/scripts/
 
@@ -72,22 +72,24 @@ def get_monitor_bounds():
         if monitors:
             for m in monitors:
                 if m.get('focused', False):
+                    w, h = monitor_logical_size(m)
                     return {
                         'left': m['x'],
-                        'right': m['x'] + m['width'],
+                        'right': m['x'] + w,
                         'top': m['y'],
-                        'bottom': m['y'] + m['height'],
-                        'width': m['width'],
-                        'height': m['height']
+                        'bottom': m['y'] + h,
+                        'width': w,
+                        'height': h
                     }
             m = monitors[0]
+            w, h = monitor_logical_size(m)
             return {
                 'left': m['x'],
-                'right': m['x'] + m['width'],
+                'right': m['x'] + w,
                 'top': m['y'],
-                'bottom': m['y'] + m['height'],
-                'width': m['width'],
-                'height': m['height']
+                'bottom': m['y'] + h,
+                'width': w,
+                'height': h
             }
     except:
         pass
@@ -166,7 +168,8 @@ def get_monitor_center():
         monitors = json.loads(r.stdout)
         for m in monitors:
             if m.get('focused', False):
-                return m['x'] + m['width'] // 2, m['y'] + m['height'] // 2
+                w, h = monitor_logical_size(m)
+                return m['x'] + w // 2, m['y'] + h // 2
     except:
         pass
     return 960, 540
@@ -448,7 +451,7 @@ def device_manager():
                     nt = threading.Thread(target=mouse_reader_device, args=(path,), daemon=True)
                     nt.start()
                     _active_mouse_threads[path] = nt
-                    print(f"[+] Mouse detectado: {path}", flush=True)
+                    print(f"[+] Mouse detected: {path}", flush=True)
         except Exception as e:
             print(f"Error in device_manager: {e}", flush=True)
 
@@ -469,7 +472,7 @@ threading.Thread(target=monitor_window_drag, daemon=True).start()
 print("Infinite Desktop active (automatic device detection)", flush=True)
 print("Super+click: drag window (static, no longer pushes the rest)", flush=True)
 print("Super+Alt+mouse: drag the whole desktop", flush=True)
-print("Super+flechas: Navegacion via hyprland bind", flush=True)
+print("Super+arrows: navigation via hyprland bind", flush=True)
 print("Super+Shift+arrows: move active window via hyprland bind", flush=True)
 
 # Active workspace cache (refreshed every 2s so hyprctl isn't called every frame)

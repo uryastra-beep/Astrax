@@ -2,7 +2,7 @@ import QtQuick
 import "../../../"
 
 // Bar "Lyrics" module: only the lyric line currently playing.
-// SUPER+A shows/hides it (bar.lyricsHidden, see Main.qml handleCommand).
+// ALT+SUPER+A shows/hides it (bar.lyricsHidden, see Main.qml handleCommand).
 // Subscribes to Lyrics only while visible.
 Item {
     id: root

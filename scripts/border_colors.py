@@ -52,6 +52,21 @@ ORIGINAL_BORDER_LUA = (
 )
 
 
+def active_shell():
+    """serpantinum | caelestia -- same rule as ~/scripts/active-shell.sh (`vm` can
+    switch shells live, so HYPR_SHELL alone can be stale)."""
+    try:
+        sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+        path = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "astrax-shell")
+        with open(path) as f:
+            fsig, shell = f.readline().split()
+        if sig and fsig == sig and shell in ("serpantinum", "caelestia"):
+            return shell
+    except (OSError, ValueError):
+        pass
+    return "serpantinum" if os.environ.get("HYPR_SHELL") == "serpantinum" else "caelestia"
+
+
 def hex_to_rgb(h):
     h = h.lstrip("#")
     return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
@@ -614,7 +629,7 @@ def get_wallpaper_path():
     # on screen -- Serpantinum caches its own here. Real bug
     # found live: purple wallpaper set by Serpantinum, but
     # lavat came out white because it read Caelestia's old path.txt.
-    if os.getenv("HYPR_SHELL") == "serpantinum" and os.path.isfile(SERPANTINUM_WALLPAPER):
+    if active_shell() == "serpantinum" and os.path.isfile(SERPANTINUM_WALLPAPER):
         return SERPANTINUM_WALLPAPER
     try:
         with open(WALLPAPER_PATH_FILE) as f:

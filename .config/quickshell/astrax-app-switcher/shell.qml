@@ -503,7 +503,7 @@ ShellRoot {
                         RowLayout {
                             Layout.fillWidth: true
                             Text {
-                                text: "Apps abiertas — " + win.modelData.name
+                                text: "Open apps — " + win.modelData.name
                                 color: theme.subtext0
                                 font.family: theme.fontFamily
                                 font.pixelSize: 12

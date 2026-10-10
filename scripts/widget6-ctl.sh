@@ -150,7 +150,7 @@ stop_visibility_watcher() {
 }
 
 # ---------------------------------------------------------------------------
-# Acciones
+# Actions
 # ---------------------------------------------------------------------------
 
 do_target() {
@@ -239,7 +239,7 @@ do_restart() {
     done
     stop_visibility_watcher
     start_visibility_watcher
-    echo "widgets6 reiniciado"
+    echo "widgets6 restarted"
 }
 
 do_status() {

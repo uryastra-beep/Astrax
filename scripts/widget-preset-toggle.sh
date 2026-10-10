@@ -21,5 +21,5 @@ fi
 case "$target_mon" in
     eDP-1)     exec "$HOME/scripts/widget-ctl.sh" p1 ;;
     HDMI-A-1)  exec "$HOME/scripts/widget-ctl.sh" p2 ;;
-    *)         echo "ERROR: monitor desconocido: $target_mon" >&2; exit 1 ;;
+    *)         echo "ERROR: unknown monitor: $target_mon" >&2; exit 1 ;;
 esac

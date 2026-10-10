@@ -4,6 +4,18 @@ import subprocess
 import json
 
 
+def monitor_logical_size(m):
+    """(width, height) of a monitor in the LOGICAL coordinates Hyprland uses for
+    positions (window "at", monitor x/y). `hyprctl monitors` reports width/height in
+    physical pixels, so they're divided by the scale, and swapped for a
+    90/270-degree rotation (transform 1, 3, 5, 7)."""
+    scale = m.get("scale") or 1.0
+    w, h = m["width"] / scale, m["height"] / scale
+    if m.get("transform", 0) % 2 == 1:
+        w, h = h, w
+    return int(round(w)), int(round(h))
+
+
 def _run(args, timeout=2):
     return subprocess.run(["hyprctl"] + args, capture_output=True, text=True, timeout=timeout)
 

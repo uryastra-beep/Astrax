@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # mode <music|study|gaming|privacy|private|code|coding|sleep|help> -- quick
 # profiles that open/close the usual apps for each context. Reuses
-# widget-ctl.sh/widget2-ctl.sh, caelestia's gameMode, wpctl, and the same
+# widget-ctl.sh/widget2-ctl.sh, the shells' game modes, wpctl, and the same
 # uwsm/kitty binds.lua uses. See 'mode help' for details.
 
 set -u
@@ -10,6 +10,7 @@ SCRIPTS_DIR="$HOME/scripts"
 LAUNCH_PREFIX=(uwsm app --) # same prefix as launchPrefix in binds.lua
 
 ALREADY_OPEN=()
+MISSING=()     # programs a mode wanted to open but that aren't installed
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -22,6 +23,13 @@ notify_already_open() {
     setsid kitty --class mode-notify -o font_size=28 -o confirm_os_window_close=0 \
         bash "$SCRIPTS_DIR/mode-notify.sh" "${ALREADY_OPEN[@]}" \
         < /dev/null > /dev/null 2>&1 &
+}
+
+# Reports what couldn't be opened because it isn't installed (stderr + notification).
+notify_missing() {
+    [ "${#MISSING[@]}" -eq 0 ] && return 0
+    echo "mode: not installed, skipped: ${MISSING[*]}" >&2
+    notify-send "mode" "Not installed, skipped: ${MISSING[*]}" 2>/dev/null || true
 }
 
 set_volume() {
@@ -61,9 +69,15 @@ open_app() {
     shift 2
     if [ "$running" -eq 1 ]; then
         ALREADY_OPEN+=("$label")
+    elif ! command -v "$1" > /dev/null 2>&1; then
+        MISSING+=("$label")
     else
         launch "$@"
     fi
+}
+
+sober_installed() {
+    command -v flatpak > /dev/null 2>&1 && flatpak info org.vinegarhq.Sober > /dev/null 2>&1
 }
 
 open_spotify() {
@@ -85,6 +99,8 @@ open_claude() {
 open_roblox() {
     if proc_running sober || class_running "org.vinegarhq.Sober"; then
         ALREADY_OPEN+=("Roblox")
+    elif ! sober_installed; then
+        MISSING+=("Roblox (Sober flatpak)")
     else
         setsid flatpak run org.vinegarhq.Sober < /dev/null > /dev/null 2>&1 &
     fi
@@ -176,7 +192,15 @@ apply_study() {
 
 apply_gaming() {
     open_roblox
-    caelestia shell gameMode enable > /dev/null 2>&1
+    # each shell has its own "game mode"; use the one that is actually running
+    if [ "$(bash "$SCRIPTS_DIR/active-shell.sh")" = "caelestia" ]; then
+        caelestia shell gameMode enable > /dev/null 2>&1 ||
+            echo "mode: couldn't enable Caelestia's gameMode" >&2
+    else
+        # Serpantinum: fewer blur passes + taskbar watcher off (see opti-ctl.sh)
+        bash "$SCRIPTS_DIR/opti-ctl.sh" on > /dev/null 2>&1 ||
+            echo "mode: couldn't enable opti" >&2
+    fi
 }
 
 apply_privacy() {
@@ -208,16 +232,19 @@ or "mode code study"):
                           with the normal profile, volume 0%
 
     gaming                closes the open normal apps, opens Roblox
-                          (Sober) and enables Caelestia's gameMode
+                          (Sober) and enables the running shell's game
+                          mode (Caelestia gameMode, or "opti on")
 
-    privacy               opens Brave Origin, volume 0%
+    privacy               opens Brave Origin, volume 0% (just a profile:
+                          it adds no privacy protection by itself)
     private               alias of "privacy"
 
     code                  opens ChatGPT and Claude
     coding                alias of "code"
 
     sleep                 opens the normal widgets (never widgets2) on
-                          the HDMI monitor
+                          the HDMI monitor (the real sleep mode is
+                          CTRL+SUPER+N / sleep-ctl.sh)
 
     help                  this help (also shown without arguments;
                           if combined with other modes, this one wins)
@@ -296,6 +323,15 @@ for m in "${requested[@]}"; do
     modes+=("$m")
 done
 
+# Before closing anything: the modes that close your apps must be able to open
+# their replacement, otherwise you'd just lose your windows.
+for m in "${modes[@]}"; do
+    case "$m" in
+        study)  command -v brave > /dev/null 2>&1 || { echo "mode study: brave isn't installed -- nothing was closed" >&2; exit 1; } ;;
+        gaming) sober_installed || { echo "mode gaming: the Sober flatpak (org.vinegarhq.Sober) isn't installed -- nothing was closed" >&2; exit 1; } ;;
+    esac
+done
+
 for m in "${modes[@]}"; do
     case "$m" in
         study|gaming) close_normal_apps; break ;;
@@ -315,3 +351,4 @@ done
 
 [ -n "$TARGET_VOLUME" ] && set_volume "$TARGET_VOLUME"
 notify_already_open
+notify_missing

@@ -9,15 +9,17 @@ MON1=$(grep -oP '^MONITOR1\s*=\s*"\K[^"]*' "$CONF" 2>/dev/null || echo "?")
 MON2=$(grep -oP '^MONITOR2\s*=\s*"\K[^"]*' "$CONF" 2>/dev/null || echo "?")
 
 # Translates a local index (1..NUM_WPM within ONE monitor) to the real shortcut.
-# Two different schemes depending on the active shell (HYPR_SHELL):
+# Two different schemes depending on the active shell (active-shell.sh):
 #   Caelestia (binds.lua): split per monitor, 1-10 -> SUPER+ALT+digit,
 #     11-20 -> SUPER+CTRL+digit (digit = 0 for 10/20).
 #   Serpantinum (binds-serpantinum.lua): flat numbering 1-10 shared
 #     across monitors, no split -- SUPER+digit to go, SUPER+SHIFT+digit to
 #     move a window (see the "for i = 1, 10" in that file).
+SHELL_NOW="$(bash "$HOME/scripts/active-shell.sh")"
+
 bind_for() {
     local local_i=$1
-    if [ "${HYPR_SHELL:-}" = "serpantinum" ]; then
+    if [ "$SHELL_NOW" = "serpantinum" ]; then
         if [ "$local_i" -ge 1 ] && [ "$local_i" -le 10 ]; then
             echo "SUPER+$((local_i % 10))"
         else
@@ -59,7 +61,7 @@ cmd_status() {
         return
     fi
 
-    if [ "${HYPR_SHELL:-}" = "serpantinum" ]; then
+    if [ "$SHELL_NOW" = "serpantinum" ]; then
         # Serpantinum uses "m~N" (relative to the CURRENT monitor, via the
         # infinite-desktop-v2 plugin), not a fixed global ID like Caelestia. The
         # real Hyprland IDs are absolute and start at a different block

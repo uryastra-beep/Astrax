@@ -33,8 +33,8 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     float d = sdBox(fragCoord - center, half_, min(half_.x, half_.y) * 0.45);
 
     float fade = 1.0 - t;
-    float ring = smoothstep(2.2, 0.0, abs(d)) * 0.85;      // borde
-    float fill = smoothstep(1.0, -1.0, d) * 0.18;          // relleno tenue
+    float ring = smoothstep(2.2, 0.0, abs(d)) * 0.85;      // edge
+    float fill = smoothstep(1.0, -1.0, d) * 0.18;          // faint fill
     float a = (ring + fill) * fade * fade;
     fragColor.rgb = mix(fragColor.rgb, iCurrentCursorColor.rgb, clamp(a, 0.0, 1.0));
 }

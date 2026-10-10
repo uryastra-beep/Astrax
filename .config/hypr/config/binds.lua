@@ -237,3 +237,7 @@ local function toggle_special_workspace()
 end
 hl.bind(mainMod .. " + SHIFT + S", toggle_special_workspace)
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special())
+
+-- physical power button: same cancellable power-off wave as the Serpantinum
+-- session (tap = the wave rises and powers off after 3.5s, tap again = cancel)
+hl.bind("XF86PowerOff", hl.dsp.exec_cmd("qs -c astrax-power-wave ipc call wave toggle"), { locked = true })

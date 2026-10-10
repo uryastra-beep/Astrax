@@ -32,11 +32,13 @@ wake_opts() {  # $1 = true|false -> key press wakes the screen
     hyprctl repl "hl.config({ misc = { key_press_enables_dpms = $1, mouse_move_enables_dpms = false } })" >/dev/null 2>&1
 }
 
-screens_all_on() {
+# any real screen back on = wake up (don't wait for every output: a monitor that
+# stays off would leave the frozen lock screen unresponsive on the other one)
+screens_any_on() {
     hyprctl monitors -j 2>/dev/null | python3 -c '
 import sys, json
 ms = [m for m in json.load(sys.stdin) if not m["name"].startswith("HEADLESS")]
-sys.exit(0 if ms and all(m["dpmsStatus"] for m in ms) else 1)'
+sys.exit(0 if any(m["dpmsStatus"] for m in ms) else 1)'
 }
 
 # PIDs of windows that must NOT be frozen: apps with an audio stream (matched by
@@ -79,15 +81,31 @@ main_shell_pids() {
 }
 
 LOCKFILE="${XDG_RUNTIME_DIR:-/tmp}/serpantinum/lock/locked"
+# created by Lock.qml only once the compositor confirms every screen is covered
+SECURE_FLAG="${XDG_RUNTIME_DIR:-/tmp}/serpantinum/lock/secure"
 
-# outro (wave rises, logo turns off, stays covered ~5s) + lock screen
+# outro (wave rises, logo turns off, stays covered ~5s) + lock screen.
+# Returns non-zero unless the lock really engaged.
 do_lock() {
-    if [ "${HYPR_SHELL:-}" = "serpantinum" ]; then
-        bash "$HOME/.local/share/serpantinum/src/scripts/lock.sh"   # outro + lock
+    if [ "$(bash "$HOME/scripts/active-shell.sh")" = "serpantinum" ]; then
+        bash "$HOME/.local/share/serpantinum/src/scripts/lock.sh" || return 1   # outro + lock
+        for _ in $(seq 1 50); do
+            [ -e "$SECURE_FLAG" ] && return 0
+            sleep 0.1
+        done
+        return 1
     else
         bash "$HOME/scripts/outro-cover.sh"
         caelestia shell lock lock >/dev/null 2>&1
     fi
+}
+
+lock_failed() {
+    rm -f "$STATE"
+    qs -c astrax-power-wave ipc call wave clear >/dev/null 2>&1
+    notify-send -u critical "Couldn't lock" "Sleep mode cancelled: not turning the screens off with the session unlocked" 2>/dev/null
+    echo "sleep: cancelled, the lock screen didn't engage" >&2
+    return 1
 }
 
 pids_by_name() { ps -eo pid=,comm= | awk -v n="$1" '$2 == n { print $1 }'; }
@@ -95,7 +113,7 @@ pids_by_name() { ps -eo pid=,comm= | awk -v n="$1" '$2 == n { print $1 }'; }
 apply_on() {
     local pids all
     : > "$STATE"          # mark "asleep" right away: avoids double activation during the outro
-    do_lock
+    do_lock || { lock_failed; return 1; }
     pids="$(freeze_windows)"
     all="$( { with_children $pids; pids_by_name mpvpaper; pids_by_name cava; main_shell_pids; } | sort -un )"
     for p in $all; do
@@ -128,16 +146,16 @@ apply_off() {
     fi
     wake_opts false
     dpms on
-    # without a lock (e.g. locking failed) Lock.qml doesn't launch the intro: launch it here
+    # without a Serpantinum lock Lock.qml doesn't launch the intro: launch it here
     [ -e "$LOCKFILE" ] || bash "$HOME/scripts/intro.sh" >/dev/null 2>&1 &
 }
 
 case "${1:-status}" in
-    on)     is_on || apply_on ;;
+    on)     is_on || apply_on || exit 1 ;;
     off)    apply_off ;;
-    toggle) if is_on; then apply_off; else apply_on; fi ;;
-    _screens_on) screens_all_on ;;
+    toggle) if is_on; then apply_off; else apply_on || exit 1; fi ;;
+    _screens_on) screens_any_on ;;
     status)
-        if is_on; then echo "sleep: ON ($(wc -l < "$STATE") procesos congelados)"; else echo "sleep: off"; fi ;;
+        if is_on; then echo "sleep: ON ($(wc -l < "$STATE") frozen processes)"; else echo "sleep: off"; fi ;;
     *) echo "usage: sleep-ctl on|off|toggle|status" >&2; exit 1 ;;
 esac

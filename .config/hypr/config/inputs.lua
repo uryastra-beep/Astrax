@@ -10,7 +10,7 @@ hl.config({
         -- Caps_Lock symbol while Control is held). kb_file replaces
         -- kb_layout/kb_options -- if you need to change the layout, you
         -- have to regenerate the file (see the comment at the end of this file).
-        kb_file = os.getenv("HOME") .. "/.config/hypr/custom-capslock.xkb",
+        kb_file = os.getenv("HOME") .. "/.config/hypr/custom-capslock.xkb", -- @astrax-keymap (install.sh may swap this line for a kb_layout)
     },
     -- cursor: no_hardware_cursors lives in config/misc.lua (marker @mouse-fix,
     -- toggled by `mouse fix on|off`)

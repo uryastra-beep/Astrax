@@ -4,6 +4,15 @@
 
 SERPANTINUMD="$HOME/.local/bin/serpantinumd"
 LOG="/tmp/serpantinumd-vm.log"
+SHELL_RECORD="${XDG_RUNTIME_DIR:-/tmp}/astrax-shell"
+
+# Records the active shell for this Hyprland instance (read by active-shell.sh,
+# hyprland.lua, sleep-ctl.sh, mode-ctl.sh...) and reloads the config so the
+# binds of the new shell take over.
+record_shell() {
+    printf '%s %s\n' "${HYPRLAND_INSTANCE_SIGNATURE:-none}" "$1" > "$SHELL_RECORD"
+    hyprctl reload >/dev/null 2>&1
+}
 
 is_serpantium_running() {
     "$SERPANTINUMD" status >/dev/null 2>&1 || pgrep -f "quickshell.*serpantinum" >/dev/null 2>&1
@@ -56,22 +65,13 @@ cmd_status() {
     esac
 }
 
-cmd_caelestia() {
-    if [ "$(current_vm)" = "caelestia" ]; then
-        echo "Already on Caelestia."
-        return 0
-    fi
-
-    echo "Stopping Serpantinum (if anything is running)..."
-    force_kill_serpantium
-    sleep 0.5
-
+start_caelestia() {
     local attempt
     for attempt in 1 2; do
         if is_caelestia_running; then
             break
         fi
-        echo "Iniciando Caelestia..."
+        echo "Starting Caelestia..."
         caelestia shell -d >/dev/null 2>&1
 
         local count=0
@@ -87,27 +87,11 @@ cmd_caelestia() {
     # confirm it's still alive a moment later (avoids false positives
     # from an instance that starts and dies by itself due to a stale socket)
     sleep 1
-    if is_caelestia_running; then
-        echo "Current VM: caelestia"
-    else
-        echo "[!] Caelestia does not seem to have started, check manually."
-        return 1
-    fi
+    is_caelestia_running
 }
 
-cmd_serpantium() {
-    if [ "$(current_vm)" = "serpantinum" ]; then
-        echo "Already on Serpantinum."
-        return 0
-    fi
-
-    if is_caelestia_running; then
-        echo "Deteniendo Caelestia..."
-        caelestia shell -k >/dev/null 2>&1
-        sleep 0.3
-    fi
-
-    echo "Iniciando Serpantinum..."
+start_serpantium() {
+    echo "Starting Serpantinum..."
     setsid nohup "$SERPANTINUMD" start >"$LOG" 2>&1 < /dev/null &
     disown
 
@@ -120,10 +104,50 @@ cmd_serpantium() {
         ((count++))
     done
 
-    if is_serpantium_running; then
+    is_serpantium_running
+}
+
+cmd_caelestia() {
+    if [ "$(current_vm)" = "caelestia" ]; then
+        echo "Already on Caelestia."
+        record_shell caelestia
+        return 0
+    fi
+
+    echo "Stopping Serpantinum (if anything is running)..."
+    force_kill_serpantium
+    sleep 0.5
+
+    if start_caelestia; then
+        record_shell caelestia
+        echo "Current VM: caelestia"
+    else
+        echo "[!] Caelestia did not start -- going back to Serpantinum." >&2
+        start_serpantium && record_shell serpantinum
+        return 1
+    fi
+}
+
+cmd_serpantium() {
+    if [ "$(current_vm)" = "serpantinum" ]; then
+        echo "Already on Serpantinum."
+        record_shell serpantinum
+        return 0
+    fi
+
+    if is_caelestia_running; then
+        echo "Stopping Caelestia..."
+        caelestia shell -k >/dev/null 2>&1
+        sleep 0.3
+    fi
+
+    if start_serpantium; then
+        record_shell serpantinum
         echo "Current VM: serpantium"
     else
-        echo "[!] Serpantinum does not seem to have started, check $LOG"
+        echo "[!] Serpantinum did not start (see $LOG) -- going back to Caelestia." >&2
+        force_kill_serpantium
+        start_caelestia && record_shell caelestia
         return 1
     fi
 }

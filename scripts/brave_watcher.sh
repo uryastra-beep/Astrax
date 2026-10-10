@@ -10,6 +10,9 @@
 #
 # Same pattern as gamemode_watcher.py: loop + flock -n in autostart.lua
 # so it isn't duplicated on a reload.
+#
+# OPT-IN: autostart.lua only runs it if ~/.config/astrax/enable-brave-watcher
+# exists (touch that file to enable it).
 
 set -u
 
@@ -27,8 +30,26 @@ has_window() {
     # thought Brave was left running without windows, and killed it after 9s
     # even though the window was open and in use. Now "$1" is a
     # REGEX (not a bare class) covering normal window + app mode.
-    hyprctl clients -j 2>/dev/null | jq -e --arg re "$1" \
-        '.[] | select(.class | test($re))' > /dev/null 2>&1
+    #
+    # Returns 0 = there is a window, 1 = there is none, 2 = couldn't ask
+    # Hyprland (a failed query must never count as "no window").
+    local clients
+    clients="$(hyprctl clients -j 2>/dev/null)" || return 2
+    printf '%s' "$clients" | jq -e --arg re "$1" 'any(.[]; .class | test($re))' > /dev/null 2>&1
+    case $? in
+        0) return 0 ;;
+        1) return 1 ;;
+        *) return 2 ;;
+    esac
+}
+
+# A download still being written (Chromium's *.crdownload) means the browser
+# is doing real work in the background: never kill it then.
+downloading() {
+    local dl
+    dl="$(xdg-user-dir DOWNLOAD 2>/dev/null)"
+    [ -d "$dl" ] || dl="$HOME/Downloads"
+    [ -d "$dl" ] && [ -n "$(find "$dl" -maxdepth 1 -name '*.crdownload' -mmin -2 -print -quit 2>/dev/null)" ]
 }
 
 # Normal Brave and Brave Origin are DIFFERENT binaries but both run
@@ -47,7 +68,12 @@ check_one() {
         streak=0
         return
     fi
-    if has_window "$class"; then
+    has_window "$class"
+    case $? in
+        0) streak=0; return ;;
+        2) return ;;          # Hyprland didn't answer: keep the streak as it is
+    esac
+    if downloading; then
         streak=0
         return
     fi

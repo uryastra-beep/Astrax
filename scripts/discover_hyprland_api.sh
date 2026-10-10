@@ -44,7 +44,7 @@ else
 fi
 echo
 
-echo "== Probando redimensionar a 800x600 =="
+echo "== Trying to resize to 800x600 =="
 OUT=$(hyprctl dispatch "hl.dsp.window.resize({ window = \"address:$ADDR\", size = { 800, 600 }, mode = \"exact\" })" 2>&1)
 echo "$OUT"
 if echo "$OUT" | grep -qi "error"; then

@@ -184,7 +184,7 @@ def main():
                           f"({n} pngs, recolor {tr:.1f}s, total {tt:.1f}s, "
                           f"dist {dist:.0f})", flush=True)
                 elif primary != _last_primary:
-                    print(f"cursor: {primary} descartado, dist {dist:.0f} "
+                    print(f"cursor: {primary} discarded, dist {dist:.0f} "
                           f"<= {COLOR_THRESHOLD:.0f} (noise)", flush=True)
                     _last_primary = primary
         except Exception as e:

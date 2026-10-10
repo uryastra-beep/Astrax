@@ -74,14 +74,23 @@ if [ "${1:-}" = "--build" ]; then
 fi
 
 # --- install (root) ---
+# prerequisites: sddm and plymouth installed (pkexec asks for your password)
+for cmd in pkexec plymouth-set-default-theme; do
+    command -v "$cmd" > /dev/null || { echo "missing $cmd -- install plymouth/polkit first (or use --build DIR)" >&2; exit 1; }
+done
+[ -d /usr/share/sddm/themes ] || { echo "SDDM themes dir not found -- is sddm installed?" >&2; exit 1; }
 pkexec bash -c "
 set -e
 rm -rf /usr/share/sddm/themes/material-you.new
 cp -r '$work/material-you' /usr/share/sddm/themes/material-you.new
-[ -d /usr/share/sddm/themes/material-you.orig ] || cp -r /usr/share/sddm/themes/material-you /usr/share/sddm/themes/material-you.orig
+# back up a previous material-you theme once, only if there is one
+if [ ! -d /usr/share/sddm/themes/material-you.orig ] && [ -d /usr/share/sddm/themes/material-you ]; then
+    cp -r /usr/share/sddm/themes/material-you /usr/share/sddm/themes/material-you.orig
+fi
 rm -rf /usr/share/sddm/themes/material-you
 mv /usr/share/sddm/themes/material-you.new /usr/share/sddm/themes/material-you
 chmod -R a+rX /usr/share/sddm/themes/material-you
+mkdir -p /usr/share/plymouth/themes/serpantinum
 cp '$work/serpantinum/'* /usr/share/plymouth/themes/serpantinum/
 plymouth-set-default-theme -R serpantinum
 "

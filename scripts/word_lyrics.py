@@ -80,6 +80,14 @@ def get_playback_status(props):
     return str(props.Get(PLAYER_IFACE, "PlaybackStatus"))
 
 
+FETCH_RETRY_SECONDS = 10.0
+
+
+class LyricsFetchError(Exception):
+    """lrclib couldn't be reached (network/server error): worth retrying,
+    unlike a 404, which means the song simply has no lyrics there."""
+
+
 def fetch_synced_lyrics(title, artist, album, duration):
     try:
         params = urllib.parse.urlencode({
@@ -93,8 +101,12 @@ def fetch_synced_lyrics(title, artist, album, duration):
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read())
         return data.get("syncedLyrics")
-    except Exception:
-        return None
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return None
+        raise LyricsFetchError(str(e)) from e
+    except Exception as e:
+        raise LyricsFetchError(str(e)) from e
 
 
 LRC_LINE_RE = re.compile(r"\[(\d+):(\d+(?:\.\d+)?)\](.*)")
@@ -160,6 +172,9 @@ def main():
     current_key = None
     last_word = None
     last_metadata_check = 0.0
+    timeline = []
+    retry_at = None   # set when the last lyrics fetch failed and must be retried
+    track = None
 
     while True:
         try:
@@ -172,12 +187,26 @@ def main():
                 title, artist, album, duration, key = load_track(props)
                 if key != current_key:
                     current_key = key
+                    track = (title, artist, album, duration)
                     rgb = hex_to_rgb(get_primary_color())
-                    synced = fetch_synced_lyrics(title, artist, album, duration) if title else None
-                    timeline = build_word_timeline(parse_lrc(synced)) if synced else []
-                    last_word = None
+                    timeline = []
+                    retry_at = now   # fetch right away
+                if retry_at is not None and now >= retry_at:
+                    title, artist, album, duration = track
+                    try:
+                        synced = fetch_synced_lyrics(title, artist, album, duration) if title else None
+                        timeline = build_word_timeline(parse_lrc(synced)) if synced else []
+                        retry_at = None
+                    except LyricsFetchError as e:
+                        print(f"lyrics fetch failed ({e}), retrying in {FETCH_RETRY_SECONDS:.0f}s", file=sys.stderr, flush=True)
+                        timeline = []
+                        retry_at = now + FETCH_RETRY_SECONDS
 
             if status != "Playing" or not timeline:
+                # paused / no lyrics: don't leave the last word of the previous song on screen
+                if last_word is not None:
+                    render_word("", rgb)
+                    last_word = None
                 time.sleep(POLL_SECONDS)
                 continue
 

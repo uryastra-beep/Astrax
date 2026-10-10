@@ -9,5 +9,7 @@ Optional. These touch system files, so `install.sh` never installs them for you.
   A grub update may overwrite it: re-apply and run `sudo grub-mkconfig -o /boot/grub/grub.cfg`.
 - `grub/01_fastboot` -> `/etc/grub.d/01_fastboot` (SUPER+Power skips the menu once).
   Needs a sudoers rule: `YOUR_USER ALL=(root) NOPASSWD: /usr/bin/grub-editenv /boot/grub/grubenv set fastboot=1`
-- `90-power-hold.conf` -> `/etc/systemd/logind.conf.d/` (the physical power button no longer powers off by itself; the wave animation handles it)
+- `90-power-hold.conf` -> `/etc/systemd/logind.conf.d/`: NOT needed for the power wave anymore (Astrax holds a
+  logind inhibitor while you are logged in). Only install it if you also want the button ignored outside the
+  session, e.g. at the login screen.
 - `sync-theme.sh` repaints Plymouth + the SDDM theme with the active Serpantinum colors.

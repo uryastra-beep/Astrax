@@ -306,7 +306,7 @@ case "$action" in
             pid=$(find_pid "$cls")
             [ -n "$pid" ] && kill -STOP "$pid"
         done
-        echo "widgets pausados"
+        echo "widgets paused"
         ;;
     play)
         _play_target_mon=$(cat "$HOME_MONITOR_FILE" 2>/dev/null)
@@ -325,7 +325,7 @@ case "$action" in
                 spawn_widget "$cls"
             fi
         done
-        echo "widgets activos"
+        echo "widgets active"
         ;;
     hide)
         # like 'off' but WITHOUT touching the power preference: used by the
@@ -334,7 +334,7 @@ case "$action" in
             pid=$(find_pid "$cls")
             [ -n "$pid" ] && kill "$pid"
         done
-        echo "widgets ocultados"
+        echo "widgets hidden"
         ;;
     off)
         # "widgets off" (no argument) turns off whatever is active on
@@ -395,7 +395,7 @@ case "$action" in
         # it DOES get a ghost), its ghost was never running and wouldn't be relaunched
         # by itself. Restore any ghost that now applies.
         [ "$GHOSTS_ENABLED" -eq 1 ] && spawn_missing_ghosts
-        echo "widgets reiniciados"
+        echo "widgets restarted"
         ;;
     any-running)
         found=0
@@ -445,9 +445,9 @@ case "$action" in
         # combined form: "widgets p1 opti on" / "widgets p2 opti off"
         if [ "${2:-}" = "opti" ] && [ -n "${3:-}" ]; then
             apply_opti "$3" > /dev/null
-            echo "widgets movidos a $target_monitor, opti $3"
+            echo "widgets moved to $target_monitor, opti $3"
         else
-            echo "widgets movidos a $target_monitor"
+            echo "widgets moved to $target_monitor"
         fi
         ;;
     glow)
@@ -473,14 +473,14 @@ case "$action" in
         # hides the ghosts WITHOUT touching the saved glow preference
         # (for gamemode: when it ends things must go back to how they were)
         kill_all_ghosts
-        echo "ghosts suspendidos"
+        echo "ghosts suspended"
         ;;
     ghosts-restore)
         # shows them again only if the glow preference is still "on"
         if [ "$(glow_state)" = "on" ]; then
             spawn_missing_ghosts
         fi
-        echo "ghosts restaurados (si correspondia)"
+        echo "ghosts restored (if applicable)"
         ;;
     opti)
         apply_opti "${2:-}"

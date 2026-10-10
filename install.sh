@@ -19,6 +19,8 @@
 
 set -euo pipefail
 
+PLUGIN_FAILURES=()
+
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
@@ -41,6 +43,48 @@ command -v pacman >/dev/null || {
 }
 echo "pacman found."
 
+# commands linked into ~/.local/bin at the end (declared here so the backup
+# below can include whatever already exists under those names)
+declare -A CMD_TARGETS=(
+    [vm]=vm-ctl.sh
+    [mode]=mode-ctl.sh
+    [opti]=opti-ctl.sh
+    [sharp]=sharp-transparent-ctl.sh
+    [workspace]=workspace-ctl.sh
+    [show]=show-ctl.sh
+    [intro]=intro.sh
+    [outro]=outro.sh
+    [hz]=hz-ctl.sh [Hz]=hz-ctl.sh [check]=hz-ctl.sh
+    [widget]=widget-ctl.sh [widgets]=widget-ctl.sh
+    [widget2]=widget2-ctl.sh [widgets2]=widget2-ctl.sh
+    [widget3]=widget3-ctl.sh [widgets3]=widget3-ctl.sh
+    [widget4]=widget4-ctl.sh [widgets4]=widget4-ctl.sh
+    [widget5]=widget5-ctl.sh [widgets5]=widget5-ctl.sh
+    [widget6]=widget6-ctl.sh [widgets6]=widget6-ctl.sh
+)
+
+step "Backing up everything Astrax will overwrite (before touching anything)"
+# Every file of this repo that already exists in $HOME (dotfiles and the
+# Serpantinum sources Astrax overrides) plus whatever already sits under the
+# command names in ~/.local/bin -- taken BEFORE any package or Serpantinum's
+# own installer runs, so it is the state you had. Restore with:
+#   tar -xzf <backup> -C "$HOME"
+BACKUP="$HOME/astrax-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+mapfile -t existing < <(
+    {
+        find .config .local scripts .zshrc .p10k.zsh \( -type f -o -type l \) 2>/dev/null
+        for name in "${!CMD_TARGETS[@]}"; do echo ".local/bin/$name"; done
+    } | while read -r f; do [ -e "$HOME/$f" ] || [ -L "$HOME/$f" ] && echo "$f"; done | sort -u
+)
+if [ "${#existing[@]}" -gt 0 ]; then
+    tar -czf "$BACKUP" -C "$HOME" "${existing[@]}"
+    tar -tzf "$BACKUP" > /dev/null || { echo "The backup can't be read back -- stopping before changing anything." >&2; exit 1; }
+    echo "${#existing[@]} files saved to $BACKUP"
+    echo "Restore later with: tar -xzf '$BACKUP' -C \"\$HOME\""
+else
+    echo "Nothing to back up (clean install)."
+fi
+
 step "yay (AUR helper)"
 if ! command -v yay >/dev/null; then
     echo "yay not found -- installing it..."
@@ -60,7 +104,7 @@ sudo pacman -S --needed --noconfirm \
     jq socat grim slurp imagemagick ffmpeg util-linux xorg-xhost libnotify \
     wireplumber playerctl cava cmatrix wl-clipboard cliphist fuzzel \
     python python-pillow python-numpy python-gobject python-dbus python-evdev \
-    qt6-multimedia-ffmpeg nautilus
+    qt6-multimedia-ffmpeg nautilus gnome-calculator
 
 step "AUR packages (yay)"
 yay -S --needed --noconfirm \
@@ -72,7 +116,7 @@ step "Serpantinum (main shell -- not an AUR package, it has its own installer)"
 # Astrax overrides several of its QML files (WidgetRegistry.qml,
 # WallpaperEngine.qml, faces/*, ...) and those were tested against this
 # commit. Bump it by hand after validating a newer one.
-SERPANTINUM_PINNED_COMMIT="df443798ef6b3bd0aaf10500533fcd75ca1b0cd8"
+SERPANTINUM_PINNED_COMMIT="1eec762088403efca84a177321520a1e5b88949a"
 SERPANTINUM_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/serpantinum-installer"
 
 if command -v serpantinum >/dev/null 2>&1; then
@@ -97,19 +141,6 @@ else
     bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
 fi
 
-step "Backing up what is about to be overwritten"
-BACKUP="$HOME/astrax-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
-mapfile -t existing < <(
-    find .config .local scripts .zshrc .p10k.zsh -type f 2>/dev/null |
-        while read -r f; do [ -f "$HOME/$f" ] && echo "$f"; done
-)
-if [ "${#existing[@]}" -gt 0 ]; then
-    tar -czf "$BACKUP" -C "$HOME" "${existing[@]}"
-    echo "${#existing[@]} files saved to $BACKUP"
-else
-    echo "Nothing to back up (clean install)."
-fi
-
 step "Copying the dotfiles to \$HOME"
 cp -r .config "$HOME/"
 cp -r .local "$HOME/"
@@ -120,31 +151,29 @@ chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py 2>/dev/null || true
 grep -rlI "@HOME@" .config .local 2>/dev/null |
     while read -r f; do sed -i "s|@HOME@|$HOME|g" "$HOME/$f"; done || true
 mkdir -p "$HOME/Pictures/Wallpapers"
+
+step "Keyboard layout"
+echo "Astrax ships the author's keymap: Latin American layout, and Caps Lock only"
+echo "toggles with Ctrl+Caps Lock (alone it does nothing)."
+if confirm "Keep that keymap?"; then
+    echo "Kept (~/.config/hypr/custom-capslock.xkb)."
+else
+    read -r -p "XKB layout to use instead (e.g. us, es, de, latam) [us]: " layout
+    layout="${layout:-us}"
+    if [[ "$layout" =~ ^[a-z]{2,8}(,[a-z]{2,8})*$ ]]; then
+        sed -i "s|^\( *\)kb_file = .*-- @astrax-keymap.*$|\1kb_layout = \"$layout\", -- @astrax-keymap|" "$HOME/.config/hypr/config/inputs.lua"
+        echo "Using the '$layout' layout."
+    else
+        echo "'$layout' doesn't look like an XKB layout -- keeping Astrax's keymap."
+    fi
+fi
 echo "Done -- this includes Astrax's versions of Serpantinum's widget registry,"
 echo "widget faces, wallpaper engine, lock screen and bar modules."
 
 step "Commands in ~/.local/bin"
 mkdir -p "$HOME/.local/bin"
-declare -A CMD_TARGETS=(
-    [vm]=vm-ctl.sh
-    [mode]=mode-ctl.sh
-    [opti]=opti-ctl.sh
-    [sharp]=sharp-transparent-ctl.sh
-    [workspace]=workspace-ctl.sh
-    [taskbar]=taskbar-ctl.sh
-    [show]=show-ctl.sh
-    [intro]=intro.sh
-    [outro]=outro.sh
-    [hz]=hz-ctl.sh [Hz]=hz-ctl.sh [check]=hz-ctl.sh
-    [widget]=widget-ctl.sh [widgets]=widget-ctl.sh
-    [widget2]=widget2-ctl.sh [widgets2]=widget2-ctl.sh
-    [widget3]=widget3-ctl.sh [widgets3]=widget3-ctl.sh
-    [widget4]=widget4-ctl.sh [widgets4]=widget4-ctl.sh
-    [widget5]=widget5-ctl.sh [widgets5]=widget5-ctl.sh
-    [widget6]=widget6-ctl.sh [widgets6]=widget6-ctl.sh
-)
 for name in "${!CMD_TARGETS[@]}"; do
-    ln -sf "$HOME/scripts/${CMD_TARGETS[$name]}" "$HOME/.local/bin/$name"
+    ln -sfn "$HOME/scripts/${CMD_TARGETS[$name]}" "$HOME/.local/bin/$name"
 done
 echo "Linked: ${!CMD_TARGETS[*]}"
 
@@ -158,11 +187,15 @@ fi
 
 step "Hyprland plugins (hyprpm)"
 if confirm "Build/enable hypr-dynamic-cursors and infinite-desktop-v2 now? (sudo, takes a while)"; then
-    hyprpm update
-    hyprpm add https://github.com/virtcode/hypr-dynamic-cursors || true
-    hyprpm enable dynamic-cursors || true
-    hyprpm add https://github.com/lipeazul/infinite-desktop-v2 || true
-    hyprpm enable infinite-desktop-v2 || true
+    hyprpm update || PLUGIN_FAILURES+=("hyprpm update")
+    hyprpm add https://github.com/virtcode/hypr-dynamic-cursors || PLUGIN_FAILURES+=("add hypr-dynamic-cursors")
+    hyprpm enable dynamic-cursors || PLUGIN_FAILURES+=("enable dynamic-cursors (cursor animations, 'mouse' command)")
+    hyprpm add https://github.com/lipeazul/infinite-desktop-v2 || PLUGIN_FAILURES+=("add infinite-desktop-v2")
+    hyprpm enable infinite-desktop-v2 || PLUGIN_FAILURES+=("enable infinite-desktop-v2 (per-monitor workspace binds)")
+    if [ "${#PLUGIN_FAILURES[@]}" -gt 0 ]; then
+        echo "WARNING: some plugin steps failed:" >&2
+        printf '  - %s\n' "${PLUGIN_FAILURES[@]}" >&2
+    fi
 else
     echo "Skipped -- the \"m~N\" workspace binds need infinite-desktop-v2 to work."
 fi
@@ -196,5 +229,10 @@ if confirm "Make fish your login shell? (chsh -- Astrax assumes it)"; then
 fi
 
 step "Done"
+if [ "${#PLUGIN_FAILURES[@]}" -gt 0 ]; then
+    echo "Finished WITH PROBLEMS -- these Hyprland plugin steps failed:"
+    printf '  - %s\n' "${PLUGIN_FAILURES[@]}"
+    echo "Fix them with hyprpm before relying on the features listed."
+fi
 echo "Log in with 'Hyprland (Serpantinum)'. See README.md for the keybinds,"
 echo "the music modes and the widget commands."

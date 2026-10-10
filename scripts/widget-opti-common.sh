@@ -67,19 +67,36 @@ WIDGETS1_CLASSES=(widget-clock widget-lavat widget-clock-ghost)
 WIDGETS4_CLASSES=(widget4-term widget4-btop widget4-unimatrix widget4-lavat)
 WIDGETS5_CLASSES=(widget5-term widget5-unimatrix widget5-lavat)
 
+# Session-scoped dir for the Quickshell widget pidfiles: cleared at logout,
+# so a pidfile can never outlive the processes of this session.
+WIDGET_RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/astrax-widgets"
+mkdir -p "$WIDGET_RUN_DIR"
+
+# pid_is_widget <pid> <config> -- true only if <pid> is OUR "qs -c <config>"
+# (same user, matching command line). A reused PID belonging to another
+# program never counts as a widget, and is never killed as one.
+pid_is_widget() {
+    local pid="$1" cfg="$2" cmd
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    [ -O "/proc/$pid" ] || return 1
+    cmd=$(tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null) || return 1
+    [[ " $cmd " == *" -c $cfg "* ]]
+}
+
+# _pidfile_alive <pidfile> <config>
 _pidfile_alive() {
     [ -f "$1" ] || return 1
     local pid
     pid=$(cat "$1" 2>/dev/null)
-    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-    kill -0 "$pid" 2>/dev/null
+    pid_is_widget "$pid" "$2" || { rm -f "$1"; return 1; }
 }
 
+# _pidfile_kill <pidfile> <config>
 _pidfile_kill() {
     [ -f "$1" ] || return 0
     local pid
     pid=$(cat "$1" 2>/dev/null)
-    [[ "$pid" =~ ^[0-9]+$ ]] && kill "$pid" 2>/dev/null
+    pid_is_widget "$pid" "$2" && kill "$pid" 2>/dev/null
     rm -f "$1"
 }
 
@@ -124,13 +141,13 @@ kill_widgets1_on() {
 
 # -------- widgets2 / widgets3 (Quickshell, MULTI-instance: one per monitor) --------
 
-widgets2_pidfile_for() { echo "$HOME/.cache/widgets2/quickshell-$1.pid"; }
-widgets3_pidfile_for() { echo "$HOME/.cache/widgets3/quickshell-$1.pid"; }
+widgets2_pidfile_for() { echo "$WIDGET_RUN_DIR/widgets2-$1.pid"; }
+widgets3_pidfile_for() { echo "$WIDGET_RUN_DIR/widgets3-$1.pid"; }
 
-any_widgets2_running_on() { _pidfile_alive "$(widgets2_pidfile_for "$1")"; }
-any_widgets3_running_on() { _pidfile_alive "$(widgets3_pidfile_for "$1")"; }
-kill_widgets2_on() { _pidfile_kill "$(widgets2_pidfile_for "$1")"; }
-kill_widgets3_on() { _pidfile_kill "$(widgets3_pidfile_for "$1")"; }
+any_widgets2_running_on() { _pidfile_alive "$(widgets2_pidfile_for "$1")" widgets2; }
+any_widgets3_running_on() { _pidfile_alive "$(widgets3_pidfile_for "$1")" widgets3; }
+kill_widgets2_on() { _pidfile_kill "$(widgets2_pidfile_for "$1")" widgets2; }
+kill_widgets3_on() { _pidfile_kill "$(widgets3_pidfile_for "$1")" widgets3; }
 
 # "running" (without saying where) = any instance on ANY monitor
 any_widgets2_running() {
@@ -146,10 +163,10 @@ kill_widgets3() { for m in "${MONITORS[@]}"; do kill_widgets3_on "$m"; done; }
 
 # -------- widgets4 (Quickshell + kitty, single instance tied to a workspace) --------
 
-WIDGETS4_PID_FILE="$HOME/.cache/widgets4/quickshell.pid"
+WIDGETS4_PID_FILE="$WIDGET_RUN_DIR/widgets4.pid"
 
 any_widgets4_running() {
-    _pidfile_alive "$WIDGETS4_PID_FILE" && return 0
+    _pidfile_alive "$WIDGETS4_PID_FILE" widgets4 && return 0
     for cls in "${WIDGETS4_CLASSES[@]}"; do
         pgrep -f "kitty --class ${cls} -o" > /dev/null 2>&1 && return 0
     done
@@ -169,7 +186,7 @@ any_widgets4_running_on() {
 }
 
 kill_widgets4() {
-    _pidfile_kill "$WIDGETS4_PID_FILE"
+    _pidfile_kill "$WIDGETS4_PID_FILE" widgets4
     for cls in "${WIDGETS4_CLASSES[@]}"; do
         pgrep -f "kitty --class ${cls} -o" | xargs -r kill 2>/dev/null
     done

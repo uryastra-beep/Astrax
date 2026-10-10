@@ -30,7 +30,7 @@ CAVA_CONFIG3="$HOME/.config/cava/config-widget3"
 
 mkdir -p "$CACHE_DIR" "$(dirname "$OPTI_STATE_FILE")"
 
-pidfile_for() { echo "$CACHE_DIR/quickshell-$1.pid"; }
+pidfile_for() { widgets3_pidfile_for "$1"; }   # see widget-opti-common.sh
 logfile_for() { echo "$CACHE_DIR/widgets3-$1.log"; }
 
 get_pid() {
@@ -40,7 +40,7 @@ get_pid() {
     local pid
     pid=$(cat "$f" 2>/dev/null)
     [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-    kill -0 "$pid" 2>/dev/null || { rm -f "$f"; return 1; }
+    pid_is_widget "$pid" widgets3 || { rm -f "$f"; return 1; }
     printf '%s\n' "$pid"
 }
 
@@ -186,7 +186,7 @@ do_restart() {
     for mon in $mons; do
         start_process "$mon"
     done
-    echo "widgets3 reiniciado -> $(echo "$mons" | tr '\n' ' ')"
+    echo "widgets3 restarted -> $(echo "$mons" | tr '\n' ' ')"
 }
 
 do_status() {

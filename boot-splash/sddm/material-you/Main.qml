@@ -684,7 +684,6 @@ Rectangle {
 
                         TextInput {
                             id: pwd
-                            validator: RegularExpressionValidator { regularExpression: /[^ ]*/ }
                             anchors.fill: parent
                             anchors.leftMargin: 20 * s
                             anchors.rightMargin: 20 * s

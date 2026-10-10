@@ -7,7 +7,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.0.0
+**Version:** 1.0.1 (see [CHANGELOG.md](CHANGELOG.md))
 
 ## Install
 
@@ -21,17 +21,29 @@ The installer:
 
 - installs the packages (pacman + yay; it installs yay if it's missing),
 - installs Serpantinum with its own installer, pinned to the commit Astrax was tested with,
-- backs up every file it is about to overwrite to `~/astrax-backup-<date>.tar.gz`,
+- **before changing anything**, backs up every file it will overwrite (dotfiles, the Serpantinum
+  sources Astrax overrides and the command names in `~/.local/bin`) to
+  `~/astrax-backup-<date>.tar.gz`. Restore it with `tar -xzf ~/astrax-backup-<date>.tar.gz -C ~`,
 - copies the dotfiles to `$HOME` and links the commands into `~/.local/bin`,
+- asks which **keyboard layout** to use (Astrax's own keymap is Latin American with Caps Lock
+  only on Ctrl+Caps Lock, or any XKB layout you type),
 - **asks first** before touching the system: the SDDM session, the Hyprland plugins, enabling sddm,
-  changing your login shell and installing Glass Lyrics.
+  changing your login shell and installing Glass Lyrics. If a plugin fails to build it tells you
+  at the end.
 
 Then log in with the **Hyprland (Serpantinum)** session from SDDM. The plain **Hyprland** session
 starts Caelestia instead.
 
-Astrax was made for a laptop panel (`eDP-1`, called **p1**) plus an external HDMI monitor (`HDMI-A-1`,
-called **p2**). With other outputs, check `hyprctl monitors` and adjust
-`~/.config/hypr/config/monitors.lua` and `variables.lua`.
+### Monitors
+
+By default Hyprland sets up every screen by itself (preferred mode, automatic position and scale),
+so nothing is tied to the author's hardware. To pin modes, positions or scales, fill in
+`MONITOR_LAYOUT` in `~/.config/hypr/config/monitors.lua`. That file is the only place monitors are
+configured; it has the author's setup as an example.
+
+The scripts call two outputs **p1** and **p2** (`MONITOR1` / `MONITOR2` in `variables.lua`, by default
+`eDP-1` and `HDMI-A-1`). The widget sets and per-monitor workspaces use those names, so set them to
+your outputs from `hyprctl monitors`.
 
 ## Glass Lyrics for Spotify
 
@@ -46,14 +58,15 @@ crossfades into the next song. It lives in [`spicetify/glass-lyrics`](spicetify/
    ```
 
    ```bash
-   sudo chmod a+wr /opt/spotify /opt/spotify/Apps -R
+   sudo chgrp -R "$(id -gn)" /opt/spotify && sudo chmod -R g+w /opt/spotify
    ```
 
    ```bash
    spicetify backup apply
    ```
 
-   The `chmod` is only needed for the AUR `spotify` package (Spicetify has to write into its folder).
+   This is only needed for the AUR `spotify` package: Spicetify has to write into its folder. It gives
+   write access to **your** group only (on Arch, your private user group), not to every user.
 
 2. Install Glass Lyrics (the main installer also offers this step):
 
@@ -90,7 +103,9 @@ or ends. Read the `_doc` field in that file to add your own.
 - Native Serpantinum widgets added by Astrax: **Lyrics** (synced, via `sptlrx`), **Lavat**
   (metaballs that follow the song color) and **Unimatrix** (Matrix rain). Add them from Serpantinum's
   widget editor.
-- Bar lyrics module that shows the current line word by word.
+- Bar lyrics module (`lyrics`, enabled on the left of the bar) that shows the current word, with
+  background vocals underneath; `ALT+SUPER+A` hides it. Lyrics come from NetEase/lrclib, word-by-word
+  when available and estimated from syllables otherwise.
 - Widget sets controlled from the terminal, each one `play | off | p1 | p2 | opti on|off | status | help`:
 
   | Command | What it is |
@@ -117,7 +132,9 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 - `intro`: splash screen where the logo lights up like a neon tube and the theme waves drop to reveal
   the desktop. It also plays on boot and after unlocking.
 - `outro`: the same animation in reverse. The physical power button starts the wave: tap again before
-  it reaches the top to cancel.
+  it reaches the top to cancel. While you're logged in, Astrax holds a logind inhibitor
+  (`systemd-inhibit --what=handle-power-key`, no root needed) so the button doesn't power off
+  behind the animation's back.
 - `boot-splash/` holds a matching Plymouth theme and SDDM theme. They're optional and installed by
   hand, see [`boot-splash/README.md`](boot-splash/README.md).
 
@@ -134,14 +151,14 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 
 | Command | What it does |
 |---|---|
-| `mode music\|study\|gaming\|privacy\|code\|sleep` | quick app/volume profiles (combinable) |
+| `mode music\|study\|gaming\|privacy\|code\|sleep` | quick app/volume profiles (combinable). Apps that aren't installed are skipped and reported; `study`/`gaming` close nothing unless their app can start |
 | `opti on\|off` | fewer blur passes + stops the taskbar watcher |
 | `sharp on\|off` (`CTRL+SUPER+G`) | sharp corners and no blur |
-| `vm caelestia\|serpantium\|status` | switch shells live without restarting Hyprland |
-| `hz p1\|p2 set <hz>`, `check Hz all` | refresh rate per monitor, with a safety cap |
+| `vm caelestia\|serpantium\|status` | switch shells live without restarting Hyprland; it reloads the binds of the new shell and goes back to the old one if the new one fails to start |
+| `hz p1\|p2 set <hz>`, `check Hz all` | refresh rate per monitor, capped at what the screen advertises (overclocks only for panels you list in `~/.config/astrax/hz-limits`) |
 | `workspace status` | open apps per workspace and the bind to reach each one |
-| `mouse rotate\|tilt\|stretch\|none` | cursor animation (hypr-dynamic-cursors) |
-| `CTRL+SUPER+N` | sleep mode: screens off, idle apps frozen, music keeps playing |
+| `mouse rotate\|tilt\|stretch\|none` | cursor animation (hypr-dynamic-cursors); `mouse trail on` needs `~/.local/share/hypr-plugins/build-trail.sh` first |
+| `CTRL+SUPER+N` | sleep mode: locks, then screens off and idle apps frozen; music keeps playing. If the lock doesn't engage, nothing is frozen |
 
 ## Keybinds (Serpantinum session)
 
@@ -168,6 +185,7 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 | `SUPER+V` | clipboard history |
 | `SUPER+.` | emoji picker |
 | `SUPER+N` | do not disturb |
+| `SUPER+A` / `ALT+SUPER+A` | auto-hide the bar / hide the bar lyrics |
 | `SUPER+L` | lock |
 | `SUPER+R` | pin / unpin window |
 | `Power` | power-off wave (tap again to cancel) |
@@ -182,7 +200,15 @@ The full list lives in `~/.config/hypr/config/binds-serpantinum.lua` and `hyprla
   and are addressed per monitor (`m~N`).
 - Some files override Serpantinum's own sources under `~/.local/share/serpantinum/src`. A
   `serpantinum update` can overwrite them: run `./install.sh` again to restore them.
-- No API keys or accounts are needed. Lyrics come from the public lrclib.net API through `sptlrx`.
+- No API keys or accounts are needed. Lyrics come from public APIs (lrclib.net, NetEase).
+- Optional extras, off unless you set them up:
+  - `~/scripts/brave_watcher.sh` closes Brave once it has no windows left. It never does this
+    during a download. Enable it with `touch ~/.config/astrax/enable-brave-watcher`.
+  - The eww taskbar scripts (`taskbar-*`) need your own eww config.
+  - `Lyrics.qml` can also read a word-synced feed from `~/.cache/spicy-bridge` and YouTube captions
+    from a `~/.local/bin/yt-lyrics` tool. Neither one ships with Astrax.
+- There is no automated test suite yet; the scripts are syntax-checked and the installer was
+  exercised in pieces, not on a fresh machine.
 
 ## Credits
 

@@ -1,18 +1,28 @@
 #!/usr/bin/env bash
 # Hz p1|p2 <hz>       -- changes that screen's refresh rate (no cap)
 # check Hz p1|p2|all  -- shows the current Hz
-# hz p1|p2 set <hz>   -- like "Hz" but with a safety cap: won't go
-#                        above what was tested and confirmed stable by hand
-#                        (p1/laptop 70Hz, p2/HDMI 200Hz)
+# hz p1|p2 set <hz>   -- like "Hz" but with a safety cap: never above the
+#                        highest refresh rate the screen itself advertises
+#                        (its EDID modes), unless that exact panel is listed
+#                        in ~/.config/astrax/hz-limits (see below)
 # (same script, behaves differently depending on the name you call it by)
+# p1/p2 = MONITOR1/MONITOR2 (eDP-1 / HDMI-A-1); any output name also works.
+#
+# ~/.config/astrax/hz-limits -- optional overclock caps, one per line, keyed by
+# the panel's description from `hyprctl monitors` (make + model + serial), so a
+# cap tested on one panel never applies to another one with the same port name:
+#   AU Optronics 0xA8AD = 70
 
 set -u
+
+LIMITS_FILE="$HOME/.config/astrax/hz-limits"
 
 mon_for() {
     case "$1" in
         p1) echo "eDP-1" ;;
         p2) echo "HDMI-A-1" ;;
-        *) echo "" ;;
+        "") echo "" ;;
+        *)  hyprctl monitors -j | jq -r --arg n "$1" '.[] | select(.name==$n) | .name' ;;
     esac
 }
 
@@ -43,12 +53,22 @@ set_hz() {
     echo "${mon}: $(round_hz "$now")Hz"
 }
 
+# highest refresh rate among the modes the monitor advertises (EDID)
+advertised_max_hz() {
+    hyprctl monitors -j | jq -r --arg n "$1" \
+        '[.[] | select(.name==$n) | .availableModes[] | capture("@(?<hz>[0-9.]+)Hz").hz | tonumber] | max // empty'
+}
+
+# cap for this monitor: an explicit entry for this exact panel in LIMITS_FILE,
+# otherwise what the panel advertises
 max_hz_for() {
-    case "$1" in
-        eDP-1)    echo 70 ;;
-        HDMI-A-1) echo 200 ;;
-        *)        echo "" ;;
-    esac
+    local desc limit
+    desc=$(hyprctl monitors -j | jq -r --arg n "$1" '.[] | select(.name==$n) | .description')
+    if [ -n "$desc" ] && [ -f "$LIMITS_FILE" ]; then
+        limit=$(awk -F' = ' -v d="$desc" '$1 == d { print $2; exit }' "$LIMITS_FILE")
+        [ -n "$limit" ] && { echo "$limit"; return; }
+    fi
+    advertised_max_hz "$1"
 }
 
 get_pos() {
@@ -64,11 +84,15 @@ set_hz_capped() {
     max=$(max_hz_for "$mon")
 
     if ! [[ "$hz" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-        echo "hz invalido: $hz" >&2
+        echo "invalid Hz: $hz" >&2
         exit 1
     fi
-    if awk -v h="$hz" -v m="$max" 'BEGIN { exit !(h > m) }'; then
-        echo "not allowed: ${mon} is capped at ${max}Hz (overclock tested and confirmed stable by hand). You asked for ${hz}Hz." >&2
+    if [ -z "$max" ]; then
+        echo "couldn't read the supported modes of ${mon}" >&2
+        exit 1
+    fi
+    if awk -v h="$hz" -v m="$max" 'BEGIN { exit !(h > m + 0.5) }'; then
+        echo "not allowed: ${mon} is capped at $(round_hz "$max")Hz (its advertised modes, or your entry in $LIMITS_FILE). You asked for ${hz}Hz." >&2
         exit 1
     fi
 
@@ -86,7 +110,7 @@ set_hz_capped() {
 check_hz() {
     local target="$1"
     if [ "$target" = "all" ]; then
-        for m in eDP-1 HDMI-A-1; do
+        for m in $(hyprctl monitors -j | jq -r '.[].name'); do
             hz=$(get_hz "$m")
             [ -n "$hz" ] && echo "${m}: $(round_hz "$hz")Hz"
         done

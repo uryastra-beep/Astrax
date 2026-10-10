@@ -49,8 +49,14 @@ Item {
     property int textStyle: Text.Normal
     property color textStyleColor: "#000000"
     property real centerRatio: 0.44
+    // background vocals (the "(lyrics)" behind) under the active line, in another
+    // color; opt-in because in multi-line mode they would sit on top of the next line
+    property bool showBackground: false
+    property color backgroundLineColor: (typeof ThemeBackend !== "undefined" && ThemeBackend.peach) ? ThemeBackend.peach : "#fab387"
 
     property real activeItemCenterY: 0
+    // Only the word currently playing (if the line has timed words)
+    property bool singleWord: false
 
     Connections {
         target: Lyrics
@@ -59,7 +65,7 @@ Item {
             root.activeItemCenterY = 0;
         }
         function onCurrentIndexChanged() {
-            if (root.activeItemCenterY > 0) {
+            if (root.activeItemCenterY > 0 && !root.singleWord) {
                 root.animate = true;
             }
             if (Lyrics.currentIndex >= 0 && lyricsRepeater && lyricsRepeater.count > Lyrics.currentIndex) {
@@ -86,6 +92,24 @@ Item {
             return center - (Lyrics.currentIndex * root.itemStep + root.lineHeight / 2);
         }
         return center - (root.lineHeight / 2);
+    }
+
+    Text {
+        id: backgroundText
+        visible: root.showBackground && Lyrics.activeBgText !== ""
+        x: root.sideMargin
+        width: parent.width - root.sideMargin * 2
+        y: root.height * root.centerRatio + root.lineHeight / 2 + root.lineSpacing
+        horizontalAlignment: root.effectiveHorizontalAlignment
+        wrapMode: Text.WordWrap
+        text: Lyrics.activeBgText
+        font.family: root.fontFamily
+        font.weight: root.fontWeight
+        font.pixelSize: root.baseActiveFont * 0.75
+        style: root.textStyle
+        styleColor: root.textStyleColor
+        color: root.backgroundLineColor
+        opacity: 0.95
     }
 
     Item {
@@ -174,10 +198,11 @@ Item {
                         font.pixelSize: root.baseActiveFont
                         style: root.textStyle
                         styleColor: root.textStyleColor
-                        color: (index === Lyrics.currentIndex && (!modelData.words || modelData.words.length === 0)) ? root.activeLineColor : root.inactiveLineColor
+                        color: (index === Lyrics.currentIndex && (root.singleWord || !modelData.words || modelData.words.length === 0)) ? root.activeLineColor : root.inactiveLineColor
                         opacity: {
                             if (!lineDelegate.isWithinRange) return 0.0;
                             if (index === Lyrics.currentIndex) return 1.0;
+                            if (root.singleWord) return 0.0;
                             if (root.inactiveOpacity >= 0) return root.inactiveOpacity;
                             return (typeof Lyrics !== "undefined" && typeof Lyrics.getLineOpacity === "function") ? Lyrics.getLineOpacity(index, Lyrics.currentIndex) : 0.4;
                         }
@@ -190,9 +215,12 @@ Item {
                         }
                         transformOrigin: root.effectiveTransformOrigin
 
-                        textFormat: (index === Lyrics.currentIndex && modelData.words && modelData.words.length > 0) ? Text.StyledText : Text.PlainText
+                        textFormat: (index === Lyrics.currentIndex && !root.singleWord && modelData.words && modelData.words.length > 0) ? Text.StyledText : Text.PlainText
 
                         text: {
+                            if (root.singleWord && index === Lyrics.currentIndex) {
+                                return Lyrics.activeWordText(modelData, Lyrics.currentPosition);
+                            }
                             if (index === Lyrics.currentIndex && modelData.words && modelData.words.length > 0) {
                                 return Lyrics.renderActiveLineText(modelData, Lyrics.currentPosition, root.activeLineColor, root.inactiveLineColor);
                             }
@@ -200,6 +228,7 @@ Item {
                         }
 
                         Behavior on color {
+                            enabled: !root.singleWord
                             ColorAnimation {
                                 duration: 650
                                 easing.type: Easing.OutCubic
@@ -207,6 +236,7 @@ Item {
                         }
 
                         Behavior on opacity {
+                            enabled: !root.singleWord
                             NumberAnimation {
                                 duration: 650
                                 easing.type: Easing.OutCubic
@@ -214,6 +244,7 @@ Item {
                         }
 
                         Behavior on scale {
+                            enabled: !root.singleWord
                             NumberAnimation {
                                 duration: 650
                                 easing.type: Easing.OutCubic

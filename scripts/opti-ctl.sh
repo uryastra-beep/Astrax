@@ -100,7 +100,7 @@ case "${1:-status}" in
         apply_off
         echo off > "$STATE_FILE"
         sleep 0.3
-        echo "opti OFF -- blur passes $(cur_blur), taskbar watcher restaurado"
+        echo "opti OFF -- blur passes $(cur_blur), taskbar watcher restored"
         ;;
     toggle)
         if [ "$(state)" = "on" ]; then exec "$0" off; else exec "$0" on; fi

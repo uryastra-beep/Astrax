@@ -152,7 +152,7 @@ stop_visibility_watcher() {
 }
 
 # ---------------------------------------------------------------------------
-# Acciones
+# Actions
 # ---------------------------------------------------------------------------
 
 do_play() {
@@ -250,7 +250,7 @@ do_restart() {
     stop_visibility_watcher
     start_visibility_watcher
     apply_widget_preset "$ON_PRESET_NAME" "HDMI-A-1"
-    echo "widgets5 reiniciado -> workspace $ws"
+    echo "widgets5 restarted -> workspace $ws"
 }
 
 do_status() {

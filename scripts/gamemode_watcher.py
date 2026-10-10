@@ -21,7 +21,24 @@ POLL_SECONDS = 2
 PREV_TRANSPARENCY_FILE = os.path.expanduser("~/.local/state/gamemode-prev-transparency")
 
 
+def caelestia_active():
+    """Caelestia's gameMode only exists while Caelestia is the running shell
+    (`vm` can switch shells live) -- same rule as ~/scripts/active-shell.sh."""
+    try:
+        sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+        path = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "astrax-shell")
+        with open(path) as f:
+            fsig, shell = f.readline().split()
+        if sig and fsig == sig and shell in ("serpantinum", "caelestia"):
+            return shell == "caelestia"
+    except (OSError, ValueError):
+        pass
+    return os.environ.get("HYPR_SHELL") != "serpantinum"
+
+
 def gamemode_enabled():
+    if not caelestia_active():
+        return False
     r = subprocess.run(["caelestia", "shell", "gameMode", "isEnabled"],
                         capture_output=True, text=True, timeout=3)
     return r.stdout.strip() == "true"
@@ -42,7 +59,7 @@ def set_shell_transparency(enabled):
         with open(SHELL_CONFIG, "w") as f:
             json.dump(config, f, indent=4)
     except Exception as e:
-        print(f"error editando shell.json: {e}", flush=True)
+        print(f"error editing shell.json: {e}", flush=True)
 
 
 def get_shell_transparency():
@@ -85,7 +102,7 @@ def configured_opacity():
             if m:
                 values[key] = float(m.group(1))
     except Exception as e:
-        print(f"error leyendo decorations.lua: {e}", flush=True)
+        print(f"error reading decorations.lua: {e}", flush=True)
     return values
 
 

@@ -1,23 +1,23 @@
 function mouse --description 'Change the cursor animation mode (hypr-dynamic-cursors)'
     set -l config "$HOME/.config/hypr/config/plugins.lua"
     set -l config_fix "$HOME/.config/hypr/config/misc.lua"
-    set -l modos tilt rotate stretch none
+    set -l modes tilt rotate stretch none
     set -l stock_so "/var/cache/hyprpm/$USER/dynamic-cursors/dynamic-cursors.so"
     set -l trail_so "$HOME/.local/share/hypr-plugins/dynamic-cursors-trail.so"
 
     if not test -f "$config"
-        echo "mouse: no existe $config" >&2
+        echo "mouse: $config doesn't exist" >&2
         return 1
     end
 
-    set -l actual (hyprctl getoption plugin:dynamic-cursors:mode 2>/dev/null | string match -rg '^str: (.+)$')
+    set -l current (hyprctl getoption plugin:dynamic-cursors:mode 2>/dev/null | string match -rg '^str: (.+)$')
 
     switch "$argv[1]"
         case '' status
-            if test -z "$actual"
+            if test -z "$current"
                 echo "mode: (plugin not loaded)"
             else
-                echo "mode: $actual"
+                echo "mode: $current"
             end
             echo "type 'mouse help' to see the commands"
             return 0
@@ -48,27 +48,27 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
             echo "  hand         tilt"
             return 0
 
-        case $modos
-            set -l nuevo $argv[1]
+        case $modes
+            set -l new_value $argv[1]
 
             # the plugin does NOT validate 'mode': a typo is silently accepted and
             # leaves the cursor without animation, so we validate here first.
             # anchored to the @mouse-mode marker to touch ONLY the global mode
             # and not the "mode" of the per-shape shape_rules.
-            sed -i -E "s/^(\s*)mode = \"[a-z]*\", -- @mouse-mode\$/\1mode = \"$nuevo\", -- @mouse-mode/" "$config"
+            sed -i -E "s/^(\s*)mode = \"[a-z]*\", -- @mouse-mode\$/\1mode = \"$new_value\", -- @mouse-mode/" "$config"
 
-            if not grep -qE "^\s*mode = \"$nuevo\", -- @mouse-mode\$" "$config"
+            if not grep -qE "^\s*mode = \"$new_value\", -- @mouse-mode\$" "$config"
                 echo "mouse: couldn't write the mode to $config" >&2
                 return 1
             end
 
             hyprctl reload >/dev/null 2>&1
 
-            set -l aplicado (hyprctl getoption plugin:dynamic-cursors:mode 2>/dev/null | string match -rg '^str: (.+)$')
-            if test "$aplicado" = "$nuevo"
-                echo "mode: $nuevo"
+            set -l applied (hyprctl getoption plugin:dynamic-cursors:mode 2>/dev/null | string match -rg '^str: (.+)$')
+            if test "$applied" = "$new_value"
+                echo "mode: $new_value"
             else
-                echo "mouse: wrote '$nuevo' but Hyprland reports '$aplicado'" >&2
+                echo "mouse: wrote '$new_value' but Hyprland reports '$applied'" >&2
                 echo "       check the error banner on screen" >&2
                 return 1
             end
@@ -101,16 +101,16 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
                     # the plugin was loaded live, so it starts with the
                     # defaults: re-apply the global mode, shake and the
                     # per-shape rules that plugins.lua normally sets.
-                    set -l modo_actual (string match -rg '^\s*mode = "([a-z]+)", -- @mouse-mode$' < "$config" | head -1)
-                    test -n "$modo_actual"; or set modo_actual rotate
+                    set -l current_mode (string match -rg '^\s*mode = "([a-z]+)", -- @mouse-mode$' < "$config" | head -1)
+                    test -n "$current_mode"; or set current_mode rotate
                     set -l shake_actual (string match -rg '^\s*enabled = (true|false), -- @mouse-shake$' < "$config" | head -1)
                     test -n "$shake_actual"; or set shake_actual false
-                    hyprctl repl "hl.config({ plugin = { dynamic_cursors = { enabled = true, mode = \"$modo_actual\", shake = { enabled = $shake_actual }, trail = { enabled = true, rate = 3, lifetime = 500.0, fade = true } } } })" >/dev/null 2>&1
+                    hyprctl repl "hl.config({ plugin = { dynamic_cursors = { enabled = true, mode = \"$current_mode\", shake = { enabled = $shake_actual }, trail = { enabled = true, rate = 3, lifetime = 500.0, fade = true } } } })" >/dev/null 2>&1
                     hyprctl repl 'hl.plugin.dynamic_cursors.shape_rule({ shape = "text", mode = "stretch" })' >/dev/null 2>&1
                     hyprctl repl 'hl.plugin.dynamic_cursors.shape_rule({ shape = "pointer", mode = "tilt" })' >/dev/null 2>&1
 
                     if test (hyprctl getoption plugin:dynamic-cursors:trail:enabled 2>/dev/null | head -1) = "bool: true"
-                        echo "trail: on  (mode $modo_actual -- ephemeral, gone on any reload)"
+                        echo "trail: on  (mode $current_mode -- ephemeral, gone on any reload)"
                     else
                         echo "mouse: the build loaded but the trail isn't active" >&2
                         return 1
@@ -142,51 +142,51 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
                     end
 
                 case '*'
-                    echo "mouse: usa 'mouse trail on' o 'mouse trail off'" >&2
+                    echo "mouse: use 'mouse trail on' or 'mouse trail off'" >&2
                     return 1
             end
 
         case fix
             if not test -f "$config_fix"
-                echo "mouse: no existe $config_fix" >&2
+                echo "mouse: $config_fix doesn't exist" >&2
                 return 1
             end
 
-            set -l nuevo
+            set -l new_value
             switch "$argv[2]"
                 case on
-                    set nuevo 1
+                    set new_value 1
                 case off
-                    set nuevo 2
+                    set new_value 2
                 case '*'
-                    echo "mouse: usa 'mouse fix on' o 'mouse fix off'" >&2
+                    echo "mouse: use 'mouse fix on' or 'mouse fix off'" >&2
                     return 1
             end
 
-            sed -i -E "s/^(\s*)no_hardware_cursors = [0-9]+, -- @mouse-fix\$/\1no_hardware_cursors = $nuevo, -- @mouse-fix/" "$config_fix"
+            sed -i -E "s/^(\s*)no_hardware_cursors = [0-9]+, -- @mouse-fix\$/\1no_hardware_cursors = $new_value, -- @mouse-fix/" "$config_fix"
 
-            if not grep -qE "^\s*no_hardware_cursors = $nuevo, -- @mouse-fix\$" "$config_fix"
+            if not grep -qE "^\s*no_hardware_cursors = $new_value, -- @mouse-fix\$" "$config_fix"
                 echo "mouse: couldn't write to $config_fix" >&2
                 return 1
             end
 
             hyprctl reload >/dev/null 2>&1
 
-            set -l aplicado (hyprctl getoption cursor:no_hardware_cursors 2>/dev/null | string match -rg '^int: (-?[0-9]+)$')
-            if test "$aplicado" = "$nuevo"
-                if test "$nuevo" = 1
+            set -l applied (hyprctl getoption cursor:no_hardware_cursors 2>/dev/null | string match -rg '^int: (-?[0-9]+)$')
+            if test "$applied" = "$new_value"
+                if test "$new_value" = 1
                     echo "fix: on  (software cursor -- visible when screen sharing)"
                 else
                     echo "fix: off (hardware cursor -- default)"
                 end
             else
-                echo "mouse: wrote '$nuevo' but Hyprland reports '$aplicado'" >&2
+                echo "mouse: wrote '$new_value' but Hyprland reports '$applied'" >&2
                 return 1
             end
 
         case '*'
             echo "mouse: unknown mode '$argv[1]'" >&2
-            echo "       valid: $modos" >&2
+            echo "       valid: $modes" >&2
             echo "       'mouse help' for help" >&2
             return 1
     end

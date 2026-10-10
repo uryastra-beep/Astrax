@@ -24,7 +24,7 @@ flock 9
 CFG_DIR="$HOME/.config/widgets4"
 CACHE_DIR="$HOME/.cache/widgets4"
 WORKSPACE_FILE="$CFG_DIR/workspace"
-QS_PID_FILE="$CACHE_DIR/quickshell.pid"
+QS_PID_FILE="$WIDGETS4_PID_FILE"   # see widget-opti-common.sh
 QS_LOG_FILE="$CACHE_DIR/widgets4.log"
 VIS_LOG_FILE="$CACHE_DIR/visibility.log"
 POWER_STATE_FILE="$HOME/.local/state/widget4-power"
@@ -46,7 +46,7 @@ qs_get_pid() {
     local pid
     pid=$(cat "$QS_PID_FILE" 2>/dev/null)
     [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-    kill -0 "$pid" 2>/dev/null || { rm -f "$QS_PID_FILE"; return 1; }
+    pid_is_widget "$pid" widgets4 || { rm -f "$QS_PID_FILE"; return 1; }
     printf '%s\n' "$pid"
 }
 qs_running() { qs_get_pid > /dev/null 2>&1; }
@@ -270,7 +270,7 @@ apply_opti() {
 }
 
 # ---------------------------------------------------------------------------
-# Acciones
+# Actions
 # ---------------------------------------------------------------------------
 
 do_play() {
@@ -294,7 +294,7 @@ do_play() {
     [ -n "$old_ws" ] && old_mon=$(workspace_monitor "$old_ws")
     new_mon=$(workspace_monitor "$ws")
     if [ -z "$new_mon" ]; then
-        echo "workspace $ws no existe" >&2
+        echo "workspace $ws doesn't exist" >&2
         return 1
     fi
 
@@ -398,7 +398,7 @@ do_restart() {
     # (the new code was never loaded until a manual "off" + "play").
     stop_visibility_watcher
     start_visibility_watcher
-    echo "widgets4 reiniciado -> workspace $ws (monitor $mon)"
+    echo "widgets4 restarted -> workspace $ws (monitor $mon)"
 }
 
 do_status() {

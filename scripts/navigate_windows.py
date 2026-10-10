@@ -15,7 +15,7 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from hypr_ipc import hyprctl_json, move_focus, move_window_exact_lua, focus_window, batch_async
+from hypr_ipc import hyprctl_json, move_focus, move_window_exact_lua, focus_window, batch_async, monitor_logical_size
 
 PROTECTED_APPS = ['brave-browser', 'chromium', 'chromium-browser', 'google-chrome',
                   'firefox', 'firefoxdeveloperedition', 'librewolf', 'vivaldi',
@@ -34,7 +34,8 @@ def get_monitor_center():
     monitors = hyprctl_json(["monitors"]) or []
     for m in monitors:
         if m.get("focused"):
-            return m["x"] + m["width"] // 2, m["y"] + m["height"] // 2
+            w, h = monitor_logical_size(m)
+            return m["x"] + w // 2, m["y"] + h // 2
     return 960, 540
 
 

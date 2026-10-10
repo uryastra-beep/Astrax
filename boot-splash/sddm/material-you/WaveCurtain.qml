@@ -29,7 +29,7 @@ Item {
 
     NumberAnimation on phase { from: 0; to: Math.PI * 2 * 1000; duration: 4500 * 1000; loops: Animation.Infinite; running: curtain.p < 1 }
 
-    // ---- secuencias ----
+    // ---- sequences ----
     // 1. when the greeter loads: the logo lights up (flicker) and the waves drop
     function reveal() {
         flow.stop();

@@ -7,7 +7,29 @@ require("config.decorations")
 require("config.variables")
 require("config.environment")
 require("config.inputs")
-if os.getenv("HYPR_SHELL") == "serpantinum" then
+-- Active shell: the SDDM session sets HYPR_SHELL, and `vm` can switch shells live,
+-- recording the choice per Hyprland instance in $XDG_RUNTIME_DIR/astrax-shell
+-- (same file scripts/active-shell.sh reads); `vm` reloads the config afterwards.
+local function active_shell()
+    local shell = (os.getenv("HYPR_SHELL") == "serpantinum") and "serpantinum" or "caelestia"
+    local sig, dir = os.getenv("HYPRLAND_INSTANCE_SIGNATURE"), os.getenv("XDG_RUNTIME_DIR")
+    if sig and dir and io and io.open then
+        local ok, line = pcall(function()
+            local f = io.open(dir .. "/astrax-shell", "r")
+            if not f then return nil end
+            local l = f:read("*l")
+            f:close()
+            return l
+        end)
+        if ok and line then
+            local fsig, fshell = line:match("^(%S+)%s+(%S+)$")
+            if fsig == sig and (fshell == "serpantinum" or fshell == "caelestia") then shell = fshell end
+        end
+    end
+    return shell
+end
+
+if active_shell() == "serpantinum" then
     require("config.binds-serpantinum")
 else
     require("config.binds")
@@ -58,7 +80,3 @@ hl.bind("SUPER" .. " + SHIFT + down", hl.dsp.exec_cmd("python3 ~/scripts/move_wi
 hl.bind("SUPER" .. " + CTRL + down", hl.dsp.exec_cmd("python3 ~/scripts/resize_window.py down"), { repeating = true })
 -- <<< hyprland-infinite-desktop-v2 (auto-installed) END
 
-
--- Custom monitor scaling
-hl.monitor({ output = "eDP-1", mode = "1920x1080@60", position = "-1536x0", scale = 1.25 })
-hl.monitor({ output = "HDMI-A-1", mode = "1920x1080@200", position = "0x0", scale = 1 })

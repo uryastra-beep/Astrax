@@ -1,19 +1,7 @@
 -- Auto-start config
 
--- eDP-1 has a tested overclock, confirmed stable up to 70Hz (75Hz+
--- corrupts the panel). Currently back at the stock 60Hz.
---
--- Change the "60" below to "70" to make the overclock the default again,
--- or run `hz p1 set 70` by hand (that only lasts until the next
--- reload/restart, which brings this value back).
---
--- A custom mode outside the EDID does NOT survive a "hyprctl reload" on an
--- already connected monitor -- Hyprland resets it to the preferred one (60Hz)
--- every time. That's why this is re-applied on TWO events: "hyprland.start"
--- (real startup) and "config.reloaded" (any later reload).
-local function overclock_edp()
-    hl.monitor({ output = "eDP-1", mode = "1920x1080@60", position = "-1536x0", scale = "1.25" })
-end
+-- monitors.lua's MONITOR_LAYOUT is re-applied here: custom modes don't
+-- survive a reload on their own (see monitors.lua).
 
 -- opti: the optimized mode (fewer blur passes + taskbar watcher
 -- stopped) is saved in ~/.local/state/opti and re-applied here. Without this,
@@ -31,13 +19,13 @@ local function reapply_sharp_transparent()
 end
 
 hl.on("config.reloaded", function ()
-    overclock_edp()
+    apply_monitors()
     reapply_opti()
     reapply_sharp_transparent()
 end)
 
 hl.on("hyprland.start", function ()
-    overclock_edp()
+    apply_monitors()
 
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     -- splash screen: covers everything and reveals the desktop with theme
@@ -55,10 +43,11 @@ hl.on("hyprland.start", function ()
         hl.exec_cmd("caelestia shell -d")
     end
     -- cliphist: without this "caelestia clipboard" (SUPER+V) breaks because
-    -- nothing is storing the clipboard history. idempotent (pgrep
-    -- first) so a reload doesn't duplicate the watcher.
-    hl.exec_cmd([[sh -c 'pgrep -f "wl-paste --type text --watch cliphist store" || wl-paste --type text --watch cliphist store']])
-    hl.exec_cmd([[sh -c 'pgrep -f "wl-paste --type image --watch cliphist store" || wl-paste --type image --watch cliphist store']])
+    -- nothing is storing the clipboard history. flock -n keeps it to one
+    -- watcher per type (a `pgrep -f` guard here matched its own `sh -c`
+    -- command line, so the watcher never started).
+    hl.exec_cmd([[sh -c 'flock -n "${XDG_RUNTIME_DIR:-/tmp}/cliphist-text.lock" wl-paste --type text --watch cliphist store']])
+    hl.exec_cmd([[sh -c 'flock -n "${XDG_RUNTIME_DIR:-/tmp}/cliphist-image.lock" wl-paste --type image --watch cliphist store']])
     -- custom launcher (tap SUPER). idempotent: won't start another if one is running.
     hl.exec_cmd([[sh -c 'mkdir -p ~/.local/state/astrax-launcher; qs list --all 2>/dev/null | grep -q "astrax-launcher/shell.qml" || qs -c astrax-launcher -d > /tmp/astrax-launcher.log 2>&1']])
     -- custom app-switcher (Menu key), sister of astrax-launcher --
@@ -69,6 +58,10 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-ws-osd/shell.qml" || qs -c astrax-ws-osd -d > /tmp/astrax-ws-osd.log 2>&1']])
     -- black power-off wave (physical button / power menu). idempotent.
     hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-power-wave/shell.qml" || qs -c astrax-power-wave -d > /tmp/astrax-power-wave.log 2>&1']])
+    -- logind must not power off on its own when the physical button is pressed:
+    -- the bind above starts the cancellable wave instead. A session inhibitor
+    -- (no root, released when the session ends) replaces editing logind.conf.
+    hl.exec_cmd([[sh -c 'flock -n "${XDG_RUNTIME_DIR:-/tmp}/astrax-powerkey.lock" systemd-inhibit --what=handle-power-key --mode=block --who=Astrax --why="The power button starts the power-off wave" sleep infinity']])
     -- polkit agent: password window for pkexec (root with approval).
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     -- watchdog: relaunches it every 10s if Hyprland kills it. flock -n so
@@ -91,7 +84,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd([[sh -c 'flock -n /tmp/window-lock.lock python3 ~/scripts/window_lock.py daemon > /tmp/window-lock.log 2>&1']])
     hl.exec_cmd([[sh -c 'flock -n /tmp/border-colors.lock python3 ~/scripts/border_colors.py > /tmp/border-colors.log 2>&1']])
     hl.exec_cmd([[sh -c 'flock -n /tmp/gamemode-watcher.lock python3 ~/scripts/gamemode_watcher.py > /tmp/gamemode-watcher.log 2>&1']])
-    hl.exec_cmd([[sh -c 'flock -n /tmp/brave-watcher.lock bash ~/scripts/brave_watcher.sh > /tmp/brave-watcher.log 2>&1']])
+    -- opt-in (kills Brave once it has no windows left): touch ~/.config/astrax/enable-brave-watcher
+    hl.exec_cmd([[sh -c '[ -e ~/.config/astrax/enable-brave-watcher ] || exit 0; flock -n /tmp/brave-watcher.lock bash ~/scripts/brave_watcher.sh > /tmp/brave-watcher.log 2>&1']])
     -- cursor_colors.py (cursor reacting to the song color) disabled
     -- on purpose: the mouse should NOT change color with the music.
     -- hl.exec_cmd([[sh -c 'flock -n /tmp/cursor-colors.lock python3 ~/scripts/cursor_colors.py > /tmp/cursor-colors.log 2>&1']])
