@@ -1,0 +1,37 @@
+{
+  "id": "widgets4",
+  "name": "widgets4",
+  "description": "",
+  "widgets": [
+    {
+      "type": "lyrics",
+      "variant": "default",
+      "anchor": "",
+      "x": 24.99609375,
+      "y": 367,
+      "width": 772,
+      "height": 160,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "visualizer",
+      "variant": "bars",
+      "anchor": "",
+      "x": 5,
+      "y": 478,
+      "width": 811.9921875,
+      "height": 581,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    }
+  ],
+  "isCustom": true,
+  "category": "user"
+}

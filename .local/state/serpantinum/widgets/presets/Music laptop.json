@@ -1,0 +1,65 @@
+{
+  "id": "music_laptop",
+  "name": "Music laptop",
+  "description": "",
+  "widgets": [
+    {
+      "type": "user",
+      "variant": "default",
+      "anchor": "",
+      "x": 20,
+      "y": 700,
+      "width": 260,
+      "height": 140,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "battery",
+      "variant": "default",
+      "anchor": "",
+      "x": 316,
+      "y": 729,
+      "width": 260,
+      "height": 90,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "visualizer",
+      "variant": "bars",
+      "anchor": "",
+      "x": 7.26171875,
+      "y": 0,
+      "width": 1521.4765625,
+      "height": 600,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 180,
+      "imagePath": ""
+    },
+    {
+      "type": "music",
+      "variant": "round",
+      "anchor": "",
+      "x": 1123.923828125,
+      "y": 10.591796875,
+      "width": 842.81640625,
+      "height": 842.81640625,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    }
+  ],
+  "isCustom": true,
+  "category": "user"
+}

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Hyprland (Serpantinum)
+Comment=Hyprland with the Serpantinum shell instead of Caelestia
+Exec=env HYPR_SHELL=serpantinum uwsm start -e -D Hyprland hyprland.desktop
+TryExec=uwsm
+DesktopNames=Hyprland
+Type=Application

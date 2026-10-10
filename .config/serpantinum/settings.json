@@ -1,0 +1,193 @@
+{
+  "general": {
+    "language": "en",
+    "avatarPath": "@HOME@/.face",
+    "muteSfx": false,
+    "weatherInterval": 15,
+    "weatherUnit": "metric",
+    "sfxVolume": 100,
+    "screenshotCaptureOnRelease": true,
+    "quickactions": true
+  },
+  "syspanel": {
+    "clipExpandProgress": 0,
+    "clipExpanded": false,
+    "clipState": 1
+  },
+  "bar": {
+    "position": "top",
+    "width": 100,
+    "opacity": 100,
+    "style": "fill",
+    "time": {
+      "format": "hh:mm:ss AP"
+    },
+    "autohide": true,
+    "autohideTimeout": 1000,
+    "modules": {
+      "left": [
+        "left",
+        "media",
+        "vis"
+      ],
+      "center": [
+        [
+          "timedate",
+          "info",
+          "weather",
+          "sysmon"
+        ]
+      ],
+      "right": [
+        "tray",
+        [
+          "kb",
+          "wifi",
+          "bt",
+          "vol",
+          "bat"
+        ]
+      ]
+    },
+    "workspacesStyle": "pills",
+    "sideWorkspacesStyle": "pills",
+    "workspaceCount": 6,
+    "distinctPills": true,
+    "groupColors": {
+      "g_timedate": "#e8b6f0",
+      "g_kb": "#673b37"
+    }
+  },
+  "theme": {
+    "fontFamily": "Adwaita Mono",
+    "borderRadius": 10,
+    "activePreset": "Matugen",
+    "matugen": true,
+    "colors": {
+      "base": "#0d1117",
+      "blue": "#58a6ff",
+      "crust": "#010409",
+      "green": "#3fb950",
+      "mantle": "#010409",
+      "maroon": "#f85149",
+      "mauve": "#bc8cff",
+      "overlay0": "#484f58",
+      "overlay1": "#6e7681",
+      "overlay2": "#8b949e",
+      "peach": "#f0883e",
+      "pink": "#d2a8ff",
+      "red": "#f85149",
+      "sapphire": "#388bfd",
+      "subtext0": "#8b949e",
+      "subtext1": "#b1bac4",
+      "surface0": "#161b22",
+      "surface1": "#21262d",
+      "surface2": "#30363d",
+      "teal": "#39c5cf",
+      "text": "#c9d1d9",
+      "yellow": "#d29922"
+    }
+  },
+  "idle": {
+    "enabled": false,
+    "actions": {
+      "dim": {
+        "id": "dim",
+        "timeout": 150,
+        "enabled": true,
+        "respectInhibitors": true,
+        "mprisInhibit": false,
+        "command": "",
+        "resumeCommand": "",
+        "isCustom": false
+      },
+      "dpms": {
+        "id": "dpms",
+        "timeout": 450,
+        "enabled": true,
+        "respectInhibitors": true,
+        "mprisInhibit": false,
+        "command": "",
+        "resumeCommand": "",
+        "isCustom": false
+      },
+      "lock": {
+        "id": "lock",
+        "timeout": 300,
+        "enabled": true,
+        "respectInhibitors": true,
+        "mprisInhibit": false,
+        "command": "",
+        "resumeCommand": "",
+        "isCustom": false
+      },
+      "suspend": {
+        "id": "suspend",
+        "timeout": 600,
+        "enabled": true,
+        "respectInhibitors": true,
+        "mprisInhibit": false,
+        "command": "",
+        "resumeCommand": "",
+        "isCustom": false
+      }
+    },
+    "manualInhibit": true
+  },
+  "notifications": {
+    "dnd": true,
+    "position": "top right",
+    "sound": true,
+    "soundFile": "@HOME@/.local/share/serpantinum/src/assets/sounds/notifications/Botanica.wav"
+  },
+  "display": {
+    "monitors": {
+      "eDP-1": {
+        "enabled": false,
+        "scale": 1
+      },
+      "HDMI-A-1": {
+        "enabled": false
+      }
+    }
+  },
+  "wallpaperDir": "@HOME@/Pictures/Wallpapers",
+  "sideBar": {
+    "workspacesStyle": "pills"
+  },
+  "osd": {
+    "horizontalPosition": 90,
+    "verticalPosition": 10,
+    "orientation": "horizontal",
+    "showCapsLock": true,
+    "showNumLock": true,
+    "showAirplane": true,
+    "attachToBar": true
+  },
+  "launcher": {
+    "position": "center",
+    "width": 600,
+    "itemCount": 6,
+    "terminalCommand": "kitty -e",
+    "smartRanking": true
+  },
+  "dock": {
+    "enabled": true,
+    "position": "bottom",
+    "onTop": true,
+    "elementSize": 44,
+    "floating": false,
+    "opacity": 100,
+    "exclusive": false,
+    "autohide": false,
+    "smartAutohide": true,
+    "autohideTimeout": 1000,
+    "editing": false,
+    "apps": [],
+    "overrideBoundsCorrection": false,
+    "enableScrolling": false,
+    "visibleElements": 7,
+    "hoverScale": 120,
+    "cascadeScale": false
+  }
+}

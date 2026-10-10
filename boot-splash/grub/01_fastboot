@@ -1,0 +1,13 @@
+#!/bin/sh
+# SUPER+Power (fast-reboot.sh) sets fastboot=1 in grubenv: that single boot
+# skips the menu (timeout 0). GRUB can't write grubenv on btrfs (save_env
+# fails silently), so grub-fastboot-clear.service clears it once Linux
+# boots; without that the menu would never come back.
+cat << 'GRUBEOF'
+if [ "${fastboot}" = "1" ]; then
+  set timeout=0
+  set timeout_style=hidden
+  set fastboot=
+  save_env fastboot
+fi
+GRUBEOF

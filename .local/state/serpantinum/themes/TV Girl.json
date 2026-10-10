@@ -1,0 +1,38 @@
+{
+  "name": "TV Girl",
+  "isColorFocused": true,
+  "colors": {
+    "base": "#000000",
+    "mantle": "#050309",
+    "crust": "#000000",
+    "text": "#eef2ff",
+    "subtext0": "#b4c6f5",
+    "subtext1": "#8aa0d8",
+    "surface0": "#060a1a",
+    "surface1": "#0d1838",
+    "surface2": "#16296a",
+    "overlay0": "#4a6fc4",
+    "overlay1": "#6a8fe0",
+    "overlay2": "#8fabf0",
+    "blue": "#3d8bff",
+    "sapphire": "#2f7bff",
+    "peach": "#5aa0ff",
+    "green": "#3d8bff",
+    "red": "#ff4f9a",
+    "mauve": "#ff3fd0",
+    "pink": "#ff7ae0",
+    "yellow": "#7fb0ff",
+    "maroon": "#b0189a",
+    "teal": "#4db8ff"
+  },
+  "isCustom": true,
+  "category": "user",
+  "spectrum": [
+    "3d8bff",
+    "ff3fd0"
+  ],
+  "lyric_cycle": [
+    "ff3fd0",
+    "3d8bff"
+  ]
+}

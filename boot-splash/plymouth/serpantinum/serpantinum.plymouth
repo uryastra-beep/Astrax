@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Serpantinum
+Description=astrax boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/serpantinum
+ScriptFile=/usr/share/plymouth/themes/serpantinum/serpantinum.script

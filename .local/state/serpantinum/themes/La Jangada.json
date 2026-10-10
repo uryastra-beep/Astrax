@@ -1,0 +1,42 @@
+{
+  "name": "La Jangada",
+  "isColorFocused": true,
+  "isCustom": true,
+  "category": "user",
+  "lyric_cycle": [
+    "558172",
+    "7aa88f",
+    "bba270",
+    "a8845a"
+  ],
+  "spectrum": [
+    "558172",
+    "7aa88f",
+    "bba270",
+    "a8845a"
+  ],
+  "colors": {
+    "base": "#000000",
+    "mantle": "#050807",
+    "crust": "#000000",
+    "surface0": "#0a0f0e",
+    "surface1": "#131c19",
+    "surface2": "#1d2c27",
+    "overlay0": "#44675b",
+    "overlay1": "#779a8e",
+    "overlay2": "#99b3aa",
+    "text": "#f6f9f7",
+    "subtext0": "#c4d3ce",
+    "subtext1": "#a2bab1",
+    "mauve": "#7aa88f",
+    "pink": "#bba270",
+    "blue": "#558172",
+    "sapphire": "#6e9487",
+    "peach": "#95b9a5",
+    "green": "#a8845a",
+    "teal": "#b99d7b",
+    "yellow": "#afcbbc",
+    "red": "#bba270",
+    "maroon": "#5e5138"
+  }
+}

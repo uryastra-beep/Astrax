@@ -1,0 +1,10 @@
+[Unit]
+Description=Clear fastboot=1 from grubenv (GRUB cannot write on btrfs)
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/grub-editenv /boot/grub/grubenv unset fastboot
+
+[Install]
+WantedBy=multi-user.target

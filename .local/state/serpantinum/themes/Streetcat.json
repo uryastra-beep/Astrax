@@ -1,0 +1,43 @@
+{
+  "name": "Streetcat",
+  "isColorFocused": true,
+  "isCustom": true,
+  "category": "user",
+  "lyric_cycle": [
+    "714e9d",
+    "f35a63",
+    "53ab69",
+    "f4ac68"
+  ],
+  "spectrum": [
+    "714e9d",
+    "f35a63",
+    "53ab69",
+    "f4ac68"
+  ],
+  "spectrum_wipe": true,
+  "colors": {
+    "base": "#000000",
+    "mantle": "#070509",
+    "crust": "#000000",
+    "surface0": "#0e0913",
+    "surface1": "#191123",
+    "surface2": "#261b35",
+    "overlay0": "#5a3e7e",
+    "overlay1": "#8d71b1",
+    "overlay2": "#aa95c4",
+    "text": "#fef9f4",
+    "subtext0": "#cdc1dd",
+    "subtext1": "#b19ec9",
+    "mauve": "#f4ac68",
+    "pink": "#f35a63",
+    "blue": "#714e9d",
+    "sapphire": "#8669ac",
+    "peach": "#f6bd86",
+    "green": "#53ab69",
+    "teal": "#75bc87",
+    "yellow": "#f8cda4",
+    "red": "#f35a63",
+    "maroon": "#7a2d32"
+  }
+}

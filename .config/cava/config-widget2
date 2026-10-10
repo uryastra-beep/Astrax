@@ -1,0 +1,36 @@
+# Cava config for widgets2. Since the move to Quickshell/layer-shell,
+# method=raw: prints each bar's values to stdout instead of drawing
+# them itself (no terminal/ncurses involved anymore); ~/.config/quickshell/
+# widgets2/shell.qml reads and draws them. Colors come straight from
+# /tmp/widget-colors.json (no [color] section for border_colors.py to patch).
+#
+
+[general]
+framerate = 60
+bars = 64
+
+[input]
+method = pulse
+source = easyeffects_sink.monitor
+
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 1000
+bar_delimiter = 59
+frame_delimiter = 10
+channels = mono
+
+[smoothing]
+noise_reduction = 85
+monstercat = 1
+waves = 0
+gravity = 120
+
+[eq]
+1 = 0.8
+2 = 0.9
+3 = 1.0
+4 = 1.1
+5 = 1.2

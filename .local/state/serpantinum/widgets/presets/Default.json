@@ -1,0 +1,79 @@
+{
+  "id": "default",
+  "name": "Default",
+  "description": "",
+  "widgets": [
+    {
+      "type": "music",
+      "variant": "round",
+      "anchor": "",
+      "x": 1572,
+      "y": 729,
+      "width": 348,
+      "height": 348,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "user",
+      "variant": "default",
+      "anchor": "",
+      "x": 26,
+      "y": 880,
+      "width": 343,
+      "height": 180,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "battery",
+      "variant": "default",
+      "anchor": "",
+      "x": 400,
+      "y": 926.5,
+      "width": 262.328125,
+      "height": 119,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "lyrics",
+      "variant": "default",
+      "anchor": "",
+      "x": 260,
+      "y": 290.5,
+      "width": 1400,
+      "height": 223,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 0,
+      "imagePath": ""
+    },
+    {
+      "type": "visualizer",
+      "variant": "bars",
+      "anchor": "",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 548,
+      "stretchWidth": false,
+      "stretchHeight": false,
+      "opacity": 1,
+      "rotation": 180,
+      "imagePath": ""
+    }
+  ],
+  "isCustom": true,
+  "category": "user"
+}

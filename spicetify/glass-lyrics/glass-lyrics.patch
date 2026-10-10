@@ -1,0 +1,1071 @@
+diff --git a/project/config.ts b/project/config.ts
+index 2ed0089..fedbcf9 100644
+--- a/project/config.ts
++++ b/project/config.ts
+@@ -1,2 +1,2 @@
+-export const ProjectName = "spicy-lyrics";
++export const ProjectName = "glass-lyrics";
+ export const ProjectVersion = "6.3.142";
+\ No newline at end of file
+diff --git a/src/app.tsx b/src/app.tsx
+index 783dbee..270055d 100644
+--- a/src/app.tsx
++++ b/src/app.tsx
+@@ -295,7 +295,7 @@ async function main() {
+       {
+         Registered: false,
+         Button: new SpotifyPlayer.Playbar.Button(
+-          "Spicy Lyrics",
++          "Glass Lyrics",
+           Icons.LyricsPage,
+           (self) => {
+             if (!self.active) {
+@@ -855,7 +855,7 @@ async function main() {
+     }
+ 
+     if (button) {
+-      button.Button.tippy.setContent("Spicy Lyrics");
++      button.Button.tippy.setContent("Glass Lyrics");
+     }
+ 
+     /*
+@@ -864,7 +864,7 @@ async function main() {
+     let wasPageViewTippyShown = false;
+     button.Button.tippy.setProps({
+       ...Spicetify.TippyProps,
+-      content: `Spicy Lyrics`,
++      content: `Glass Lyrics`,
+       allowHTML: true,
+       onShow(instance: any) {
+         // Spotify's Code
+@@ -895,7 +895,7 @@ async function main() {
+             TippyElementContent.style.borderRadius = "";
+ 
+             TippyElementContent.innerHTML = ""
+-            instance.setContent("Spicy Lyrics");
++            instance.setContent("Glass Lyrics");
+ 
+             return;
+           };
+@@ -1096,7 +1096,9 @@ async function main() {
+           setTimeout(CheckForUpdates_Intervaled, jitter(120 * 1000, 0.2));
+         }
+       };
+-      setTimeout(async () => await CheckForUpdates_Intervaled(), 1000);
++      // Glass Lyrics fork: upstream update prompts would reload into Spicy Lyrics' CDN build.
++      const upstreamUpdateChecks = false;
++      if (upstreamUpdateChecks) setTimeout(async () => await CheckForUpdates_Intervaled(), 1000);
+     }
+   };
+ 
+diff --git a/src/components/Pages/PageView.ts b/src/components/Pages/PageView.ts
+index b7c70b8..79083f1 100644
+--- a/src/components/Pages/PageView.ts
++++ b/src/components/Pages/PageView.ts
+@@ -777,7 +777,7 @@ function AppendViewControls(ReAppend: boolean = false) {
+       try {
+         Tooltips.Settings = createTooltip(settingsButton, {
+           ...Spicetify.TippyProps,
+-          content: `Spicy Lyrics Settings`,
++          content: `Glass Lyrics Settings`,
+         });
+         settingsButton.addEventListener("click", () => {
+           openSettingsPanel();
+diff --git a/src/components/ReactComponents/SettingsPanel/index.tsx b/src/components/ReactComponents/SettingsPanel/index.tsx
+index fd8402a..5f2b094 100644
+--- a/src/components/ReactComponents/SettingsPanel/index.tsx
++++ b/src/components/ReactComponents/SettingsPanel/index.tsx
+@@ -10,8 +10,10 @@ import LyricsSection from "./LyricsSection.tsx";
+ import PlaybackSection from "./PlaybackSection.tsx";
+ import ScrollingSection from "./ScrollingSection.tsx";
+ import { FilterDropdown, SearchBar } from "./components.tsx";
++import GlassSection, { GLASS_SECTION_NAME } from "../../../custom/GlassSection.tsx";
+ 
+ const SECTIONS = [
++  GLASS_SECTION_NAME,
+   "Background",
+   "Lyrics Display",
+   "Playback",
+@@ -34,6 +36,7 @@ export default function SettingsPanel({ onOpenExperiments }: { onOpenExperiments
+         <FilterDropdown sections={SECTIONS} value={sectionFilter} onChange={setSectionFilter} />
+       </div>
+ 
++      <GlassSection query={query} sectionFilter={sectionFilter} />
+       <BackgroundSection query={query} sectionFilter={sectionFilter} />
+       <LyricsSection query={query} sectionFilter={sectionFilter} />
+       <PlaybackSection query={query} sectionFilter={sectionFilter} />
+diff --git a/src/components/Utils/NPVLyrics.ts b/src/components/Utils/NPVLyrics.ts
+index ca260c9..5d9f186 100644
+--- a/src/components/Utils/NPVLyrics.ts
++++ b/src/components/Utils/NPVLyrics.ts
+@@ -412,7 +412,7 @@ function renderCardShell(npv: HTMLElement): boolean {
+       // The card guard inside PageView.Open hands the pipeline over.
+       Session.Navigate({ pathname: "/SpicyLyrics" });
+     });
+-    setTooltip(expand, "Open Spicy Lyrics", "expand-tip");
++    setTooltip(expand, "Open Glass Lyrics", "expand-tip");
+   }
+ 
+   const maximize = cardEl.querySelector<HTMLElement>("#NPVCardMaximize");
+diff --git a/src/components/Utils/NowBar.ts b/src/components/Utils/NowBar.ts
+index 3831ba6..1349542 100644
+--- a/src/components/Utils/NowBar.ts
++++ b/src/components/Utils/NowBar.ts
+@@ -3,6 +3,7 @@ import { GetCurrentLyricsContainerInstance } from "../../utils/Lyrics/Applyer/Cr
+ import { SongProgressBar } from "./../../utils/Lyrics/SongProgressBar.ts";
+ import { QueueForceScroll, ResetLastLine } from "../../utils/Scrolling/ScrollToActiveLine.ts";
+ import { $showVolumeSlider, $timelineOutsideMediaContent } from "../../utils/stores.ts";
++import { onNowBarUpdate } from "../../custom/index.ts";
+ import { onExperimentChange } from "../../utils/experiments.ts";
+ import { $isNowBarOpen, $nowBarSide } from "../../utils/uiState.ts";
+ import Global from "../Global/Global.ts";
+@@ -1334,6 +1335,7 @@ function UpdateNowBar(force = false) {
+   //const SongName = NowBar.querySelector(".Header .Metadata .SongName");
+ 
+   if (!$isNowBarOpen.get() && !force) return;
++  onNowBarUpdate(NowBar);
+ 
+   const coverArt = SpotifyPlayer.GetCover("xlarge");
+ 
+diff --git a/src/custom/GlassSection.tsx b/src/custom/GlassSection.tsx
+new file mode 100644
+index 0000000..f1685e1
+--- /dev/null
++++ b/src/custom/GlassSection.tsx
+@@ -0,0 +1,163 @@
++import { useStore } from "@nanostores/react";
++import React, { useState } from "react";
++import {
++  matches,
++  Row,
++  SectionTitle,
++  Slider,
++  Toggle,
++} from "../components/ReactComponents/SettingsPanel/components.tsx";
++import { getCrossfade } from "./crossfade.ts";
++import { $mixTimesCount, clearMixTimes, exportMixTimes, importMixTimes } from "./mixTimes.ts";
++import {
++  $glassEnabled,
++  $glassGlow,
++  $glassStroke,
++  $glassUnsungAlpha,
++  $mixEnabled,
++  $mixLearnKey,
++  $mixManualSeconds,
++  DEFAULTS,
++} from "./settings.ts";
++
++export const GLASS_SECTION_NAME = "Glass Lyrics";
++
++interface Props {
++  query: string;
++  sectionFilter: string;
++}
++
++const ROWS = {
++  glass: ["Glass lyrics", "Glassmorphism on the text: glass outline, translucent unsung words and a glow on sung ones."],
++  glassStroke: ["Glass outline", "Thickness of the letter outline."],
++  glassAlpha: ["Unsung transparency", "Fill opacity of the words that haven't been sung yet."],
++  glassGlow: ["Glow", "Glow radius on sung words."],
++  mix: ["Crossfade transition", "Cover animation when Spotify mixes one song into the next."],
++  mixKey: ["Learn key", "Saves the current moment as the mix start point for this song in this playlist."],
++  mixManual: ["Manual crossfade", "Mix length if Spotify doesn't expose it. 0 = use Spotify's."],
++  mixData: ["Saved mix points", "Export, import or delete the learned mix points."],
++} as const;
++
++export default function GlassSection({ query, sectionFilter }: Props) {
++  const glassEnabled = useStore($glassEnabled);
++  const glassStroke = useStore($glassStroke);
++  const glassAlpha = useStore($glassUnsungAlpha);
++  const glassGlow = useStore($glassGlow);
++  const mixEnabled = useStore($mixEnabled);
++  const mixKey = useStore($mixLearnKey);
++  const mixManual = useStore($mixManualSeconds);
++  const mixCount = useStore($mixTimesCount);
++  const [json, setJson] = useState("");
++  const [status, setStatus] = useState("");
++
++  if (sectionFilter !== "All" && sectionFilter !== GLASS_SECTION_NAME) return null;
++  const show = Object.fromEntries(
++    Object.entries(ROWS).map(([k, [label, desc]]) => [k, matches(query, label, desc)])
++  ) as Record<keyof typeof ROWS, boolean>;
++  if (!Object.values(show).some(Boolean)) return null;
++
++  const cf = getCrossfade();
++  const cfLabel =
++    cf.source === "none"
++      ? "Spotify doesn't expose the crossfade: use the manual value."
++      : `Now: ${cf.active ? "on" : "off"}${cf.seconds ? ` · ${cf.seconds}s` : ""} (${cf.source === "manual" ? "manual" : "Spotify"})`;
++
++  const doExport = async () => {
++    const data = exportMixTimes();
++    setJson(data);
++    try {
++      await (Spicetify.Platform?.ClipboardAPI?.copy?.(data) ?? navigator.clipboard.writeText(data));
++      setStatus("Copied to the clipboard.");
++    } catch {
++      setStatus("Copy it from the box below.");
++    }
++  };
++  const doImport = () => {
++    try {
++      const n = importMixTimes(json);
++      setStatus(`Imported ${n} mix points.`);
++    } catch (err) {
++      setStatus(`Invalid JSON: ${(err as Error).message}`);
++    }
++  };
++  const doClear = () => {
++    clearMixTimes();
++    setStatus("Mix points deleted.");
++  };
++
++  return (
++    <>
++      <SectionTitle>{GLASS_SECTION_NAME}</SectionTitle>
++
++      {show.glass && (
++        <Row label={ROWS.glass[0]} description={ROWS.glass[1]}>
++          <Toggle checked={glassEnabled} onChange={(v) => $glassEnabled.set(v)} />
++        </Row>
++      )}
++      {show.glassStroke && (
++        <Row label={ROWS.glassStroke[0]} description={ROWS.glassStroke[1]} disabled={!glassEnabled} stacked>
++          <Slider value={glassStroke} min={0} max={2} step={0.1} defaultValue={DEFAULTS.glassStroke} unit="px"
++            onChange={(v) => $glassStroke.set(v)} disabled={!glassEnabled} />
++        </Row>
++      )}
++      {show.glassAlpha && (
++        <Row label={ROWS.glassAlpha[0]} description={ROWS.glassAlpha[1]} disabled={!glassEnabled} stacked>
++          <Slider value={glassAlpha} min={0} max={0.6} step={0.01} defaultValue={DEFAULTS.glassUnsungAlpha}
++            onChange={(v) => $glassUnsungAlpha.set(v)} disabled={!glassEnabled} />
++        </Row>
++      )}
++      {show.glassGlow && (
++        <Row label={ROWS.glassGlow[0]} description={ROWS.glassGlow[1]} disabled={!glassEnabled} stacked>
++          <Slider value={glassGlow} min={0} max={40} step={1} defaultValue={DEFAULTS.glassGlow} unit="px"
++            onChange={(v) => $glassGlow.set(v)} disabled={!glassEnabled} />
++        </Row>
++      )}
++
++      {show.mix && (
++        <Row label={ROWS.mix[0]} description={`${ROWS.mix[1]} ${cfLabel}`}>
++          <Toggle checked={mixEnabled} onChange={(v) => $mixEnabled.set(v)} />
++        </Row>
++      )}
++      {show.mixKey && (
++        <Row label={ROWS.mixKey[0]} description={ROWS.mixKey[1]} disabled={!mixEnabled}>
++          <input
++            className="sl-sp-select"
++            style={{ width: "4em", textAlign: "center", textTransform: "uppercase" }}
++            value={mixKey}
++            maxLength={1}
++            disabled={!mixEnabled}
++            onChange={(e) => {
++              const k = e.currentTarget.value.trim().toLowerCase();
++              if (k) $mixLearnKey.set(k);
++            }}
++          />
++        </Row>
++      )}
++      {show.mixManual && (
++        <Row label={ROWS.mixManual[0]} description={ROWS.mixManual[1]} disabled={!mixEnabled} stacked>
++          <Slider value={mixManual} min={0} max={12} step={1} defaultValue={DEFAULTS.mixManualSeconds} unit="s"
++            onChange={(v) => $mixManualSeconds.set(v)} disabled={!mixEnabled} />
++        </Row>
++      )}
++      {show.mixData && (
++        <Row label={ROWS.mixData[0]} description={`${ROWS.mixData[1]} Saved: ${mixCount}.`} stacked>
++          <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
++            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
++              <button type="button" className="sl-sp-btn" onClick={doExport}>Export</button>
++              <button type="button" className="sl-sp-btn" onClick={doImport} disabled={!json.trim()}>Import</button>
++              <button type="button" className="sl-sp-btn" onClick={doClear} disabled={mixCount === 0}>Delete all</button>
++            </div>
++            <textarea
++              className="sl-sp-select"
++              style={{ width: "100%", minHeight: 80, fontFamily: "monospace", resize: "vertical" }}
++              placeholder='Paste the JSON to import here: {"spotify:playlist:…|spotify:track:…": 192.4}'
++              value={json}
++              onChange={(e) => setJson(e.currentTarget.value)}
++            />
++            {status && <span className="sl-sp-description">{status}</span>}
++          </div>
++        </Row>
++      )}
++    </>
++  );
++}
+diff --git a/src/custom/crossfade.ts b/src/custom/crossfade.ts
+new file mode 100644
+index 0000000..b574641
+--- /dev/null
++++ b/src/custom/crossfade.ts
+@@ -0,0 +1,60 @@
++// Reads Spotify's own crossfade / automix settings.
++//
++// Source (Spotify 1.2.96 xpui bundle, not a documented API):
++//   Spicetify.Platform.SettingsAPI.playback.audioCrossfade    -> pref "audio.crossfade_v2"      (bool)
++//   Spicetify.Platform.SettingsAPI.playback.audioCrossfadeMs  -> pref "audio.crossfade.time_v2" (ms)
++//   Spicetify.Platform.SettingsAPI.playback.autoMix           -> pref "audio.automix"           (bool)
++// Each is a PrefValue with async getValue() and subValue(cb). If any of it is
++// missing, the manual "crossfade seconds" setting takes over.
++import { $mixManualSeconds } from "./settings.ts";
++
++type PrefValue<T> = {
++  getValue: () => Promise<T>;
++  subValue?: (cb: (v: T) => void) => unknown;
++};
++
++const state = {
++  apiAvailable: false,
++  crossfade: false,
++  crossfadeMs: 0,
++  automix: false,
++};
++
++function watch<T>(pref: PrefValue<T> | undefined, apply: (v: T) => void) {
++  if (!pref?.getValue) return false;
++  pref.getValue().then(apply, () => {});
++  try {
++    pref.subValue?.(apply);
++  } catch {
++    /* no live updates; the value read at startup still stands */
++  }
++  return true;
++}
++
++export function initCrossfade() {
++  const playback = Spicetify.Platform?.SettingsAPI?.playback;
++  const a = watch<boolean>(playback?.audioCrossfade, (v) => (state.crossfade = !!v));
++  const b = watch<number | bigint>(playback?.audioCrossfadeMs, (v) => (state.crossfadeMs = Number(v) || 0));
++  watch<boolean>(playback?.autoMix, (v) => (state.automix = !!v));
++  state.apiAvailable = a && b;
++}
++
++export type CrossfadeInfo = {
++  /** A crossfade/automix transition is expected between tracks. */
++  active: boolean;
++  /** Fixed crossfade length if known (automix decides its own length). */
++  seconds: number | null;
++  source: "manual" | "spotify" | "none";
++};
++
++export function getCrossfade(): CrossfadeInfo {
++  const manual = $mixManualSeconds.get();
++  if (manual > 0) return { active: true, seconds: manual, source: "manual" };
++  if (!state.apiAvailable) return { active: false, seconds: null, source: "none" };
++  const seconds = state.crossfade && state.crossfadeMs > 0 ? state.crossfadeMs / 1000 : null;
++  return { active: state.crossfade || state.automix, seconds, source: "spotify" };
++}
++
++export function getCrossfadeDebug() {
++  return { ...state };
++}
+diff --git a/src/custom/css/glass.css b/src/custom/css/glass.css
+new file mode 100644
+index 0000000..bf8091f
+--- /dev/null
++++ b/src/custom/css/glass.css
+@@ -0,0 +1,48 @@
++/* Glass Lyrics — "letras de vidrio".
++   Only paint is changed: colors, stroke and shadows. No property here affects
++   layout (text-stroke draws on top of the glyph, shadows don't take space), and
++   nothing touches transform/scale/opacity, which the animator owns.
++
++   Spicy pins `--gradient-alpha-end` with !important on `.line`, so these rules
++   need !important plus higher specificity (the extra `body.GL_Glass`).
++   Values come from the settings panel through --GL-* on <body>. */
++
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line .word,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line .letter {
++  --gradient-alpha-end: var(--GL-UnsungAlpha, 0.18) !important;
++  -webkit-text-stroke: var(--GL-Stroke, 0.6px) rgba(255, 255, 255, 0.5);
++}
++
++/* Static lyrics have no "unsung" part: Spicy draws them fully lit. Keep that. */
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.static {
++  --gradient-alpha-end: 1 !important;
++}
++
++/* Sung lines: Spicy draws the glyph itself as a zero-offset text-shadow (the
++   fill is transparent and they carry no background-image), so the glow is
++   appended as a second shadow instead of replacing the first. */
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Sung,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Sung .word,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Sung .letter {
++  text-shadow:
++    0 0 var(--BlurAmount, 0)
++      rgba(var(--gradient-color), var(--gradient-color), var(--gradient-color), var(--gradient-alpha)),
++    var(--ActiveTextGlowDef);
++}
++
++/* Active line: the animator drives --text-shadow-opacity per word/letter (0%
++   before it's sung, rising while it's sung, held after). The glass glow rides
++   on that value, so it only lights what has actually been sung. */
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Active,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Active .word,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Active .letter,
++body.GL_Glass #SpicyLyricsPage.SpicyRenderer .LyricsContainer .LyricsContent .line.Active .letterGroup {
++  text-shadow:
++    0 0 var(--text-shadow-blur-radius) rgba(255, 255, 255, var(--text-shadow-opacity)),
++    0 0 var(--GL-Glow, 19px) rgba(255, 255, 255, min(55%, calc(var(--text-shadow-opacity) * 1.6)));
++}
++
++body.GL_Glass #SpicyLyricsPage .LyricsContainer .LyricsContent {
++  --ActiveTextGlowDef: rgba(255, 255, 255, 0.55) 0 0 var(--GL-Glow, 19px);
++}
+diff --git a/src/custom/css/transition.css b/src/custom/css/transition.css
+new file mode 100644
+index 0000000..79647a8
+--- /dev/null
++++ b/src/custom/css/transition.css
+@@ -0,0 +1,39 @@
++/* Glass Lyrics — crossfade cover transition. Motion itself is WAAPI (transition.ts);
++   this only lays out the stage and hides what it stands in for. */
++
++#SpicyLyricsPage .MediaBox > .GL-CoverStage {
++  position: absolute;
++  inset: 0;
++  z-index: 2;
++  pointer-events: none;
++}
++
++#SpicyLyricsPage .GL-CoverStage .GL-StageCover {
++  position: absolute;
++  inset: 0;
++  border-radius: 2cqh;
++  background-size: cover;
++  background-repeat: no-repeat;
++  background-position: center;
++  box-shadow: 0 9px 20px 0 rgba(0, 0, 0, 0.271);
++  will-change: transform, opacity;
++}
++
++#SpicyLyricsPage .GL-CoverStage .GL-Cur {
++  z-index: 1;
++}
++
++#SpicyLyricsPage .GL-CoverStage .GL-Next {
++  z-index: 0;
++}
++
++/* The stage shows the same image in the same box, so hiding Spicy's cover is
++   invisible; it also hides Spicy's own swap animation running underneath. */
++#SpicyLyricsPage .ContentBox .NowBar .Header .MediaBox.GL-Mixing > .MediaImageContainer {
++  opacity: 0 !important;
++}
++
++#SpicyLyricsPage .ContentBox .NowBar .Header .Metadata.GL-MetaHidden {
++  opacity: 0 !important;
++  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
++}
+diff --git a/src/custom/index.ts b/src/custom/index.ts
+new file mode 100644
+index 0000000..f7df391
+--- /dev/null
++++ b/src/custom/index.ts
+@@ -0,0 +1,76 @@
++// Glass Lyrics fork — entry point for everything custom.
++// Upstream files only carry two hooks: `onNowBarUpdate` (NowBar.ts) and the
++// <GlassSection> row in the settings panel. Everything else lives here.
++import "./css/glass.css";
++import "./css/transition.css";
++
++import { initCrossfade } from "./crossfade.ts";
++import { currentContextUri, setMixTime } from "./mixTimes.ts";
++import {
++  $glassEnabled,
++  $glassGlow,
++  $glassStroke,
++  $glassUnsungAlpha,
++  $mixEnabled,
++  $mixLearnKey,
++} from "./settings.ts";
++import { initTransition, mixStartTaught } from "./transition.ts";
++
++function applyGlass() {
++  const body = document.body;
++  body.classList.toggle("GL_Glass", $glassEnabled.get());
++  body.style.setProperty("--GL-Stroke", `${$glassStroke.get()}px`);
++  body.style.setProperty("--GL-UnsungAlpha", `${$glassUnsungAlpha.get()}`);
++  body.style.setProperty("--GL-Glow", `${$glassGlow.get()}px`);
++}
++
++const fmt = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, "0")}`;
++
++function onLearnKey(e: KeyboardEvent) {
++  if (!$mixEnabled.get() || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
++  const key = $mixLearnKey.get();
++  if (!key || e.key.toLowerCase() !== key.toLowerCase()) return;
++  const t = e.target as HTMLElement | null;
++  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
++
++  const track = Spicetify.Player?.data?.item?.uri;
++  if (!track) return;
++  const seconds = Spicetify.Player.getProgress() / 1000;
++  const context = currentContextUri();
++  setMixTime(context, track, seconds);
++  const where = context === "none" ? "no playlist" : "in this playlist";
++  Spicetify.showNotification(`Glass Lyrics: mix point saved at ${fmt(seconds)} (${where})`);
++  mixStartTaught();
++}
++
++let initialized = false;
++function init() {
++  if (initialized) return;
++  initialized = true;
++  initCrossfade();
++  initTransition();
++  applyGlass();
++  for (const store of [$glassEnabled, $glassStroke, $glassUnsungAlpha, $glassGlow]) store.listen(applyGlass);
++  window.addEventListener("keydown", onLearnKey);
++}
++
++/** Hook: Spicy calls this whenever it (re)renders the NowBar's cover/metadata. */
++export function onNowBarUpdate(_nowBar: Element) {
++  try {
++    init();
++  } catch (err) {
++    console.error("[Glass Lyrics] NowBar hook failed", err);
++  }
++}
++
++// Glass styling and the learn key don't depend on the NowBar being open.
++const spicetifyReady = () =>
++  typeof Spicetify !== "undefined" && !!Spicetify.Player?.addEventListener && !!Spicetify.Platform;
++if (spicetifyReady()) init();
++else {
++  const wait = setInterval(() => {
++    if (!spicetifyReady()) return;
++    clearInterval(wait);
++    init();
++  }, 300);
++}
+diff --git a/src/custom/mixTimes.ts b/src/custom/mixTimes.ts
+new file mode 100644
+index 0000000..d58aa66
+--- /dev/null
++++ b/src/custom/mixTimes.ts
+@@ -0,0 +1,69 @@
++// Learned mix start times, keyed by playlist (context) + track: the automix
++// transition for a given track inside a given playlist doesn't change.
++import { atom } from "nanostores";
++import { GL_PREFIX } from "./settings.ts";
++
++const STORAGE_KEY = `${GL_PREFIX}mixTimes`;
++
++type MixTimes = Record<string, number>; // "contextUri|trackUri" -> seconds into the track
++
++function load(): MixTimes {
++  try {
++    const parsed = JSON.parse(Spicetify.LocalStorage.get(STORAGE_KEY) ?? "{}");
++    return parsed && typeof parsed === "object" ? parsed : {};
++  } catch {
++    return {};
++  }
++}
++
++let times: MixTimes = load();
++/** Number of saved times, for the settings panel. */
++export const $mixTimesCount = atom(Object.keys(times).length);
++
++function save() {
++  Spicetify.LocalStorage.set(STORAGE_KEY, JSON.stringify(times));
++  $mixTimesCount.set(Object.keys(times).length);
++}
++
++export function currentContextUri(): string {
++  const data = Spicetify.Player?.data as any;
++  return data?.context?.uri ?? data?.context_uri ?? "none";
++}
++
++const keyFor = (contextUri: string, trackUri: string) => `${contextUri}|${trackUri}`;
++
++export function getMixTime(contextUri: string, trackUri: string): number | null {
++  const v = times[keyFor(contextUri, trackUri)];
++  return typeof v === "number" && Number.isFinite(v) ? v : null;
++}
++
++export function setMixTime(contextUri: string, trackUri: string, seconds: number) {
++  times[keyFor(contextUri, trackUri)] = Math.round(seconds * 100) / 100;
++  save();
++}
++
++export function clearMixTimes() {
++  times = {};
++  save();
++}
++
++export function exportMixTimes(): string {
++  return JSON.stringify(times, null, 2);
++}
++
++/** Merges valid entries from `json`; returns how many were imported. */
++export function importMixTimes(json: string): number {
++  const parsed = JSON.parse(json);
++  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
++    throw new Error("Expected an object of \"context|track\": seconds");
++  }
++  let n = 0;
++  for (const [k, v] of Object.entries(parsed)) {
++    if (k.includes("|") && typeof v === "number" && Number.isFinite(v) && v >= 0) {
++      times[k] = v;
++      n++;
++    }
++  }
++  save();
++  return n;
++}
+diff --git a/src/custom/settings.ts b/src/custom/settings.ts
+new file mode 100644
+index 0000000..133767e
+--- /dev/null
++++ b/src/custom/settings.ts
+@@ -0,0 +1,48 @@
++// Glass Lyrics settings. Stored under their own "GL:" keys so they never touch
++// Spicy Lyrics' "SL:settings" blob (clean upstream merges, and either extension
++// can be swapped back in without leftovers).
++import { atom, type WritableAtom } from "nanostores";
++
++export const GL_PREFIX = "GL:";
++
++function read<T>(key: string, fallback: T): T {
++  try {
++    const raw = Spicetify.LocalStorage.get(GL_PREFIX + key);
++    if (raw === null || raw === undefined) return fallback;
++    const parsed = JSON.parse(raw);
++    return typeof parsed === typeof fallback ? parsed : fallback;
++  } catch {
++    return fallback;
++  }
++}
++
++function glAtom<T>(key: string, fallback: T): WritableAtom<T> {
++  const store = atom<T>(read(key, fallback));
++  store.listen((v) => {
++    try {
++      Spicetify.LocalStorage.set(GL_PREFIX + key, JSON.stringify(v));
++    } catch {
++      /* storage full or unavailable: the setting just won't persist */
++    }
++  });
++  return store;
++}
++
++export const DEFAULTS = {
++  glassEnabled: true,
++  glassStroke: 0.6, // px
++  glassUnsungAlpha: 0.18,
++  glassGlow: 19, // px
++  mixEnabled: true,
++  mixLearnKey: "m",
++  mixManualSeconds: 0, // 0 = read the crossfade length from Spotify
++};
++
++export const $glassEnabled = glAtom("glassEnabled", DEFAULTS.glassEnabled);
++export const $glassStroke = glAtom("glassStroke", DEFAULTS.glassStroke);
++export const $glassUnsungAlpha = glAtom("glassUnsungAlpha", DEFAULTS.glassUnsungAlpha);
++export const $glassGlow = glAtom("glassGlow", DEFAULTS.glassGlow);
++
++export const $mixEnabled = glAtom("mixEnabled", DEFAULTS.mixEnabled);
++export const $mixLearnKey = glAtom("mixLearnKey", DEFAULTS.mixLearnKey);
++export const $mixManualSeconds = glAtom("mixManualSeconds", DEFAULTS.mixManualSeconds);
+diff --git a/src/custom/transition.ts b/src/custom/transition.ts
+new file mode 100644
+index 0000000..ec93314
+--- /dev/null
++++ b/src/custom/transition.ts
+@@ -0,0 +1,378 @@
++// Feature 1 — cover transition during a crossfade / automix.
++//
++//   begin:  title fades → next cover rises from behind the
++//           current one; both shrink and stack, the current one dims.
++//   finish: next cover drops into place full size, the old one leaves downward,
++//           title comes back.
++//
++// When it begins, in priority order:
++//   1. a learned start time for this track in this playlist (mixTimes.ts),
++//   2. track end minus Spotify's crossfade length,
++//   3. fallback: the whole sequence runs on `songchange`.
++// When it finishes: on `songchange`, delayed by however much of the previous
++// track was still left when the event fired (if Spotify switches tracks at the
++// start of the fade, that remainder *is* the rest of the fade).
++import { getCrossfade } from "./crossfade.ts";
++import { currentContextUri, getMixTime } from "./mixTimes.ts";
++import { $mixEnabled } from "./settings.ts";
++
++const EASE = "cubic-bezier(.22,1,.36,1)";
++const STACK_SCALE = 0.72;
++const CUR_DIM = 0.55;
++const TICK_MS = 250;
++const SEEK_BACK_TOLERANCE = 1.5; // s before the start point that cancels a running mix
++const UNKNOWN_MIX_LENGTH = 12; // s, for automix without a learned time
++
++type Phase = "idle" | "mixing" | "finishing" | "cancelling";
++
++const s = {
++  phase: "idle" as Phase,
++  token: 0,
++  trackUri: null as string | null,
++  coverUrl: null as string | null, // current track's cover, tracked on every tick
++  startAt: null as number | null, // where the running mix began (s into the track)
++  beganAt: 0, // performance.now() when begin() ran
++  nextUrl: null as string | null,
++  nextPreload: null as Promise<void> | null,
++  // last known position, for measuring how early `songchange` fires
++  lastProgress: 0,
++  lastDuration: 0,
++  lastTrack: null as string | null,
++  stage: null as HTMLDivElement | null,
++  cur: null as HTMLDivElement | null,
++  next: null as HTMLDivElement | null,
++  timers: [] as number[],
++};
++
++const BEGIN_TOTAL_MS = 450 + 1000 + 600;
++
++const log = (...a: unknown[]) => console.debug("[Glass Lyrics] [Mix]", ...a);
++
++function toHttps(url: string | undefined | null): string | null {
++  if (!url) return null;
++  if (url.startsWith("spotify:image:")) return `https://i.scdn.co/image/${url.slice(14)}`;
++  return url.startsWith("http") ? url : null;
++}
++
++function pickImage(images: any[] | undefined): string | null {
++  if (!Array.isArray(images) || !images.length) return null;
++  const by = (label: string) => images.find((i) => i?.label === label)?.url;
++  return toHttps(by("xlarge") ?? by("large") ?? images[0]?.url);
++}
++
++function currentCover(): string | null {
++  const item = Spicetify.Player?.data?.item as any;
++  return pickImage(item?.images ?? item?.show?.images);
++}
++
++function nextCover(): string | null {
++  const data = Spicetify.Player?.data as any;
++  const fromPlayer = pickImage(data?.nextItems?.[0]?.images);
++  if (fromPlayer) return fromPlayer;
++  const meta = (Spicetify.Queue as any)?.nextTracks?.[0]?.contextTrack?.metadata;
++  return toHttps(meta?.image_xlarge_url ?? meta?.image_large_url ?? meta?.image_url);
++}
++
++function preload(url: string): Promise<void> {
++  return new Promise((resolve) => {
++    const img = new Image();
++    img.onload = img.onerror = () => resolve();
++    img.src = url;
++  });
++}
++
++const withTimeout = (p: Promise<void> | null, ms: number) =>
++  Promise.race([p ?? Promise.resolve(), new Promise<void>((r) => setTimeout(r, ms))]);
++
++function later(fn: () => void, ms: number) {
++  s.timers.push(window.setTimeout(fn, ms));
++}
++
++function clearTimers() {
++  s.timers.forEach(clearTimeout);
++  s.timers = [];
++}
++
++function nowBarParts() {
++  const nowBar = document.querySelector<HTMLElement>("#SpicyLyricsPage .ContentBox .NowBar");
++  const mediaBox = nowBar?.querySelector<HTMLElement>(".Header .MediaBox") ?? null;
++  const metadata = nowBar?.querySelector<HTMLElement>(".Header .Metadata") ?? null;
++  const container = mediaBox?.querySelector<HTMLElement>(".MediaImageContainer") ?? null;
++  const page = nowBar?.closest<HTMLElement>("#SpicyLyricsPage") ?? null;
++  const visible =
++    !!nowBar &&
++    nowBar.classList.contains("Active") &&
++    !page?.classList.contains("CardMode") &&
++    nowBar.getBoundingClientRect().width > 0;
++  return { nowBar, mediaBox, metadata, container, visible };
++}
++
++function anim(el: Element | null, frames: Keyframe[], ms: number, delay = 0) {
++  return el?.animate(frames, { duration: ms, delay, easing: EASE, fill: "forwards" });
++}
++
++function buildStage(mediaBox: HTMLElement, curUrl: string, nextUrl: string) {
++  s.stage?.remove();
++  const stage = document.createElement("div");
++  stage.className = "GL-CoverStage";
++  stage.innerHTML = `<div class="GL-StageCover GL-Next"></div><div class="GL-StageCover GL-Cur"></div>`;
++  s.next = stage.querySelector(".GL-Next");
++  s.cur = stage.querySelector(".GL-Cur");
++  s.cur!.style.backgroundImage = `url("${curUrl}")`;
++  s.next!.style.backgroundImage = `url("${nextUrl}")`;
++  s.next!.style.opacity = "0";
++  mediaBox.appendChild(stage);
++  s.stage = stage;
++}
++
++function teardown() {
++  clearTimers();
++  s.stage?.remove();
++  s.stage = s.cur = s.next = null;
++  const { mediaBox, metadata } = nowBarParts();
++  mediaBox?.classList.remove("GL-Mixing");
++  metadata?.classList.remove("GL-MetaHidden");
++  s.phase = "idle";
++  s.startAt = null;
++}
++
++/** Phases 1–4. `speed` < 1 compresses the timings (used by the songchange fallback). */
++async function begin(curUrl: string, nextUrl: string, speed = 1, immediateStage = false) {
++  const { mediaBox, metadata, container, visible } = nowBarParts();
++  if (!visible || !mediaBox || !container) return false;
++  const token = ++s.token;
++  s.phase = "mixing";
++  s.beganAt = performance.now();
++  const t = (ms: number) => ms * speed;
++  log("begin", { curUrl, nextUrl, speed });
++
++  // 1-2. title fades
++  later(() => metadata?.classList.add("GL-MetaHidden"), t(150));
++
++  // On songchange Spicy starts its own cover swap right away; cover it at once.
++  if (immediateStage) {
++    buildStage(mediaBox, curUrl, nextUrl);
++    mediaBox.classList.add("GL-Mixing");
++  }
++
++  await Promise.all([
++    new Promise((r) => setTimeout(r, t(450))),
++    withTimeout(nextUrl === s.nextUrl ? s.nextPreload : preload(nextUrl), t(1200)),
++  ]);
++  if (token !== s.token || !mediaBox.isConnected) return false;
++
++  // 3. stage the two covers over the real one (same image, same box → no jump)
++  if (!immediateStage) {
++    buildStage(mediaBox, curUrl, nextUrl);
++    mediaBox.classList.add("GL-Mixing");
++  }
++  anim(s.cur, [
++    { transform: "translateY(0) scale(1)" },
++    { transform: `translateY(26%) scale(${STACK_SCALE})` },
++  ], t(1000));
++  anim(s.next, [
++    { transform: "translateY(6%) scale(0.62)", opacity: 0 },
++    { transform: "translateY(-52%) scale(0.72)", opacity: 1 },
++  ], t(1000));
++  // 4. the outgoing cover dims while the mix plays
++  anim(s.cur, [{ opacity: 1 }, { opacity: CUR_DIM }], t(600), t(900));
++  return true;
++}
++
++/** Phases 5–6. */
++function finish() {
++  if (s.phase !== "mixing" || !s.stage?.isConnected) {
++    teardown();
++    return;
++  }
++  const token = s.token;
++  s.phase = "finishing";
++  log("finish");
++
++  // The track that actually came on may not be the one we preloaded (shuffle, queue edits).
++  const actual = currentCover();
++  if (actual && s.next && actual !== s.nextUrl) s.next.style.backgroundImage = `url("${actual}")`;
++
++  // 5. next drops to the centre at full size, the old one leaves downward
++  if (s.next) s.next.style.zIndex = "2";
++  anim(s.next, [{ transform: "translateY(0) scale(1)", opacity: 1 }], 850);
++  anim(s.cur, [{ transform: `translateY(72%) scale(${STACK_SCALE})`, opacity: 0 }], 750);
++
++  // 6. title comes back
++  later(() => {
++    if (token !== s.token) return;
++    nowBarParts().metadata?.classList.remove("GL-MetaHidden");
++  }, 650);
++
++  // Hand back to Spicy's own cover once it shows the new image and its own
++  // crossfade has settled underneath us; then the stage can go.
++  const started = performance.now();
++  const handBack = () => {
++    if (token !== s.token) return;
++    const { container } = nowBarParts();
++    const want = Spicetify.Player?.data?.item?.images?.find((i: any) => i.label === "xlarge")?.url;
++    const toImage = container?.querySelector(".ti_ToImage");
++    const settled =
++      !!container &&
++      (!want || container.getAttribute("last-image") === want) &&
++      (!toImage || (toImage.classList.contains("MB_hidden") && !toImage.classList.contains("MB_anim_enter")));
++    if ((settled && performance.now() - started > 900) || performance.now() - started > 4000) {
++      teardown();
++      return;
++    }
++    later(handBack, 120);
++  };
++  later(handBack, 900);
++}
++
++/** Seeked back before the start point: undo phases 1–4. */
++function cancel() {
++  if (s.phase !== "mixing") return;
++  log("cancel");
++  s.phase = "cancelling";
++  const token = ++s.token;
++  clearTimers();
++  anim(s.next, [{ transform: "translateY(6%) scale(0.62)", opacity: 0 }], 600);
++  anim(s.cur, [{ transform: "translateY(0) scale(1)", opacity: 1 }], 700);
++  nowBarParts().metadata?.classList.remove("GL-MetaHidden");
++  later(() => token === s.token && teardown(), 720);
++}
++
++function startPoint(trackUri: string, durationS: number): { at: number | null; length: number } {
++  const learned = getMixTime(currentContextUri(), trackUri);
++  if (learned !== null && learned < durationS) return { at: learned, length: durationS - learned };
++  const cf = getCrossfade();
++  if (cf.seconds) return { at: Math.max(0, durationS - cf.seconds), length: cf.seconds };
++  return { at: null, length: UNKNOWN_MIX_LENGTH };
++}
++
++function onTrackStart() {
++  s.trackUri = Spicetify.Player?.data?.item?.uri ?? null;
++  s.coverUrl = currentCover();
++  s.nextUrl = nextCover();
++  s.nextPreload = s.nextUrl ? preload(s.nextUrl) : null;
++}
++
++function tick() {
++  const uri = Spicetify.Player?.data?.item?.uri ?? null;
++  if (uri !== s.trackUri) onTrackStart();
++  else {
++    // The queue can change mid-song; keep the preloaded "next" in sync.
++    const next = nextCover();
++    if (next && next !== s.nextUrl) {
++      s.nextUrl = next;
++      s.nextPreload = preload(next);
++    }
++  }
++
++  const cf = getCrossfade();
++  if (!$mixEnabled.get() || !cf.active) {
++    if (s.phase === "mixing") cancel();
++    return;
++  }
++  if (!uri || Spicetify.Player?.data?.isPaused) return;
++
++  const progress = Spicetify.Player.getProgress() / 1000;
++  const duration = Spicetify.Player.getDuration() / 1000;
++  if (!(duration > 0)) return;
++  const { at } = startPoint(uri, duration);
++
++  if (s.phase === "idle" && at !== null && progress >= at && progress < duration - 0.4) {
++    if (s.coverUrl && s.nextUrl && nowBarParts().visible) {
++      s.startAt = at;
++      void begin(s.coverUrl, s.nextUrl);
++    }
++  } else if (s.phase === "mixing" && s.startAt !== null && progress < s.startAt - SEEK_BACK_TOLERANCE) {
++    cancel();
++  }
++}
++
++/** Call right after the user teaches a new start point: start the mix now. */
++export function mixStartTaught() {
++  if (s.phase === "idle") tick();
++}
++
++function onSongChange() {
++  // How much of the previous track was left when Spotify switched tracks.
++  const lead = s.lastDuration > 0 ? Math.max(0, (s.lastDuration - s.lastProgress) / 1000) : NaN;
++  const prevTrack = s.lastTrack;
++  const prevDurationS = s.lastDuration / 1000;
++  const oldCover = s.coverUrl;
++  recordLead(lead);
++
++  const cf = getCrossfade();
++  const enabled = $mixEnabled.get() && cf.active;
++  const mixLength = prevTrack ? startPoint(prevTrack, prevDurationS).length : UNKNOWN_MIX_LENGTH;
++  const natural = Number.isFinite(lead) && lead <= mixLength + 1.5; // not a manual skip
++
++  onTrackStart();
++  s.lastProgress = 0;
++  s.lastDuration = Spicetify.Player.getDuration?.() ?? 0;
++  s.lastTrack = s.trackUri;
++
++  if (s.phase === "finishing" || s.phase === "cancelling") teardown();
++
++  if (s.phase === "mixing") {
++    if (!natural) return finish();
++    const sinceBegin = performance.now() - s.beganAt;
++    const wait = Math.max(lead * 1000 - 200, BEGIN_TOTAL_MS - sinceBegin, 0);
++    const token = s.token;
++    later(() => token === s.token && finish(), wait);
++    return;
++  }
++
++  // 3. fallback: nothing started before the switch — run the whole thing now.
++  if (enabled && natural && oldCover && s.coverUrl && oldCover !== s.coverUrl) {
++    const quick = lead < 2;
++    void begin(oldCover, s.coverUrl, quick ? 0.6 : 1, true).then((ok) => {
++      if (!ok) return;
++      const token = s.token;
++      const wait = Math.max(lead * 1000 - 200, BEGIN_TOTAL_MS * (quick ? 0.6 : 1));
++      later(() => token === s.token && finish(), wait);
++    });
++  }
++}
++
++// --- songchange timing measurement -----------------------------------------
++// Answers "does songchange fire at the start or the end of the fade?" with real
++// numbers: each entry is how many seconds of the previous track were left.
++const LEAD_KEY = "GL:songchangeLead";
++function recordLead(lead: number) {
++  if (!Number.isFinite(lead)) return;
++  const cf = getCrossfade();
++  log(`songchange with ${lead.toFixed(2)}s of the previous track left`, cf);
++  try {
++    const list = JSON.parse(Spicetify.LocalStorage.get(LEAD_KEY) ?? "[]");
++    list.push({ lead: Math.round(lead * 100) / 100, crossfade: cf.seconds, active: cf.active, at: Date.now() });
++    Spicetify.LocalStorage.set(LEAD_KEY, JSON.stringify(list.slice(-30)));
++  } catch {
++    /* measurement only */
++  }
++}
++
++export function isTransitionBusy() {
++  return s.phase !== "idle";
++}
++
++let initialized = false;
++export function initTransition() {
++  if (initialized) return;
++  initialized = true;
++  onTrackStart();
++  s.lastTrack = s.trackUri;
++  s.lastDuration = Spicetify.Player.getDuration?.() ?? 0;
++
++  Spicetify.Player.addEventListener("onprogress", (e: any) => {
++    // Ignore progress from a track whose songchange hasn't been handled yet.
++    if ((Spicetify.Player?.data?.item?.uri ?? null) !== s.lastTrack) return;
++    if (typeof e?.data === "number") s.lastProgress = e.data;
++    const d = Spicetify.Player.getDuration?.();
++    if (d) s.lastDuration = d;
++  });
++  Spicetify.Player.addEventListener("songchange", onSongChange);
++  setInterval(tick, TICK_MS);
++
++  $mixEnabled.listen((on) => {
++    if (!on && s.phase !== "idle") teardown();
++  });
++}
+diff --git a/src/utils/settings.ts b/src/utils/settings.ts
+index 87dd1f0..7d4e32e 100644
+--- a/src/utils/settings.ts
++++ b/src/utils/settings.ts
+@@ -68,7 +68,7 @@ function openExperimentsPanel() {
+ }
+ 
+ export function registerSettingsMenu(icon: string) {
+-  const name = "Spicy Lyrics Settings";
++  const name = "Glass Lyrics Settings";
+   const itemId = "SpicyLyricsSettingsMenuItem";
+   const profileSelector = '[data-testid="user-widget-link"]';
+   const menuSelector = '#context-menu ul[role="menu"]';

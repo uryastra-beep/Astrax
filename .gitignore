@@ -1,0 +1,13 @@
+# local secrets / machine-specific values (Astrax itself needs no API keys)
+.env
+.env.*
+!.env.example
+
+# editor / backup leftovers
+*.bak
+*.bak.*
+*.backup-*
+_pre-*
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,77 @@
+{
+  "_doc": "Per-song special modes. match = regex (lowercase) on artist/title/album; all must match. colors = [primary, secondary] hex without #; without 'colors' they're taken from the album art. fixed_theme = use themes/<name>.json as is (don't regenerate). The first match wins. accents = 4 named colors (orange/purple/red/green) for a multicolor theme; colors = border/widgets. gradient: true = TV Girl's fixed shader; list of hex = left-to-right gradient with those colors (the first must be the theme's main accent). gradient also accepts {stops:[...], axis:'x'|'y', src: hex of the main accent to recolor}. cycle = list of colors: the main accent rotates in order with every lyric line (Streetcat). lyric_cycle = list of colors: only the active line of the Simple Lyrics widget rotates, one color per line. spectrum = left->right colors of Serpantinum's visualizer (cava). spectrum_bands = true: cava uses SOLID color bands (one per color) instead of blending. spectrum_wipe = true: cava is a single solid color and the next color sweeps over it from left to right, in order, looping. (Streetcat only uses 'spectrum': a fixed gradient with fade, no animation.)",
+  "modes": [
+    {
+      "name": "TV Girl",
+      "match": {
+        "artist": "tv ?girl"
+      },
+      "colors": [
+        "ff3fd0",
+        "3d8bff"
+      ],
+      "gradient": true,
+      "fixed_theme": true,
+      "lyric_cycle": [
+        "ff3fd0",
+        "3d8bff"
+      ]
+    },
+    {
+      "name": "Streetcat",
+      "match": {
+        "title": "^street ?cat"
+      },
+      "colors": [
+        "f4ac68",
+        "714e9d"
+      ],
+      "accents": {
+        "orange": "f4ac68",
+        "purple": "714e9d",
+        "red": "f35a63",
+        "green": "53ab69"
+      },
+      "lyric_cycle": [
+        "714e9d",
+        "f35a63",
+        "53ab69",
+        "f4ac68"
+      ],
+      "spectrum": [
+        "714e9d",
+        "f35a63",
+        "53ab69",
+        "f4ac68"
+      ]
+    },
+    {
+      "name": "La Jangada",
+      "match": {
+        "album": "la jangada"
+      },
+      "colors": [
+        "7aa88f",
+        "558172"
+      ],
+      "accents": {
+        "orange": "7aa88f",
+        "purple": "558172",
+        "red": "bba270",
+        "green": "a8845a"
+      },
+      "spectrum": [
+        "558172",
+        "7aa88f",
+        "bba270",
+        "a8845a"
+      ],
+      "lyric_cycle": [
+        "558172",
+        "7aa88f",
+        "bba270",
+        "a8845a"
+      ]
+    }
+  ]
+}

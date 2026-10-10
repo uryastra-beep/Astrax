@@ -1,0 +1,7 @@
+{
+    "colorscheme": "serpantinum",
+    "softwrap": true,
+    "wordwrap": true,
+    "cursorline": true,
+    "statusformatl": "󱔎 $(filename) $(modified)$(overwrite)($(line),$(col)) $(status.paste)| ft:$(opt:filetype) | $(opt:fileformat) | $(opt:encoding)"
+}
