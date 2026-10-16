@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Level 1 - static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck lua5.4 jq
+      - name: Lint
+        run: bash tests/lint.sh
+
+  srp:
+    name: Level 2 - srp-update / astrax-restore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: bash tests/test-srp.sh
+
+  install:
+    name: Level 3 - clean install on Arch
+    needs: [lint, srp]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: archlinux:latest
+    steps:
+      - name: Base system and a normal user with sudo
+        run: |
+          pacman -Syu --noconfirm --needed git sudo base-devel
+          useradd -m -s /bin/bash tester
+          echo 'tester ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/tester
+          # AUR builds (yay, caelestia, rust packages) use every core
+          sed -i 's/^#MAKEFLAGS=.*/MAKEFLAGS="-j$(nproc)"/' /etc/makepkg.conf
+      - uses: actions/checkout@v4
+      - name: Copy the repo into the user's home
+        run: |
+          cp -r "$GITHUB_WORKSPACE" /home/tester/Astrax
+          chown -R tester:tester /home/tester/Astrax
+      - name: First install (clean machine)
+        run: |
+          sudo -u tester -H bash -c 'cd ~/Astrax && ASTRAX_SERP_KEYS=456 ./install.sh --non-interactive' < /dev/null
+      - name: Check the install
+        run: sudo -u tester -H bash -c 'cd ~/Astrax && bash tests/assert-install.sh'
+      - name: Second install (re-running must work and back up first)
+        run: |
+          sudo -u tester -H bash -c 'cd ~/Astrax && ./install.sh --non-interactive' < /dev/null
+          sudo -u tester -H bash -c 'ls ~/astrax-backup-*.tar.gz && tar -tzf ~/astrax-backup-*.tar.gz > /dev/null'
+      - name: Check again after the second install
+        run: sudo -u tester -H bash -c 'cd ~/Astrax && bash tests/assert-install.sh'

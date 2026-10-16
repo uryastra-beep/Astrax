@@ -16,18 +16,41 @@
 #
 # Not done: boot splash / GRUB / Plymouth (see boot-splash/README.md) and
 # renaming monitors if yours aren't eDP-1 + HDMI-A-1.
+#
+# ./install.sh --non-interactive (or ASTRAX_NONINTERACTIVE=1) answers every
+# question with a safe default instead of asking: keep Astrax's keymap,
+# install the SDDM session file, skip the Hyprland plugins, Glass Lyrics,
+# enabling sddm and chsh, and stop if a different Serpantinum is installed.
+# Serpantinum's own installer gets its defaults with telemetry turned off
+# (keys in ASTRAX_SERP_KEYS, default "56"). Used by the CI test.
 
 set -euo pipefail
 
 PLUGIN_FAILURES=()
+
+NONINTERACTIVE="${ASTRAX_NONINTERACTIVE:-0}"
+for arg in "$@"; do
+    case "$arg" in
+        --non-interactive|-y) NONINTERACTIVE=1 ;;
+        -h|--help) sed -n '2,25p' "$0"; exit 0 ;;
+        *) echo "Unknown option: $arg (see --help)" >&2; exit 2 ;;
+    esac
+done
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
 step() { echo; bold "== $* =="; }
+# confirm "question" [default]: the default (y/n, "n" if omitted) is only
+# used in --non-interactive mode
 confirm() {
-    local prompt="$1" reply
+    local prompt="$1" default="${2:-n}" reply
+    if [ "$NONINTERACTIVE" = 1 ]; then
+        echo "$prompt [auto: $default]"
+        [ "$default" = y ]
+        return
+    fi
     read -r -p "$prompt [y/N] " reply
     [[ "$reply" =~ ^[Yy]$ ]]
 }
@@ -141,7 +164,13 @@ else
     fi
     git -C "$SERPANTINUM_CACHE_DIR" checkout "$SERPANTINUM_PINNED_COMMIT"
     echo "Running Serpantinum's official installer..."
-    bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
+    if [ "$NONINTERACTIVE" = 1 ]; then
+        # its installer is a key-driven menu: "5" turns telemetry off,
+        # "6" installs (CI also sends "4" for the small wallpaper set)
+        printf '%s' "${ASTRAX_SERP_KEYS:-56}" | bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
+    else
+        bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
+    fi
 fi
 
 step "Copying the dotfiles to \$HOME"
@@ -158,7 +187,7 @@ mkdir -p "$HOME/Pictures/Wallpapers"
 step "Keyboard layout"
 echo "Astrax ships the author's keymap: Latin American layout, and Caps Lock only"
 echo "toggles with Ctrl+Caps Lock (alone it does nothing)."
-if confirm "Keep that keymap?"; then
+if confirm "Keep that keymap?" y; then
     echo "Kept (~/.config/hypr/custom-capslock.xkb)."
 else
     read -r -p "XKB layout to use instead (e.g. us, es, de, latam) [us]: " layout
@@ -181,7 +210,7 @@ done
 echo "Linked: ${!CMD_TARGETS[*]}"
 
 step "SDDM session for Serpantinum"
-if confirm "Install the 'Hyprland (Serpantinum)' session into /usr/share/wayland-sessions/? (sudo)"; then
+if confirm "Install the 'Hyprland (Serpantinum)' session into /usr/share/wayland-sessions/? (sudo)" y; then
     sudo cp system/hyprland-serpantinum.desktop /usr/share/wayland-sessions/
     echo "Done -- pick it in the SDDM session menu."
 else
