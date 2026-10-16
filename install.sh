@@ -125,16 +125,28 @@ fi
 step "Official packages (pacman)"
 sudo pacman -S --needed --noconfirm \
     hyprland uwsm sddm xdg-desktop-portal-hyprland hyprpolkitagent quickshell \
-    kitty fish zsh zsh-theme-powerlevel10k micro fastfetch btop \
+    kitty fish zsh micro fastfetch btop \
     jq socat grim slurp imagemagick ffmpeg util-linux xorg-xhost libnotify \
     wireplumber playerctl cava cmatrix wl-clipboard cliphist fuzzel \
     python python-pillow python-numpy python-gobject python-dbus python-evdev \
     qt6-multimedia-ffmpeg nautilus gnome-calculator
 
+# powerlevel10k is in some repos (CachyOS, chaotic-aur) but not in Arch's:
+# take the repo package when there is one, the AUR one otherwise
+P10K=zsh-theme-powerlevel10k
+pacman -Si "$P10K" >/dev/null 2>&1 || P10K=zsh-theme-powerlevel10k-git
+if pacman -Qq zsh-theme-powerlevel10k >/dev/null 2>&1 || pacman -Qq zsh-theme-powerlevel10k-git >/dev/null 2>&1; then
+    P10K=""  # already installed, whichever one it is
+fi
+if [ "$P10K" = zsh-theme-powerlevel10k ]; then
+    sudo pacman -S --needed --noconfirm "$P10K"
+    P10K=""
+fi
+
 step "AUR packages (yay)"
 yay -S --needed --noconfirm \
     caelestia-shell caelestia-cli sptlrx-bin lavat unimatrix-git clock-rs-git \
-    toilet ttf-rubik-vf bibata-cursor-theme brave-bin
+    toilet ttf-rubik-vf bibata-cursor-theme brave-bin $P10K
 
 step "Serpantinum (main shell -- not an AUR package, it has its own installer)"
 # Pinned commit: Serpantinum's installer always resets to the latest master.
