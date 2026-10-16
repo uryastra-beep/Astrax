@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.4.0
+
+**Tests.** GitHub Actions now runs three levels on every push (see `tests/`):
+
+1. static checks: shell, Python, Lua and JSON syntax, `shellcheck`, that every script and
+   Quickshell config the binds call exists, and no personal data in the repo;
+2. `srp-update` / `astrax-restore` against a fake home and a fake Serpantinum (28 checks);
+3. a full install on a **clean Arch container**, then checks that Serpantinum is on the pinned
+   commit with telemetry off, every dotfile and command is in place, and that a second run works
+   and backs up first.
+
+The clean install found three installer bugs, all fixed here. **Installing on plain Arch
+(not CachyOS) failed before this release:**
+
+- `zsh-theme-powerlevel10k` only exists in CachyOS/chaotic repos: the installer now takes the AUR
+  package on plain Arch, and `.zshrc` loads the theme itself when CachyOS's zsh config isn't there.
+- `caelestia-shell` (AUR) depends on `quickshell-git`, which conflicted with the official
+  `quickshell` installed first. The installer now lets it pull `quickshell-git` and swaps back to
+  the official package Serpantinum needs, like Serpantinum's own installer does.
+- New `./install.sh --non-interactive`: safe defaults instead of questions, Serpantinum's
+  telemetry off. Serpantinum's final "reboot now?" prompt no longer fails it without a terminal.
+
 ## 1.3.0
 
 **Current Serpantinum version: 2.2.10.**

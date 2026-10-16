@@ -1,5 +1,7 @@
 # Astrax
 
+[![CI](https://github.com/uryastra-beep/Astrax/actions/workflows/ci.yml/badge.svg)](https://github.com/uryastra-beep/Astrax/actions/workflows/ci.yml)
+
 **A music-focused rice for Hyprland**, built on the [Serpantinum](https://github.com/ilyamiro/serpantinum)
 shell (Quickshell/QML) with [Caelestia](https://github.com/caelestia-dots/shell) as a fallback session.
 
@@ -7,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.3.0 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.4.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.10** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -31,6 +33,10 @@ The installer:
 - **asks first** before touching the system: the SDDM session, the Hyprland plugins, enabling sddm,
   changing your login shell and installing Glass Lyrics. If a plugin fails to build it tells you
   at the end.
+
+`./install.sh --non-interactive` answers every question with a safe default instead of asking
+(keeps Astrax's keymap, installs the SDDM session file, skips the plugins, Glass Lyrics, enabling
+sddm and `chsh`, and turns Serpantinum's telemetry off).
 
 Then log in with the **Hyprland (Serpantinum)** session from SDDM. The plain **Hyprland** session
 starts Caelestia instead.
@@ -238,8 +244,16 @@ The full list lives in `~/.config/hypr/config/binds-serpantinum.lua` and `hyprla
   - The eww taskbar scripts (`taskbar-*`) need your own eww config.
   - `Lyrics.qml` can also read a word-synced feed from `~/.cache/spicy-bridge` and YouTube captions
     from a `~/.local/bin/yt-lyrics` tool. Neither one ships with Astrax.
-- There is no automated test suite yet; the scripts are syntax-checked and the installer was
-  exercised in pieces, not on a fresh machine.
+- **Tests** (`tests/`, run by GitHub Actions on every push):
+  1. static checks: shell, Python, Lua and JSON syntax, `shellcheck`, that every script and
+     Quickshell config the binds call exists, and no personal data in the repo;
+  2. `srp-update` / `astrax-restore` against a fake home and a fake Serpantinum;
+  3. a full `./install.sh --non-interactive` on a **clean Arch container**, then checks that
+     Serpantinum is on the pinned commit, every dotfile and command is in place, and that running
+     the installer a second time works and backs up first.
+
+  A container has no screen, so the CI doesn't start Hyprland or Quickshell: it proves the install
+  finishes and puts everything in place, not that the desktop looks right.
 
 ## Credits
 
