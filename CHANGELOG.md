@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- **Bind search** (`SUPER+I`): a centered search menu for every keybind, styled like the
+  Astrax launcher (same card, selection bubble and animations, live Serpantinum theme colors).
+  Type to filter by key, description or group; a corner selector switches between Serpantinum
+  (default), Caelestia and All (`Tab`/`Shift+Tab` or click). The panel shrinks to fit the results
+  and scrolls past its max height. Binds live in `~/.config/quickshell/astrax-binds/binds.json`.
+
 ## 1.0.1
 
 Fixes from a code review of 1.0.0.

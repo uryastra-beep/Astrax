@@ -1,0 +1,500 @@
+[
+ {
+  "keys": "SUPER (tap)",
+  "desc": "Custom launcher (astrax-launcher)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + SPACE",
+  "desc": "Serpantinum launcher",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + RETURN",
+  "desc": "Terminal (kitty)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + F",
+  "desc": "Browser",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + B",
+  "desc": "Brave",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + E",
+  "desc": "File manager",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + M",
+  "desc": "Spotify (toggle)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Menu / ALT + Tab",
+  "desc": "App switcher (focused screen)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + V",
+  "desc": "Clipboard history",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + .",
+  "desc": "Emoji picker",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + I",
+  "desc": "Bind search (this menu)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + Q",
+  "desc": "Close window",
+  "group": "Windows",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + R",
+  "desc": "Lock/unlock window",
+  "group": "Windows",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + SHIFT + F",
+  "desc": "Toggle floating",
+  "group": "Windows",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + left click (drag)",
+  "desc": "Move window",
+  "group": "Windows",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + right click (drag)",
+  "desc": "Resize window",
+  "group": "Windows",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + 1…0",
+  "desc": "Go to workspace 1-10 on this monitor",
+  "group": "Workspaces",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + SHIFT + 1…0",
+  "desc": "Move window to workspace 1-10",
+  "group": "Workspaces",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + scroll up/down",
+  "desc": "Next/previous workspace",
+  "group": "Workspaces",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + W",
+  "desc": "Wallpaper picker",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + W",
+  "desc": "Network/Bluetooth panel",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + SHIFT + W",
+  "desc": "Toggle widgets + preset",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + C / SUPER + H",
+  "desc": "Guide",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + Z",
+  "desc": "Music",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + B",
+  "desc": "System",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + S",
+  "desc": "Calendar",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + V",
+  "desc": "Volume",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + A",
+  "desc": "Bar autohide",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + ALT + A",
+  "desc": "Lyrics",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + N",
+  "desc": "Do not disturb",
+  "group": "Serpantinum panels",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + C",
+  "desc": "Widget colors follow music",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + ALT + C",
+  "desc": "Widget colors follow wallpaper",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + ALT + G",
+  "desc": "Hide/show widgets (focused screen)",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + S",
+  "desc": "Mute wallpaper audio",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + SHIFT + S",
+  "desc": "Wallpaper audio plays over apps",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + CTRL + A",
+  "desc": "Animated wallpaper stays visible behind apps",
+  "group": "Colors and wallpaper",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + L",
+  "desc": "Lock screen",
+  "group": "System",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Power button",
+  "desc": "Power-off wave",
+  "group": "System",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "CTRL + Power",
+  "desc": "Lock",
+  "group": "System",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + Power",
+  "desc": "Fast reboot",
+  "group": "System",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Print",
+  "desc": "Screenshot (region)",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SHIFT + Print",
+  "desc": "Screenshot + edit",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + Print",
+  "desc": "Full screenshot",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + SHIFT + Print",
+  "desc": "Full screenshot + edit",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Brightness up/down",
+  "desc": "Raise/lower brightness",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Vol up/down/mute/mic",
+  "desc": "Volume and microphone",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "Play/Pause/Next/Prev",
+  "desc": "Media controls",
+  "group": "Screenshots, brightness and media",
+  "session": "Serpantinum"
+ },
+ {
+  "keys": "SUPER + Q",
+  "desc": "Close window",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + Esc",
+  "desc": "Kill window (hyprctl kill)",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + ALT + Space",
+  "desc": "Toggle floating",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + F",
+  "desc": "Fullscreen",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + D",
+  "desc": "Maximize",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + J",
+  "desc": "Toggle split",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + arrows",
+  "desc": "Move focus",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + SHIFT + arrows",
+  "desc": "Move window",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + Tab",
+  "desc": "Dashboard",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + left click / CTRL + right click",
+  "desc": "Move / resize",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + − / +",
+  "desc": "Zoom",
+  "group": "Windows and focus",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + 1/2/3",
+  "desc": "Focus monitor 1/2/3",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + SHIFT + 1/2/3",
+  "desc": "Move window to monitor",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + ALT + 1…0",
+  "desc": "Workspaces 1-10",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + CTRL + 1…0",
+  "desc": "Workspaces 11-20",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + CTRL + ←/→",
+  "desc": "Previous/next workspace",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + CTRL + ↓",
+  "desc": "Empty workspace",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + S",
+  "desc": "Special workspace",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + SHIFT + S",
+  "desc": "Toggle special workspace",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + CTRL + SHIFT + ←/→",
+  "desc": "Move window between workspaces",
+  "group": "Monitors and workspaces",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + Return",
+  "desc": "Terminal",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + E",
+  "desc": "Files",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + T",
+  "desc": "Editor",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + C",
+  "desc": "Calculator",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + B",
+  "desc": "Browser",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + CTRL + O",
+  "desc": "ChatGPT",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "CTRL + SHIFT + Esc",
+  "desc": "btop",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + Space",
+  "desc": "Caelestia launcher",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + V",
+  "desc": "Clipboard",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + A",
+  "desc": "Sidebar",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + SHIFT + W",
+  "desc": "Nexus",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + ALT + C",
+  "desc": "Session",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + L",
+  "desc": "Lock",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + P",
+  "desc": "Color picker",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "SUPER + .",
+  "desc": "Emoji",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ },
+ {
+  "keys": "Print / SUPER + Print",
+  "desc": "Screenshots",
+  "group": "Apps and shell",
+  "session": "Caelestia"
+ }
+]

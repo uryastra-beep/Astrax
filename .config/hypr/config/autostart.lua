@@ -50,6 +50,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd([[sh -c 'flock -n "${XDG_RUNTIME_DIR:-/tmp}/cliphist-image.lock" wl-paste --type image --watch cliphist store']])
     -- custom launcher (tap SUPER). idempotent: won't start another if one is running.
     hl.exec_cmd([[sh -c 'mkdir -p ~/.local/state/astrax-launcher; qs list --all 2>/dev/null | grep -q "astrax-launcher/shell.qml" || qs -c astrax-launcher -d > /tmp/astrax-launcher.log 2>&1']])
+    -- bind search (SUPER+I), idempotent
+    hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-binds/shell.qml" || qs -c astrax-binds -d > /tmp/astrax-binds.log 2>&1']])
     -- custom app-switcher (Menu key), sister of astrax-launcher --
     -- lists open windows per screen. Same idempotent pattern.
     hl.exec_cmd([[sh -c 'mkdir -p ~/.local/state/astrax-app-switcher; qs list --all 2>/dev/null | grep -q "astrax-app-switcher/shell.qml" || qs -c astrax-app-switcher -d > /tmp/astrax-app-switcher.log 2>&1']])

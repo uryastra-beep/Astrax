@@ -170,3 +170,7 @@ for i = 1, 10 do
   hl.bind(mainMod .. " + " .. key, hl.dsp.focus({ workspace = "m~" .. i }))
   hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = "m~" .. i }))
 end
+
+-- SUPER+I -> bind search (quickshell astrax-binds; data in
+-- ~/.config/quickshell/astrax-binds/binds.json)
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc -c astrax-binds call binds toggle"))
