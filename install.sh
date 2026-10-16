@@ -124,7 +124,7 @@ fi
 
 step "Official packages (pacman)"
 sudo pacman -S --needed --noconfirm \
-    hyprland uwsm sddm xdg-desktop-portal-hyprland hyprpolkitagent quickshell \
+    hyprland uwsm sddm xdg-desktop-portal-hyprland hyprpolkitagent \
     kitty fish zsh micro fastfetch btop \
     jq socat grim slurp imagemagick ffmpeg util-linux xorg-xhost libnotify \
     wireplumber playerctl cava cmatrix wl-clipboard cliphist fuzzel \
@@ -144,6 +144,13 @@ if [ "$P10K" = zsh-theme-powerlevel10k ]; then
 fi
 
 step "AUR packages (yay)"
+# caelestia-shell's AUR package depends on quickshell-git, which conflicts
+# with the official quickshell that Serpantinum needs. Same dance as
+# Serpantinum's own installer: let caelestia pull quickshell-git, then swap
+# back to the official package (see "quickshell" below).
+if ! pacman -Qq caelestia-shell >/dev/null 2>&1 && pacman -Qq quickshell >/dev/null 2>&1; then
+    sudo pacman -Rdd --noconfirm quickshell
+fi
 yay -S --needed --noconfirm \
     caelestia-shell caelestia-cli sptlrx-bin lavat unimatrix-git clock-rs-git \
     toilet ttf-rubik-vf bibata-cursor-theme brave-bin $P10K
@@ -184,6 +191,12 @@ else
         bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
     fi
 fi
+
+step "quickshell (the official package, which Serpantinum needs)"
+if pacman -Qq quickshell-git >/dev/null 2>&1; then
+    sudo pacman -Rdd --noconfirm quickshell-git
+fi
+sudo pacman -S --needed --noconfirm quickshell
 
 step "Copying the dotfiles to \$HOME"
 cp -r .config "$HOME/"
