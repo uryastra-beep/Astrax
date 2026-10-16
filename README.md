@@ -34,6 +34,33 @@ The installer:
 Then log in with the **Hyprland (Serpantinum)** session from SDDM. The plain **Hyprland** session
 starts Caelestia instead.
 
+### ⚠️ Updating Serpantinum can break Astrax
+
+Astrax is tested against **one pinned Serpantinum commit** and replaces some of Serpantinum's own
+source files (widget registry, widget faces, wallpaper engine, lock screen, bar modules). Updating
+Serpantinum (its own installer or `serpantinum update`) wipes and re-copies
+`~/.local/share/serpantinum`, so **those changes are lost** and the newer Serpantinum code may not
+work with the rest of Astrax. **You can lose your setup.**
+
+Don't update Serpantinum directly. Use:
+
+```bash
+srp-update
+```
+
+It asks first, backs up everything a Serpantinum update can touch (Serpantinum's files, its
+settings and state, `~/.config/hypr`, `~/.config/quickshell`, `~/scripts`, `~/.local/bin`) to
+`~/astrax-backups/srp-update-<date>.tar.gz`, checks the backup can be read, and only then updates
+Serpantinum. If anything breaks, put **everything** back with one command:
+
+```bash
+astrax-restore
+```
+
+It restores the latest backup and returns Serpantinum to the commit it was on (log out and back
+in afterwards). `astrax-restore --list` shows every backup and `astrax-restore <file>` restores a
+specific one.
+
 ### Monitors
 
 By default Hyprland sets up every screen by itself (preferred mode, automatic position and scale),
@@ -158,6 +185,8 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 | `hz p1\|p2 set <hz>`, `check Hz all` | refresh rate per monitor, capped at what the screen advertises (overclocks only for panels you list in `~/.config/astrax/hz-limits`) |
 | `workspace status` | open apps per workspace and the bind to reach each one |
 | `mouse rotate\|tilt\|stretch\|none` | cursor animation (hypr-dynamic-cursors); `mouse trail on` needs `~/.local/share/hypr-plugins/build-trail.sh` first |
+| `srp-update` | back up everything, then update Serpantinum (see the warning under Install) |
+| `astrax-restore` | undo `srp-update`: restore the latest backup (`--list`, or pass a file) |
 | `CTRL+SUPER+N` | sleep mode: locks, then screens off and idle apps frozen; music keeps playing. If the lock doesn't engage, nothing is frozen |
 
 ## Keybinds (Serpantinum session)
@@ -182,6 +211,7 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 | `CTRL+SUPER+S` | wallpaper sound on/off |
 | `CTRL+SUPER+SHIFT+S` | keep wallpaper sound playing through apps |
 | `CTRL+SUPER+A` | keep the video wallpaper playing through apps |
+| `SUPER+I` | search every keybind (Serpantinum / Caelestia / All) |
 | `SUPER+V` | clipboard history |
 | `SUPER+.` | emoji picker |
 | `SUPER+N` | do not disturb |
@@ -198,8 +228,8 @@ The full list lives in `~/.config/hypr/config/binds-serpantinum.lua` and `hyprla
   `hyprctl keyword` doesn't apply here; use `hyprctl repl` and `hl.dsp.*` dispatchers.
 - Workspaces use the [infinite-desktop-v2](https://github.com/lipeazul/infinite-desktop-v2) plugin
   and are addressed per monitor (`m~N`).
-- Some files override Serpantinum's own sources under `~/.local/share/serpantinum/src`. A
-  `serpantinum update` can overwrite them: run `./install.sh` again to restore them.
+- Some files override Serpantinum's own sources under `~/.local/share/serpantinum/src`. Updating
+  Serpantinum overwrites them: update with `srp-update` and undo with `astrax-restore`.
 - No API keys or accounts are needed. Lyrics come from public APIs (lrclib.net, NetEase).
 - Optional extras, off unless you set them up:
   - `~/scripts/brave_watcher.sh` closes Brave once it has no windows left. It never does this

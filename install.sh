@@ -53,6 +53,8 @@ declare -A CMD_TARGETS=(
     [workspace]=workspace-ctl.sh
     [show]=show-ctl.sh
     [intro]=intro.sh
+    [srp-update]=srp-update.sh
+    [astrax-restore]=astrax-restore.sh
     [outro]=outro.sh
     [hz]=hz-ctl.sh [Hz]=hz-ctl.sh [check]=hz-ctl.sh
     [widget]=widget-ctl.sh [widgets]=widget-ctl.sh

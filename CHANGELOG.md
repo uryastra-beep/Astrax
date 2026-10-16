@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0
+
+> ⚠️ **Updating Serpantinum can break Astrax and you can lose your setup.** Astrax is pinned to one
+> Serpantinum commit and replaces some of Serpantinum's source files; a Serpantinum update wipes
+> them. Update only with `srp-update`, and undo it with `astrax-restore`.
+
+- **`srp-update`**: asks first, backs up everything a Serpantinum update can touch (Serpantinum's
+  files, settings and state, `~/.config/hypr`, `~/.config/quickshell`, `~/scripts`, `~/.local/bin`)
+  to `~/astrax-backups/`, checks the backup can be read, then updates Serpantinum to its latest
+  version.
+- **`astrax-restore`**: puts everything back from the latest backup (or `astrax-restore <file>`;
+  `--list` shows them) and returns Serpantinum to the commit it was on.
+- README: a warning about updating Serpantinum under Install, plus `SUPER+I` in the keybinds table.
+
 ## 1.1.0
 
 - **Bind search** (`SUPER+I`): a centered search menu for every keybind, styled like the
