@@ -186,7 +186,18 @@ else
     if [ "$NONINTERACTIVE" = 1 ]; then
         # its installer is a key-driven menu: "5" turns telemetry off,
         # "6" installs (CI also sends "4" for the small wallpaper set)
-        printf '%s' "${ASTRAX_SERP_KEYS:-56}" | bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
+        # its last step asks "reboot now?" on /dev/tty, which fails without a
+        # terminal (CI, cron) even though the install itself went fine: judge
+        # it by the version it recorded instead of by its exit code
+        if ! printf '%s' "${ASTRAX_SERP_KEYS:-56}" | bash "$SERPANTINUM_CACHE_DIR/install/install.sh"; then
+            recorded="$(sed -n 's/^SERPANTINUM_COMMIT="\(.*\)"/\1/p' "$HOME/.local/state/serpantinum/version" 2>/dev/null)"
+            if [ -n "$recorded" ] && [ "${SERPANTINUM_PINNED_COMMIT#"$recorded"}" != "$SERPANTINUM_PINNED_COMMIT" ]; then
+                echo "Serpantinum's installer exited with an error after installing $recorded (its reboot prompt has no terminal) -- continuing."
+            else
+                echo "Serpantinum's installer failed." >&2
+                exit 1
+            fi
+        fi
     else
         bash "$SERPANTINUM_CACHE_DIR/install/install.sh"
     fi
