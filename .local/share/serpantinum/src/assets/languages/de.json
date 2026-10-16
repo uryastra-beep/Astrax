@@ -531,6 +531,30 @@
           "button": "Interaktive Pillen-Schaltfläche mit Hintergrund",
           "text": "Kompakter Text und Symbol ohne Hintergrund"
         }
+      },
+      "media": {
+        "info_mode": {
+          "title": "Secondary info",
+          "desc": "Choose whether to show the song duration or its author",
+          "duration": "Duration",
+          "author": "Author"
+        },
+        "width": {
+          "title": "Width",
+          "desc": "Width of the song title area"
+        },
+        "show_icon": {
+          "title": "Symbol anzeigen",
+          "desc": "Zeigt das Albumcover oder das Musiksymbol an"
+        },
+        "show_controls": {
+          "title": "Steuerelemente anzeigen",
+          "desc": "Zeigt die Schaltflächen für Zurück, Wiedergabe und Weiter an"
+        },
+        "preview": {
+          "title": "Songtitel",
+          "author": "Song author"
+        }
       }
     },
     "theme": {
@@ -570,7 +594,8 @@
         "pictures": "Bilder",
         "music": "Musik",
         "documents": "Dokumente"
-      }
+      },
+      "done": "Fertig"
     },
     "font_picker": {
       "title": "Schriftart auswählen",
@@ -841,6 +866,29 @@
       "smart_autohide": {
         "title": "Intelligentes automatisches Ausblenden",
         "desc": "Dock nur bei geöffneten Fenstern ausblenden, auf dem Desktop sichtbar lassen"
+      },
+      "focus_running": {
+        "title": "Bestehendes Fenster fokussieren",
+        "desc": "Klicken auf ein App-Symbol aktiviert das geöffnete Fenster, anstatt eine neue Instanz zu starten"
+      },
+      "show_running_indicators": {
+        "title": "Laufende Indikatoren",
+        "desc": "Punkt- oder Balkenindikatoren für geöffnete Anwendungssymbole anzeigen"
+      },
+      "show_running_apps": {
+        "title": "Geöffnete Anwendungen anzeigen",
+        "desc": "Nicht angeheftete geöffnete Anwendungen im Dock anzeigen"
+      },
+      "running_scope": {
+        "title": "Bereich aktiver Fenster",
+        "desc": "Laufende Fenster filtern, die im Dock angezeigt und gesteuert werden",
+        "auto": "Automatisch (Compositor-Standard)",
+        "all": "Alle Arbeitsflächen & Monitore",
+        "output": "Nur aktueller Monitor",
+        "workspace": "Nur aktive Arbeitsfläche"
+      },
+      "window_menu": {
+        "untitled": "Untitled"
       }
     },
     "lyrics_picker": {
@@ -925,6 +973,11 @@
       "authenticating": "Authentifizierung läuft...",
       "enter_pin": "PIN eingeben"
     },
+    "fingerprint": {
+      "ready": "Sensor berühren",
+      "not_recognized": "Fingerabdruck nicht erkannt",
+      "recognized": "Fingerabdruck erkannt"
+    },
     "power": {
       "suspend": "Standby",
       "reboot": "Neu starten",
@@ -983,7 +1036,8 @@
     },
     "actions": {
       "unpair": "Entkoppeln",
-      "scan": "Suchen"
+      "scan": "Suchen",
+      "sign_in": "Anmelden"
     }
   },
   "notifications": {
@@ -1051,6 +1105,7 @@
       }
     },
     "draw": {
+      "hex": "Hex",
       "notification": {
         "app_name": "DrawAction",
         "saved_title": "Zeichnung gespeichert",
@@ -1058,7 +1113,9 @@
         "copied_body": "Zeichnung in die Zwischenablage kopiert",
         "failed_title": "Export fehlgeschlagen",
         "failed_body": "Zeichnung konnte nicht gespeichert werden"
-      }
+      },
+      "palette": "Palette",
+      "palette_default": "Standard"
     },
     "notes": {
       "title": "Notizen",

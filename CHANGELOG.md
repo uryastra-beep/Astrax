@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.3.0
+
+**Current Serpantinum version: 2.2.10.**
+
+- The installer now pins **Serpantinum 2.2.10** (commit `e2a91af`) instead of `1eec762` (between
+  2.2.6 and 2.2.7). Every Serpantinum file Astrax overrides was updated to 2.2.10 with Astrax's
+  changes kept: the lock screen, theme backend, cava, widget registry and editor, bar module
+  registry, lyrics view, `Main.qml` and the translations.
+- The power-off wave moved to `SystemPanelPowerActions.qml`, where Serpantinum 2.2.9+ keeps the
+  power buttons. That file also fixes the panel-closed check (upstream points it at an id that
+  doesn't exist).
+- README shows the current Serpantinum version at the top. The version line was also stuck at 1.0.1.
+- Already on an older Serpantinum? Update with `srp-update` (it backs everything up first), then
+  run `./install.sh` again to copy Astrax's 2.2.10 files. Undo with `astrax-restore`.
+
 ## 1.2.0
 
 > ⚠️ **Updating Serpantinum can break Astrax and you can lose your setup.** Astrax is pinned to one

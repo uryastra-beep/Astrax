@@ -162,6 +162,9 @@ PanelWindow {
             let effectivelyActive = masterWindow.targetActive;
 
             if (cmd === "close") {
+                if (typeof DockAppMenuController !== "undefined") {
+                    DockAppMenuController.hide();
+                }
                 switchWidget("hidden", "");
             } else if (cmd === "toggle" || cmd === "open") {
                 if (targetWidget === effectivelyActive) {
@@ -372,6 +375,8 @@ PanelWindow {
             if (masterWindow.currentActive === "hidden") {
                 let t = masterWindow.getLayout("guide");
                 if (t) masterWindow.ensureWidgetItem("guide", t);
+                let w = masterWindow.getLayout("wallpaper");
+                if (w) masterWindow.ensureWidgetItem("wallpaper", w);
             }
         });
     }

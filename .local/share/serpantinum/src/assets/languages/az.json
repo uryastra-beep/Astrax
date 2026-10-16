@@ -528,6 +528,30 @@
           "button": "Arxa planlı interaktiv düymə",
           "text": "Arxa plansız sadə mətn və ikon"
         }
+      },
+      "media": {
+        "info_mode": {
+          "title": "Secondary info",
+          "desc": "Choose whether to show the song duration or its author",
+          "duration": "Duration",
+          "author": "Author"
+        },
+        "width": {
+          "title": "Width",
+          "desc": "Width of the song title area"
+        },
+        "show_icon": {
+          "title": "İkonu göstər",
+          "desc": "Albom üz qabığını və ya musiqi ikonunu göstər"
+        },
+        "show_controls": {
+          "title": "İdarəetməni göstər",
+          "desc": "Əvvəlki, oxut və növbəti düymələrini göstər"
+        },
+        "preview": {
+          "title": "Mahnının adı",
+          "author": "Song author"
+        }
       }
     },
     "theme": {
@@ -567,7 +591,8 @@
         "pictures": "Şəkillər",
         "music": "Musiqi",
         "documents": "Sənədlər"
-      }
+      },
+      "done": "Hazırdır"
     },
     "font_picker": {
       "title": "Yazı növü seç",
@@ -791,6 +816,29 @@
       "smart_autohide": {
         "title": "Ağıllı avto-gizlətmə",
         "desc": "Doku yalnız pəncərələr açıq olduqda gizlət, masaüstündə görünən saxla"
+      },
+      "focus_running": {
+        "title": "Mövcud pəncərəni fokuslayın",
+        "desc": "Tətbiq ikonuna kliklədikdə yeni nüsxə başlatmaq əvəzinə açıq pəncərəsi aktivləşdirilir"
+      },
+      "show_running_indicators": {
+        "title": "İşləmə indikatorları",
+        "desc": "Açıq tətbiq ikonlarında nöqtə və ya xətt indikatorlarını göstərin"
+      },
+      "show_running_apps": {
+        "title": "Açıq tətbiqləri göstərin",
+        "desc": "Bərkidilməmiş açıq tətbiqləri dokda göstərin"
+      },
+      "running_scope": {
+        "title": "Aktiv pəncərə əhatəsi",
+        "desc": "Dok tərəfindən göstərilən və idarə olunan işləyən pəncərələri filtrləyin",
+        "auto": "Avtomatik (kompozitor susmaya görə)",
+        "all": "Bütün iş sahələri və monitorlar",
+        "output": "Yalnız cari monitor",
+        "workspace": "Yalnız aktiv iş sahəsi"
+      },
+      "window_menu": {
+        "untitled": "Untitled"
       }
     },
     "lyrics_picker": {
@@ -875,6 +923,11 @@
       "authenticating": "Kimlik doğrulanır...",
       "enter_pin": "PIN daxil edin"
     },
+    "fingerprint": {
+      "ready": "Sensora toxunun",
+      "not_recognized": "Barmaq izi tanınmadı",
+      "recognized": "Barmaq izi tanındı"
+    },
     "power": {
       "suspend": "Yuxu rejiminə keçir",
       "reboot": "Yenidən başlat",
@@ -933,7 +986,8 @@
     },
     "actions": {
       "unpair": "Cütləşdirməni ləğv et",
-      "scan": "Axtar"
+      "scan": "Axtar",
+      "sign_in": "Daxil ol"
     }
   },
   "notifications": {
