@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.4.0 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.5.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.10** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -161,6 +161,31 @@ Serpantinum's wallpaper engine is extended with:
 
 Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is shown over a paused video.
 
+### WORT — Wallpaper On Real Time (lava wallpaper)
+
+A "lava lamp" wallpaper drawn live by a shader (`~/.config/quickshell/lava-wallpaper/`): up to 7
+colored bubbles that melt into each other. The colors follow what you're doing:
+
+1. **Music playing**: the same colors as the visualizer (the special mode's palette, or the song
+   colors). Without a special mode they come from the album art.
+2. **No music**: the colors of the focused app's icon.
+3. **Nothing**: a purple palette.
+4. **TV Girl mode** adds two black bubbles.
+
+Serpantinum's theme follows the lava colors too, except while a special song mode is active.
+
+Pick **`lava-live.mp4`** in `SUPER+W` > Videos to turn it on (the installer puts that small
+placeholder video in your wallpaper folder; it is paused while the lava runs). Picking any other
+wallpaper turns it off, and it comes back on its own after a restart if lava-live was the last one.
+`lava-wallpaper on|off|toggle|status` controls it from the terminal.
+
+It hooks into Serpantinum's `singletons/theme/Wallpaper.qml`. That file is overwritten by a
+Serpantinum update; `patches/serpantinum-Wallpaper.qml-wort.patch` re-applies the hooks:
+
+```bash
+cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum-Wallpaper.qml-wort.patch
+```
+
 ### Intro, outro and the power wave
 
 - `intro`: splash screen where the logo lights up like a neon tube and the theme waves drop to reveal
@@ -192,6 +217,7 @@ Optionally, put a still image at `~/Pictures/Wallpapers/fallback.jpg`. It is sho
 | `hz p1\|p2 set <hz>`, `check Hz all` | refresh rate per monitor, capped at what the screen advertises (overclocks only for panels you list in `~/.config/astrax/hz-limits`) |
 | `workspace status` | open apps per workspace and the bind to reach each one |
 | `mouse rotate\|tilt\|stretch\|none` | cursor animation (hypr-dynamic-cursors); `mouse trail on` needs `~/.local/share/hypr-plugins/build-trail.sh` first |
+| `lava-wallpaper on\|off\|toggle\|status` | WORT, the lava wallpaper (normally driven by picking `lava-live.mp4` in `SUPER+W`) |
 | `srp-update` | back up everything, then update Serpantinum (see the warning under Install) |
 | `astrax-restore` | undo `srp-update`: restore the latest backup (`--list`, or pass a file) |
 | `CTRL+SUPER+N` | sleep mode: locks, then screens off and idle apps frozen; music keeps playing. If the lock doesn't engage, nothing is frozen |

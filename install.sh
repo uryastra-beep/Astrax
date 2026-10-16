@@ -78,6 +78,7 @@ declare -A CMD_TARGETS=(
     [intro]=intro.sh
     [srp-update]=srp-update.sh
     [astrax-restore]=astrax-restore.sh
+    [lava-wallpaper]=lava-wallpaper.sh
     [outro]=outro.sh
     [hz]=hz-ctl.sh [Hz]=hz-ctl.sh [check]=hz-ctl.sh
     [widget]=widget-ctl.sh [widgets]=widget-ctl.sh
@@ -219,6 +220,12 @@ chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py 2>/dev/null || true
 grep -rlI "@HOME@" .config .local 2>/dev/null |
     while read -r f; do sed -i "s|@HOME@|$HOME|g" "$HOME/$f"; done || true
 mkdir -p "$HOME/Pictures/Wallpapers"
+# WORT: lava-live.mp4 is the entry that turns the lava wallpaper on from
+# SUPER+W > Videos; it goes in Serpantinum's wallpaperDir
+wall_dir="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("wallpaperDir",""))' "$HOME/.config/serpantinum/settings.json" 2>/dev/null || true)"
+wall_dir="${wall_dir:-$HOME/Pictures/Wallpapers}"
+mkdir -p "$wall_dir"
+cp wallpapers/lava-live.mp4 "$wall_dir/"
 
 step "Keyboard layout"
 echo "Astrax ships the author's keymap: Latin American layout, and Caps Lock only"

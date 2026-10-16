@@ -28,8 +28,29 @@ Item {
         return false;
     }
 
+    // WORT: when Serpantinum starts and the saved wallpaper is lava-live, start the lava again
+    Timer {
+        id: lavaBootTimer
+        interval: 4000
+        running: true
+        onTriggered: Quickshell.execDetached(["sh", "-c",
+            "grep -q lava-live \"$HOME\"/.cache/serpantinum/wallpaper/current_* 2>/dev/null && lava-wallpaper on"])
+    }
+
+    Timer {
+        id: lavaPauseTimer
+        interval: 1500
+        onTriggered: root.setPlayback("all", "pause")
+    }
+
     function setWallpaper(screenName: string, path: string, transition: string): void {
+        // WORT ("lava-live"): the lava-live.* file is only a placeholder/thumbnail
+        let isLava = (path || "").split("/").pop().toLowerCase().indexOf("lava-live") === 0;
+        Quickshell.execDetached(["lava-wallpaper", isLava ? "on" : "off"]);
         root.wallpaperChanged(screenName, path, transition ? transition : "fade");
+        // With the lava on, the placeholder video is paused (once loaded); any other wallpaper resumes it
+        if (isLava) lavaPauseTimer.restart();
+        else { lavaPauseTimer.stop(); root.setPlayback("all", "play"); }
     }
 
     function getWallpaper(screenName: string): string {

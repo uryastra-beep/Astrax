@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.0
+
+- **WORT — Wallpaper On Real Time**: a live "lava lamp" wallpaper (Quickshell shader) with up to 7
+  colored bubbles. Colors come from the music (the visualizer's palette, or the album art), from the
+  focused app's icon when nothing plays, or an idle purple palette; TV Girl mode adds two black
+  bubbles. Serpantinum's theme follows the lava colors (except in special song modes). Turn it on by
+  picking `lava-live.mp4` in `SUPER+W` > Videos, or with `lava-wallpaper on|off|toggle|status`.
+- Serpantinum's `Wallpaper.qml` gets the WORT hooks (start/stop the lava, pause the placeholder
+  video, restart it on boot). Since a Serpantinum update overwrites it,
+  `patches/serpantinum-Wallpaper.qml-wort.patch` re-applies them.
+- CI checks the lava files, the placeholder video and the hooks after a clean install.
+
 ## 1.4.0
 
 **Tests.** GitHub Actions now runs three levels on every push (see `tests/`):

@@ -47,6 +47,12 @@ while read -r name target; do
     check "$name is executable" [ -x "$link" ]
 done < <(grep -oE '\[[A-Za-z0-9_-]+\]=[A-Za-z0-9_.-]+' install.sh | sed -E 's/^\[([^]]+)\]=(.*)$/\1 \2/')
 
+echo "== WORT (lava wallpaper)"
+wall_dir="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("wallpaperDir",""))' "$HOME/.config/serpantinum/settings.json")"
+check "lava-live.mp4 in Serpantinum's wallpaperDir ($wall_dir)" cmp -s wallpapers/lava-live.mp4 "$wall_dir/lava-live.mp4"
+check "lava shader is compiled" [ -s "$HOME/.config/quickshell/lava-wallpaper/lava.frag.qsb" ]
+check "Wallpaper.qml has the WORT hooks" grep -q lavaBootTimer "$HOME/.local/share/serpantinum/src/quickshell/singletons/theme/Wallpaper.qml"
+
 echo "== system files"
 check "SDDM session installed" cmp -s system/hyprland-serpantinum.desktop /usr/share/wayland-sessions/hyprland-serpantinum.desktop
 
