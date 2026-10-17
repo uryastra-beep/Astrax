@@ -63,6 +63,11 @@ check "Bibata-ArrowBare theme installed" [ -f "$HOME/.local/share/icons/Bibata-A
 check "default style is astrax" [ "$(bash scripts/cursor-style.sh get)" = astrax ]
 check "Serpantinum menu has the cursor style row" grep -q cursorStyleCodes "$HOME/.local/share/serpantinum/src/quickshell/guide/general/GeneralTab.qml"
 
+echo "== Astrax version / update check"
+check "installed version recorded" [ "$(cat "$HOME/.local/state/astrax/version" 2>/dev/null)" = "$(tr -d '[:space:]' < VERSION)" ]
+check "astrax-update version" [ "$(bash scripts/astrax-update.sh version)" = "$(tr -d '[:space:]' < VERSION)" ]
+check "About page shows Astrax's version" grep -q astraxUpdate "$HOME/.local/share/serpantinum/src/quickshell/guide/AboutTab.qml"
+
 echo "== system files"
 check "SDDM session installed" cmp -s system/hyprland-serpantinum.desktop /usr/share/wayland-sessions/hyprland-serpantinum.desktop
 

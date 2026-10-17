@@ -77,6 +77,7 @@ declare -A CMD_TARGETS=(
     [show]=show-ctl.sh
     [intro]=intro.sh
     [srp-update]=srp-update.sh
+    [astrax-update]=astrax-update.sh
     [astrax-restore]=astrax-restore.sh
     [lava-wallpaper]=lava-wallpaper.sh
     [cursor-style]=cursor-style.sh
@@ -221,6 +222,9 @@ chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py 2>/dev/null || true
 # a few JSON/QML files can't expand $HOME by themselves: fill in the placeholder
 grep -rlI "@HOME@" .config .local 2>/dev/null |
     while read -r f; do sed -i "s|@HOME@|$HOME|g" "$HOME/$f"; done || true
+# the installed version: the About page (SUPER+C) and astrax-update read it
+mkdir -p "$HOME/.local/state/astrax"
+tr -d '[:space:]' < VERSION > "$HOME/.local/state/astrax/version"
 mkdir -p "$HOME/Pictures/Wallpapers"
 # WORT: lava-live.mp4 is the entry that turns the lava wallpaper on from
 # SUPER+W > Videos; it goes in Serpantinum's wallpaperDir
