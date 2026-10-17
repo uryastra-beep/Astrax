@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.7.0 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.8.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.12** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -78,6 +78,24 @@ configured; it has the author's setup as an example.
 The scripts call two outputs **p1** and **p2** (`MONITOR1` / `MONITOR2` in `variables.lua`, by default
 `eDP-1` and `HDMI-A-1`). The widget sets and per-monitor workspaces use those names, so set them to
 your outputs from `hyprctl monitors`.
+
+### Updating Astrax
+
+`SUPER+C` > **About** shows the Astrax version under Serpantinum's. When a newer release exists,
+a green card appears there with **Changelog** and **Update** buttons (like Serpantinum's), and a
+desktop notification arrives once per new version (clicking it opens the About page). The check
+runs a minute after login and every 6 hours. From a terminal: `astrax-update check`, `astrax-update run`.
+`Update` fetches the release tag and runs its `./install.sh`, which backs up every file it overwrites first.
+
+### Updating Serpantinum while Astrax is installed
+
+Serpantinum updates its own About page too, but **don't take that update blindly**. You have two options:
+
+1. **Wait for a new Astrax release** that ships the new Serpantinum version. It is ported and tested
+   first, and the About page will offer it as an Astrax update. This is the safe way.
+2. **Update it yourself with `srp-update`** (backs up first, undo with `astrax-restore`). This is at
+   your own risk: Astrax's replaced files get overwritten, the new Serpantinum code may not work
+   with the rest of Astrax, and your setup can end up broken or corrupted.
 
 ## Glass Lyrics for Spotify
 
@@ -271,6 +289,7 @@ different shapes per type, is future work.
 | `cursor-style normal\|astrax\|highcontrast` | reactive cursor style; `cursor-style anim <name> 0\|1` toggles an animation (also in `SUPER+C` > General) |
 | `cursor-plugin check\|build` | is the reactive cursor built for this Hyprland? / rebuild it (after every Hyprland update) |
 | `lava-wallpaper on\|off\|toggle\|status` | WORT, the lava wallpaper (normally driven by picking `lava-live.mp4` in `SUPER+W`) |
+| `astrax-update check\|run` | is there a newer Astrax release? / update to it |
 | `srp-update` | back up everything, then update Serpantinum (see the warning under Install) |
 | `astrax-restore` | undo `srp-update`: restore the latest backup (`--list`, or pass a file) |
 | `CTRL+SUPER+N` | sleep mode: locks, then screens off and idle apps frozen; music keeps playing. If the lock doesn't engage, nothing is frozen |

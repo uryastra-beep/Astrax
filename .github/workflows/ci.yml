@@ -22,7 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test
-        run: bash tests/test-srp.sh
+        run: |
+          bash tests/test-srp.sh
+          bash tests/test-update.sh
 
   install:
     name: Level 3 - clean install on Arch

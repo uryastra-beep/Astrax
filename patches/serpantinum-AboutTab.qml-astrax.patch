@@ -1,0 +1,123 @@
+--- a/src/quickshell/guide/AboutTab.qml	2026-10-16 17:17:32.000000000 -0600
++++ b/src/quickshell/guide/AboutTab.qml
+@@ -29,7 +29,33 @@
+         }
+     }
+ 
++    // ---- ASTRAX: version and update status, written by scripts/astrax-update.sh ----
++    property string astraxLocal: ""
++    property string astraxRemote: ""
++    property bool astraxUpdate: false
++
++    FileView {
++        id: astraxStatusFile
++        path: Quickshell.env("HOME") + "/.local/state/astrax/update.json"
++        watchChanges: true
++        onFileChanged: reload()
++        onLoaded: {
++            try {
++                let d = JSON.parse(text());
++                aboutTabRoot.astraxLocal = d.local || "";
++                aboutTabRoot.astraxRemote = d.remote || "";
++                aboutTabRoot.astraxUpdate = d.available === true;
++            } catch (e) {}
++        }
++    }
++    FileView {
++        id: astraxVersionFile
++        path: Quickshell.env("HOME") + "/.local/state/astrax/version"
++        onLoaded: { let v = text().trim(); if (v) aboutTabRoot.astraxLocal = v; }
++    }
++
+     function activateTab() {
++        Quickshell.execDetached(["bash", "-c", "command -v astrax-update >/dev/null && astrax-update check"]);
+         if (typeof SystemInfo !== "undefined") {
+             SystemInfo.fetch();
+         }
+@@ -152,6 +178,15 @@
+                                 color: ThemeBackend.subtext0
+                                 Layout.alignment: Qt.AlignHCenter
+                             }
++
++                            Text {
++                                visible: aboutTabRoot.astraxLocal !== ""
++                                text: "Astrax v" + aboutTabRoot.astraxLocal
++                                font.family: ThemeBackend.fontFamily
++                                font.pixelSize: rootObj.s(13)
++                                color: aboutTabRoot.astraxUpdate ? ThemeBackend.green : ThemeBackend.subtext0
++                                Layout.alignment: Qt.AlignHCenter
++                            }
+                         }
+                     }
+                 }
+@@ -221,6 +256,70 @@
+                         }
+                     }
+                 }
++            }
++
++            // ---- ASTRAX update card (same buttons as Serpantinum's) ----
++            Rectangle {
++                visible: aboutTabRoot.astraxUpdate
++                Layout.fillWidth: true
++                implicitHeight: astraxUpdRow.implicitHeight + rootObj.s(24)
++                radius: ThemeBackend.borderRadius
++                color: Qt.alpha(ThemeBackend.green, 0.10)
++                border.width: 1
++                border.color: Qt.alpha(ThemeBackend.green, 0.35)
++
++                RowLayout {
++                    id: astraxUpdRow
++                    anchors.fill: parent
++                    anchors.margins: rootObj.s(12)
++                    spacing: rootObj.s(12)
++
++                    Text {
++                        Layout.fillWidth: true
++                        text: "Astrax update available v" + aboutTabRoot.astraxRemote
++                        font.family: ThemeBackend.fontFamily
++                        font.weight: Font.Bold
++                        font.pixelSize: rootObj.s(16)
++                        color: ThemeBackend.green
++                        elide: Text.ElideRight
++                    }
++
++                    ClickButton {
++                        Layout.preferredWidth: rootObj.s(130)
++                        Layout.preferredHeight: rootObj.s(36)
++                        horizontalPadding: rootObj.s(14)
++                        cornerRadius: ThemeBackend.borderRadius
++                        buttonText: "Changelog"
++                        textFontSize: rootObj.s(12)
++                        buttonIcon: "󰈙"
++                        iconFontSize: rootObj.s(16)
++                        accentColor: ThemeBackend.surface0
++                        textColor: ThemeBackend.text
++
++                        onTriggered: Quickshell.execDetached(["xdg-open", "https://github.com/uryastra-beep/Astrax/releases/tag/v" + aboutTabRoot.astraxRemote])
++                    }
++
++                    FillButton {
++                        Layout.preferredWidth: rootObj.s(130)
++                        Layout.preferredHeight: rootObj.s(38)
++                        buttonText: "Update"
++                        buttonIcon: "󰚰"
++                        accentColor: ThemeBackend.green
++                        baseColor: ThemeBackend.surface0
++                        hoverColor: Qt.alpha(ThemeBackend.green, 0.15)
++                        textColor: ThemeBackend.green
++                        filledTextColor: ThemeBackend.crust
++                        cornerRadius: ThemeBackend.borderRadius
++                        textFontSize: rootObj.s(12)
++                        iconFontSize: rootObj.s(16)
++                        fillDuration: 1200
++
++                        onTriggered: {
++                            Quickshell.execDetached(["bash", "-c", "if command -v kitty >/dev/null 2>&1; then kitty --hold bash -c 'astrax-update run'; else ${TERM:-xterm} -hold -e bash -c 'astrax-update run'; fi"]);
++                            Quickshell.execDetached(["bash", rootObj.appPaths.serpantinumDir + "/scripts/qs_manager.sh", "close"]);
++                        }
++                    }
++                }
+             }
+ 
+             RowLayout {

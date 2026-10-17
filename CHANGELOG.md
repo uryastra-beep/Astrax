@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.8.0
+
+- **Astrax version and updates in Serpantinum's menu**: `SUPER+C` > About shows `Astrax v1.8.0` under
+  Serpantinum's version. When a newer GitHub release exists, a card shows **Changelog** and **Update**
+  (the same buttons as Serpantinum's update). `Update` opens a terminal, fetches the release tag and
+  runs its `./install.sh` (which backs up what it overwrites first).
+- **Update notification**: a desktop notification arrives once per new Astrax version (click it to open
+  the About page). The check runs a minute after login and every 6 hours.
+- New `astrax-update` command (`version`, `check`, `status`, `run`); `install.sh` now records the
+  installed version in `~/.local/state/astrax/version`.
+- Docs: new README sections explaining that, to update Serpantinum with Astrax installed, you can
+  either wait for an Astrax release that ships it, or update it manually with `srp-update` at your own
+  risk of breaking or corrupting your setup.
+- Patch `patches/serpantinum-AboutTab.qml-astrax.patch` for the About page (re-apply it after a
+  Serpantinum update, or run `./install.sh` again). New CI test `tests/test-update.sh`.
+
 ## 1.7.0
 
 - **Reactive cursor**: a patched hypr-dynamic-cursors (`plugins/dynamic-cursors`, BSD-3-Clause) draws
