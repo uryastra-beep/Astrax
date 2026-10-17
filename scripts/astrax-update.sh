@@ -8,13 +8,16 @@
 #   astrax-update status         print the status (JSON)
 #   astrax-update daemon         what runs at login: check after a minute, then every 6 hours
 #   astrax-update run            update: fetch the latest release and run its ./install.sh
+#   astrax-update changelog      what changed since the installed version (from GitHub)
+#   astrax-update rollback       put the latest backup back (same as astrax-restore)
 #
 # State lives in ~/.local/state/astrax (version, update.json, notified).
-# Overrides, for tests: ASTRAX_STATE_DIR, ASTRAX_RELEASE_URL (a file:// works), ASTRAX_REPO_URL.
+# Overrides, for tests: ASTRAX_STATE_DIR, ASTRAX_CHANGELOG_URL (a file:// works), ASTRAX_RELEASE_URL (a file:// works), ASTRAX_REPO_URL.
 set -u
 
 STATE="${ASTRAX_STATE_DIR:-$HOME/.local/state/astrax}"
 RELEASE_URL="${ASTRAX_RELEASE_URL:-https://api.github.com/repos/uryastra-beep/Astrax/releases/latest}"
+CHANGELOG_URL="${ASTRAX_CHANGELOG_URL:-https://raw.githubusercontent.com/uryastra-beep/Astrax/main/CHANGELOG.md}"
 REPO_URL="${ASTRAX_REPO_URL:-https://github.com/uryastra-beep/Astrax.git}"
 CLONE="${XDG_CACHE_HOME:-$HOME/.cache}/astrax-installer"
 GUIDE_CACHE="${QS_CACHE_DIR:-$HOME/.cache/serpantinum}/guide"
@@ -74,6 +77,25 @@ case "${1:-}" in
         sleep 60
         while true; do check -n >/dev/null 2>&1 || true; sleep 21600; done
         ;;
+    changelog)
+        l="$(local_version)"
+        curl -fsS --max-time 20 "$CHANGELOG_URL" 2>/dev/null | python3 -c '
+import re, sys
+local = sys.argv[1]
+key = lambda v: [int(x) if x.isdigit() else 0 for x in re.split(r"[.]", v)]
+out, keep = [], False
+for line in sys.stdin:
+    m = re.match(r"^## (\S+)", line)
+    if m:
+        keep = (not local) or key(m.group(1)) > key(local)
+    if keep:
+        out.append(line)
+print("".join(out).rstrip() or "Nothing newer than " + local + ".")' "$l" || { echo "couldn't reach GitHub" >&2; exit 1; }
+        ;;
+    rollback)
+        command -v astrax-restore >/dev/null && exec astrax-restore "${@:2}"
+        exec bash "$HOME/scripts/astrax-restore.sh" "${@:2}"
+        ;;
     run)
         l="$(local_version)"
         r="$(fetch_remote)" || { echo "couldn't reach GitHub" >&2; exit 1; }
@@ -92,5 +114,5 @@ case "${1:-}" in
         git -C "$CLONE" checkout -q -f "v$r" || { echo "tag v$r not found" >&2; exit 1; }
         ( cd "$CLONE" && ./install.sh ) && check >/dev/null 2>&1
         ;;
-    *) sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    *) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

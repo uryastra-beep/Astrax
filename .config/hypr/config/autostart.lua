@@ -54,6 +54,8 @@ hl.on("hyprland.start", function ()
     hl.exec_cmd([[sh -c 'mkdir -p ~/.local/state/astrax-launcher; qs list --all 2>/dev/null | grep -q "astrax-launcher/shell.qml" || qs -c astrax-launcher -d > /tmp/astrax-launcher.log 2>&1']])
     -- Astrax update check: a minute after login, then every 6 h; notifies once per new version
     hl.exec_cmd([[sh -c 'flock -n "${XDG_RUNTIME_DIR:-/tmp}/astrax-update.lock" bash ~/scripts/astrax-update.sh daemon > /tmp/astrax-update.log 2>&1']])
+    -- Hyprland-update notice (says if the patched cursor no longer matches; changes nothing) and the one-time tour
+    hl.exec_cmd([[sh -c 'sleep 20; bash ~/scripts/astrax-hypr-guard.sh check -n; bash ~/scripts/astrax-tour.sh' > /dev/null 2>&1]])
     -- bind search (SUPER+I), idempotent
     hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-binds/shell.qml" || qs -c astrax-binds -d > /tmp/astrax-binds.log 2>&1']])
     -- custom app-switcher (Menu key), sister of astrax-launcher --

@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.8.1 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.9.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.12** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -68,8 +68,23 @@ It restores the latest backup and returns Serpantinum to the commit it was on (l
 in afterwards). `astrax-restore --list` shows every backup and `astrax-restore <file>` restores a
 specific one.
 
+### Commands and health check
+
+`astrax-help` lists every Astrax command. `astrax-doctor` checks the install (versions, drifted
+overrides, monitors, the cursor plugin, commands, Glass Lyrics, backups) and prints how to fix
+whatever is off; run it after any update. Both are read-only and never fix anything on their own.
+
+If something misbehaves, `astrax-safe on` turns off the patched cursor plugin, uses the normal
+cursor and enables opti; `astrax-safe off` puts it back. It also works from a TTY (Ctrl+Alt+F3)
+when the desktop itself won't start. After a Hyprland update a notification tells you whether the
+patched cursor still matches; the stock plugin is used meanwhile, never a mismatched one.
+
+To stop lyrics for a source, add a regular expression per line to
+`~/.config/astrax/lyrics-blocklist.txt` (matched against the player, URL, title and artist).
+
 ### Monitors
 
+`astrax-monitors` lists your outputs and sets p1/p2 for you (or `astrax-monitors eDP-1 HDMI-A-1`).
 By default Hyprland sets up every screen by itself (preferred mode, automatic position and scale),
 so nothing is tied to the author's hardware. To pin modes, positions or scales, fill in
 `MONITOR_LAYOUT` in `~/.config/hypr/config/monitors.lua`. That file is the only place monitors are

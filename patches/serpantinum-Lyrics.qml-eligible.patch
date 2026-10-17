@@ -1,6 +1,6 @@
 --- a/src/quickshell/singletons/audio/Lyrics.qml
 +++ b/src/quickshell/singletons/audio/Lyrics.qml
-@@ -13,9 +13,32 @@
+@@ -13,9 +13,56 @@
      property var customPlayer: null
      readonly property var player: customPlayer || MprisController.activePlayer
  
@@ -8,6 +8,27 @@
 +    // track) and short-video sites playing through a browser (TikTok etc.),
 +    // where the title/artist are a username or caption and lrclib/YouTube
 +    // would "match" some unrelated song in another language.
++    // Extra "no lyrics for this" patterns, one regular expression per line in
++    // ~/.config/astrax/lyrics-blocklist.txt (# starts a comment). Each is tested,
++    // case-insensitive, against the player name, the page URL, the title and the artist.
++    property var userBlock: []
++    FileView {
++        id: blocklistFile
++        path: Quickshell.env("HOME") + "/.config/astrax/lyrics-blocklist.txt"
++        watchChanges: true
++        onFileChanged: reload()
++        onLoaded: {
++            const out = [];
++            for (const raw of text().split("\n")) {
++                const line = raw.replace(/#.*$/, "").trim();
++                if (line === "") continue;
++                try { out.push(new RegExp(line, "i")); } catch (e) {}
++            }
++            root.userBlock = out;
++        }
++        onLoadFailed: root.userBlock = []
++    }
++
 +    readonly property bool lyricsEligible: {
 +        try {
 +            if (!player) return false;
@@ -21,6 +42,9 @@
 +            if (/^dj\b/i.test(artist.trim()) || /^dj\b/i.test(title.trim())) return false;
 +            if (/(tiktok|instagram|facebook|twitter|snapchat|reddit)\.|fb\.watch|\/\/(www\.)?x\.com/.test(url)) return false;
 +            if (/tiktok/i.test(title) || /tiktok/i.test(artist)) return false;
++            for (const re of userBlock) {
++                if (re.test(who) || re.test(url) || re.test(title) || re.test(artist)) return false;
++            }
 +            return true;
 +        } catch (e) {
 +            return true;

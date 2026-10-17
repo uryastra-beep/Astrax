@@ -1,5 +1,44 @@
 # Changelog
 
+## 1.9.0
+
+Quality-of-life tools; none of them touches Serpantinum's code or the shaders.
+
+- **`astrax-doctor`**: one read-only command that checks the install and prints a `fix:` line for
+  everything that is off: Astrax and Serpantinum versions against the pinned one, Serpantinum
+  overrides that drifted from the repo, whether `p1`/`p2` are connected outputs, the cursor plugin
+  against the installed Hyprland headers, the commands in `PATH`, Glass Lyrics in Spicetify and
+  whether any backup exists. `-q` prints only warnings and failures; it exits 1 on a failure.
+- **`astrax-monitors`**: lists the connected outputs and sets `MONITOR1`/`MONITOR2` (p1/p2) in
+  `variables.lua` for you, so a new install no longer needs hand-editing. Interactive, or
+  `astrax-monitors eDP-1 HDMI-A-1`. Keeps `variables.lua.bak`.
+- **`astrax-help`**: every Astrax command with a one-line description, grouped; `astrax-help cursor`
+  filters.
+- **`astrax-safe on|off|status`**: safe mode in one command. Patched cursor plugin off at the next
+  login, `cursor-style normal`, `opti on`; `off` restores exactly what `on` changed (including a
+  `disabled` marker that was already there). It only writes files, so it works from a TTY
+  (Ctrl+Alt+F3) when Hyprland or Quickshell are broken. It asks first; `-y` skips the question and
+  is required without a terminal. `astrax-doctor` flags it when it is on.
+- **`astrax-hypr-guard`**: at login, tells you once per Hyprland version when an update left the
+  patched cursor plugin out of date. It changes nothing: `plugins.lua` already refuses to load a
+  plugin built against other headers, so the stock plugin runs instead of risking the compositor.
+  Rebuilding stays manual (`cursor-plugin build`).
+- **`astrax-tour`**: five welcome notifications (SUPER, SUPER+I, SUPER+C, `astrax-help`,
+  `astrax-doctor`) shown once after install; `astrax-tour --force` shows them again.
+- **`astrax-update changelog`** prints what changed since your version; **`astrax-update rollback`**
+  runs `astrax-restore` (any extra arguments are passed on).
+- **Lyrics blocklist**: put one regular expression per line in `~/.config/astrax/lyrics-blocklist.txt`
+  (`#` starts a comment, case-insensitive) to stop lyrics for a player, URL, title or artist; it is
+  reloaded when the file changes. `patches/serpantinum-Lyrics.qml-eligible.patch` carries it.
+- `tests/check-binds.py` (in CI) fails when a letter/punctuation keybind in the Lua files is missing
+  from `binds.json` (SUPER+I) or the other way round.
+- README: new "Commands" and "Health check" sections; the Monitors section points at `astrax-monitors`.
+- New CI test `tests/test-tools.sh`.
+- **Not in this release** (need a live session or can crash the compositor, so they were left out on
+  purpose): configurable cursor colors and per-app cursor profiles (C++ plugin), a lyrics-offset hotkey
+  and "retry lyrics" outside the Spotify window (Glass Lyrics bundle), and Rollback/Changelog buttons in
+  the About page (QML). The CLI equivalents above exist.
+
 ## 1.8.1
 
 - **No more invented lyrics for non-songs**: the lyrics lookup (`Lyrics.qml`) now has a `lyricsEligible` check.

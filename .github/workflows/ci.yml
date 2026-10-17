@@ -25,6 +25,8 @@ jobs:
         run: |
           bash tests/test-srp.sh
           bash tests/test-update.sh
+          bash tests/test-tools.sh
+          python3 tests/check-binds.py
 
   install:
     name: Level 3 - clean install on Arch
