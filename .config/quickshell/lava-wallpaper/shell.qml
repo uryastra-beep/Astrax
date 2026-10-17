@@ -41,13 +41,13 @@ ShellRoot {
     property color k4: target[4]
     property color k5: target[5]
     property color k6: target[6]
-    Behavior on k0 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k1 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k2 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k3 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k4 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k5 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
-    Behavior on k6 { ColorAnimation { duration: 2000; easing.type: Easing.InOutQuad } }
+    Behavior on k0 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k1 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k2 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k3 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k4 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k5 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
+    Behavior on k6 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
 
     property real t: 0
     Timer {

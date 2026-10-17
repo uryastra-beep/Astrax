@@ -217,7 +217,7 @@ def main():
                 key = ("cava", tuple(sc)) if sc else ("music", os.stat(ART).st_mtime)
                 if key != state:
                     state = key
-                    time.sleep(0.15)
+                    time.sleep(0.03)
                     if sc:
                         publish([{"hex": sc[i % len(sc)], "w": 1.0} for i in range(7)])
                     else:
@@ -231,6 +231,6 @@ def main():
                     publish(data or PURPLES)
         except Exception as e:
             print(e, file=sys.stderr, flush=True)
-        time.sleep(1)
+        time.sleep(0.25)
 
 main()

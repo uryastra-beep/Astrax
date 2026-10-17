@@ -3,6 +3,11 @@
 album art of the song playing in Spotify (via MPRIS). It doesn't touch
 caelestia's scheme, the wallpaper, or anything else. When nothing is
 playing, it goes back to the original border (violet gradient)."""
+import builtins as _b, time as _t
+_p = _b.print
+def print(*a, **k):
+    # every log line starts with HH:MM:SS (to time how fast a song change lands)
+    _p(_t.strftime("%H:%M:%S"), *a, **k)
 
 import json
 import os
@@ -15,7 +20,7 @@ import urllib.parse
 import urllib.request
 
 POLL_SECONDS = 2        # fallback; track changes are detected instantly (see main)
-CONFIRM_SECONDS = 0.35  # re-read the metadata this long afterwards to discard flickers
+CONFIRM_SECONDS = 0.12  # re-read the metadata this long afterwards to discard flickers
 ART_CACHE = "/tmp/caelestia-track-art.jpg"
 WIDGET_COLORS_FILE = "/tmp/widget-colors.json"
 CAVA_MODE_FILE = "/tmp/widget-cava-mode"
@@ -748,12 +753,14 @@ def tick():
         art_url = art_url2
         artist, title, album = key2[1:]
 
-    duration = mpris_length_seconds()
-    set_sptlrx_mode("lyrics" if has_lyrics(title, artist, album, duration) else "pipes")
-
     try:
-        with urllib.request.urlopen(art_url, timeout=5) as resp:
-            data = resp.read()
+        # curl -4: urllib tried IPv6 first and took ~5.5s on networks without IPv6
+        # connectivity; curl -4 takes ~0.3s. urllib stays as the fallback.
+        data = subprocess.run(["curl", "-4", "-sfL", "--max-time", "5", art_url],
+                              capture_output=True, timeout=7).stdout
+        if not data:
+            with urllib.request.urlopen(art_url, timeout=5) as resp:
+                data = resp.read()
         with open(ART_CACHE, "wb") as f:
             f.write(data)
         mode = match_mode(artist, title, album)
@@ -773,6 +780,10 @@ def tick():
         update_widgets(color_a, color_b)
         _last_applied_art_url = key
         print(f"border and widgets updated to {color_a} / {color_b}", flush=True)
+        # the lyrics lookup (a network request) runs AFTER the colors are applied,
+        # so it never delays them
+        duration = mpris_length_seconds()
+        set_sptlrx_mode("lyrics" if has_lyrics(title, artist, album, duration) else "pipes")
     except Exception as e:
         print(f"error: {e}", flush=True)
 
@@ -805,7 +816,7 @@ def main():
         ready, _, _ = select.select([follower.stdout], [], [], POLL_SECONDS)
         if ready:
             follower.stdout.readline()
-            time.sleep(0.15)  # gathers the burst of events from a single track change
+            time.sleep(0.05)  # gathers the burst of events from a single track change
             while select.select([follower.stdout], [], [], 0)[0]:
                 if not follower.stdout.readline():
                     break
