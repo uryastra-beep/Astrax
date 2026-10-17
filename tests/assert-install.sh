@@ -27,7 +27,8 @@ echo "== dotfiles copied (Astrax's copy wins over Serpantinum's)"
 missing=0; differ=0
 while IFS= read -r -d '' f; do
     [ -e "$HOME/$f" ] || { missing=$((missing + 1)); bad "missing ~/$f"; continue; }
-    if grep -qI "@HOME@" "$f"; then
+    # the installer only fills the placeholder under .config and .local
+    if [[ "$f" == .config/* || "$f" == .local/* ]] && grep -qI "@HOME@" "$f"; then
         # placeholder files: compare after filling in $HOME like the installer does
         cmp -s <(sed "s|@HOME@|$HOME|g" "$f") "$HOME/$f" || { differ=$((differ + 1)); bad "~/$f differs from the repo"; }
     elif [ "$f" = .config/hypr/config/inputs.lua ]; then
