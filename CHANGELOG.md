@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.1
 
 **Faster song change detection.** The border, the widgets and the lava wallpaper now switch to the
 new song's colors in **~2s instead of ~10s**.
