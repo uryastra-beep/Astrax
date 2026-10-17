@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+**Faster song change detection.** The border, the widgets and the lava wallpaper now switch to the
+new song's colors in **~2s instead of ~10s**.
+
+- **Quicker confirmation:** a track change is confirmed after 0.12s (was 0.35s), and the burst of
+  player events is grouped for 0.05s (was 0.15s).
+- **Faster cover download:** the album art is fetched with `curl -4` (~0.3s). `urllib` tried IPv6
+  first and took ~5.5s on networks without IPv6; it stays as the fallback.
+- **Colors first:** the lyrics lookup (a network request) now runs after the colors are applied, so
+  it no longer delays them.
+- **Lava wallpaper:** checks for changes every 0.25s (was 1s), waits 0.03s before reading the cover
+  (was 0.15s), and fades to the new colors in 0.8s (was 2s).
+- `border_colors.py` log lines now start with the time (`HH:MM:SS`), to measure how fast a change
+  lands.
+
 ## 1.6.0
 
 **Current Serpantinum version: 2.2.12.**
