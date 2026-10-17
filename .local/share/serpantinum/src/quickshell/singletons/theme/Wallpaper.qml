@@ -13,6 +13,21 @@ Item {
 
     property var screenWallpapers: ({})
     property var screenWallpaperPaths: ({})
+    property var engines: ({})
+
+    function registerEngine(screenName: string, engine: var): void {
+        if (!screenName) return;
+        let map = Object.assign({}, root.engines);
+        map[screenName] = engine;
+        root.engines = map;
+    }
+
+    function unregisterEngine(screenName: string, engine: var): void {
+        if (!screenName || root.engines[screenName] !== engine) return;
+        let map = Object.assign({}, root.engines);
+        delete map[screenName];
+        root.engines = map;
+    }
 
     // Which screens have a VIDEO wallpaper set right now (not a
     // static image) -- updated by WallpaperEngine.qml for each

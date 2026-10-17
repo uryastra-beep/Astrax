@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.6.0
+
+**Current Serpantinum version: 2.2.12.**
+
+- The installer now pins **Serpantinum 2.2.12** (commit `c72992d`) instead of 2.2.10. Every
+  Serpantinum file Astrax overrides was carried over to 2.2.12 with Astrax's changes kept: lock
+  screen and `lock.sh`, theme backend, wallpaper engine (with the safe-arguments fix from 1.0.1),
+  `Wallpaper.qml` (WORT hooks), lyrics, bar, power actions, widget registry/loader/editor and the
+  translations.
+- Serpantinum 2.2.12 draws its visualizers (bar cava, the round music widget) with a shared
+  single-color `Visualizer`. Astrax now adds the special song mode gradient there, so the bar cava
+  and the ring around the music disc take the mode's colors again (left to right, or bottom to top
+  on screen for the ring). Its new continuous/wave style works too.
+- The round music widget keeps Astrax's cover crossfade on top of Serpantinum 2.2.12's version.
+- The bar lyrics module picks its horizontal or vertical face again (`BarModule.qml` passes the
+  bar orientation).
+- Already on an older Serpantinum? Update with `srp-update`, then run `./install.sh` again to copy
+  Astrax's 2.2.12 files, and re-apply `patches/serpantinum-Wallpaper.qml-wort.patch` only if you
+  skip the installer. Undo with `astrax-restore`.
+
 ## 1.5.0
 
 - **WORT — Wallpaper On Real Time**: a live "lava lamp" wallpaper (Quickshell shader) with up to 7

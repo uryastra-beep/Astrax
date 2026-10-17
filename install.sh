@@ -161,8 +161,8 @@ step "Serpantinum (main shell -- not an AUR package, it has its own installer)"
 # Astrax overrides several of its QML files (WidgetRegistry.qml,
 # WallpaperEngine.qml, faces/*, ...) and those were tested against this
 # commit. Bump it by hand after validating a newer one.
-# Serpantinum 2.2.10
-SERPANTINUM_PINNED_COMMIT="e2a91afbdbf416b06c86015ef6bb5ef51832586c"
+# Serpantinum 2.2.12
+SERPANTINUM_PINNED_COMMIT="c72992d85a8d841b3edb00d41f225b6d35c4e90f"
 SERPANTINUM_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/serpantinum-installer"
 
 if command -v serpantinum >/dev/null 2>&1; then

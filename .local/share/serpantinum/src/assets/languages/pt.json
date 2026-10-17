@@ -101,6 +101,10 @@
         "title": "Animação de central vazia",
         "desc": "Exibe o gato dormindo na central quando vazia"
       },
+      "right_click_close": {
+        "title": "Fechar com clique direito",
+        "desc": "Dispensar uma notificação com o clique direito"
+      },
       "test": "Testar notificação",
       "test_desc": "Esta é uma notificação de teste"
     },
@@ -165,7 +169,11 @@
       "hooks": {
         "title": "Hooks (comandos shell)"
       },
-      "custom_action_desc": "Ação e comando personalizados por tempo limite"
+      "custom_action_desc": "Ação e comando personalizados por tempo limite",
+      "lock_on_sleep": {
+        "title": "Bloquear antes de suspender",
+        "desc": "Bloquear a sessão antes de o sistema suspender, por exemplo ao fechar a tampa"
+      }
     },
     "welcome": {
       "by_author": "por @{author}",
@@ -325,6 +333,11 @@
         "title": "Largura da barra",
         "desc": "Define a largura da barra em porcentagem"
       },
+      "center_by_edges": {
+        "title": "Centralizar pelas bordas",
+        "desc": "Mantém margens iguais à esquerda e à direita da barra em vez de centralizar pelo módulo central",
+        "desc_vertical": "Mantém margens iguais acima e abaixo da barra em vez de centralizar pelo módulo central"
+      },
       "workspaces": {
         "title": "Quantidade de workspaces a exibir",
         "disc": "Nota: isto não afeta a quantidade real de workspaces no compositor",
@@ -337,10 +350,6 @@
           "title": "Estilo",
           "desc": "Escolha o estilo visual para os indicadores de áreas de trabalho"
         }
-      },
-      "opacity": {
-        "title": "Opacidade da barra",
-        "desc": "Define a opacidade da barra em porcentagem"
       },
       "style": {
         "title": "Estilo da barra",
@@ -554,6 +563,10 @@
           "title": "Título da música",
           "author": "Song author"
         }
+      },
+      "thickness": {
+        "title": "Espessura da barra",
+        "desc": "Altere a espessura da barra, os módulos se ajustam"
       }
     },
     "theme": {
@@ -787,10 +800,6 @@
         "done": "Concluir",
         "empty": "Nenhum aplicativo correspondente"
       },
-      "opacity": {
-        "title": "Opacidade da dock",
-        "desc": "Ajusta a opacidade do fundo da dock"
-      },
       "override_bounds": {
         "title": "Ignorar correção de tamanho fora da tela",
         "desc": "Mantém o tamanho personalizado mesmo se a dock passar da tela"
@@ -954,6 +963,26 @@
     "eq": {
       "apply": "Aplicar",
       "saved": "Salvo"
+    },
+    "audio": {
+      "title": "Áudio",
+      "balance": "Balanço dos canais",
+      "reset": "Redefinir",
+      "centered": "Centralizado",
+      "left_slightly_favored": "Leve preferência à esquerda",
+      "right_slightly_favored": "Leve preferência à direita",
+      "left_only": "Somente esquerda",
+      "right_only": "Somente direita",
+      "left_favored": "Preferência à esquerda",
+      "right_favored": "Preferência à direita",
+      "test": "Testar",
+      "stop_test": "Parar",
+      "mono": "Áudio mono",
+      "swap": "Trocar E/D",
+      "dynamic_range": "Faixa dinâmica",
+      "off": "Desativado",
+      "balanced": "Equilibrado",
+      "night": "Noturno"
     },
     "presets": {
       "flat": "Plano",
@@ -1514,7 +1543,11 @@
     "deploy": {
       "configuring_sddm": "Configurando o gerenciador de tela SDDM...",
       "disabling_dm": "-> Desativando gerenciador de tela conflitante: {dm}",
-      "sddm_success": "-> Tema material you do SDDM instalado e serviço ativado [ OK ]"
+      "sddm_success": "-> Tema material you do SDDM instalado e serviço ativado [ OK ]",
+      "sddm_no_wayland_compositor": "Nenhum compositor Wayland compatível para a tela de login (kwin_wayland/weston) encontrado, usando X11 para o SDDM.",
+      "sddm_no_xorg": "Xorg não encontrado, usando {compositor} para o SDDM.",
+      "sddm_no_backend": "Nem o Xorg nem um compositor Wayland compatível para a tela de login (kwin_wayland/weston) foram encontrados em /usr/local/bin, /usr/bin ou /bin.",
+      "sddm_skipped": "Configuração do SDDM ignorada: nenhum servidor gráfico ou compositor de login utilizável encontrado. O gerenciador de login atual permanece inalterado."
     }
   },
   "translator": {

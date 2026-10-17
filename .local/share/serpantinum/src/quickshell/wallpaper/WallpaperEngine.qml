@@ -176,6 +176,12 @@ ShellRoot {
                 property string pathB: ""
                 property bool isVideoB: false
                 property bool playbackPaused: false
+                property bool snapReadyA: false
+                property bool snapReadyB: false
+                property int snapRevA: 0
+                property int snapRevB: 0
+                readonly property string layerSnapshotPathA: wpCacheDir + "/layer_" + barWindow.screen.name + "_a.png"
+                readonly property string layerSnapshotPathB: wpCacheDir + "/layer_" + barWindow.screen.name + "_b.png"
 
                 // Pauses/resumes the video wallpaper ONLY ON THIS screen
                 // with an explicit rule: it RUNS if the
@@ -345,6 +351,7 @@ ShellRoot {
 
                 Component.onCompleted: {
                     restorePoller.running = true;
+                    Wallpaper.registerEngine(barWindow.screen ? barWindow.screen.name : "", barWindow);
                     if (barWindow.screen && barWindow.screen.name) {
                         let map = Object.assign({}, globalRoot.wallpaperScreens);
                         map[barWindow.screen.name] = barWindow;
@@ -355,6 +362,8 @@ ShellRoot {
                         Wallpaper.screenIsVideo = videoMap;
                     }
                 }
+
+                Component.onDestruction: Wallpaper.unregisterEngine(barWindow.screen ? barWindow.screen.name : "", barWindow)
 
                 onCurrentWallpaperPathChanged: {
                     if (barWindow.screen && barWindow.screen.name) {
@@ -459,6 +468,44 @@ ShellRoot {
                 }
 
                 Process {
+                    id: layerSnapshotA
+                    running: false
+                    property string targetPath: ""
+                    command: [
+                        "bash", "-c",
+                        "ffmpeg -y -hide_banner -loglevel error -ss 00:00:01 -i \"$1\" -frames:v 1 -q:v 2 \"$2\" 2>/dev/null || ffmpeg -y -hide_banner -loglevel error -i \"$1\" -frames:v 1 -q:v 2 \"$2\" 2>/dev/null",
+                        "_",
+                        targetPath,
+                        barWindow.layerSnapshotPathA
+                    ]
+                    onExited: exitCode => {
+                        if (exitCode === 0) {
+                            barWindow.snapReadyA = true;
+                            barWindow.snapRevA++;
+                        }
+                    }
+                }
+
+                Process {
+                    id: layerSnapshotB
+                    running: false
+                    property string targetPath: ""
+                    command: [
+                        "bash", "-c",
+                        "ffmpeg -y -hide_banner -loglevel error -ss 00:00:01 -i \"$1\" -frames:v 1 -q:v 2 \"$2\" 2>/dev/null || ffmpeg -y -hide_banner -loglevel error -i \"$1\" -frames:v 1 -q:v 2 \"$2\" 2>/dev/null",
+                        "_",
+                        targetPath,
+                        barWindow.layerSnapshotPathB
+                    ]
+                    onExited: exitCode => {
+                        if (exitCode === 0) {
+                            barWindow.snapReadyB = true;
+                            barWindow.snapRevB++;
+                        }
+                    }
+                }
+
+                Process {
                     id: videoSnapshotProcess
                     running: false
                     property string targetPath: ""
@@ -475,6 +522,15 @@ ShellRoot {
                             Matugen.generate(barWindow.wpSnapshotPath);
                         }
                     }
+                }
+
+                function snapshotLayer(slot, path) {
+                    let proc = slot === 0 ? layerSnapshotA : layerSnapshotB;
+                    if (slot === 0) barWindow.snapReadyA = false;
+                    else barWindow.snapReadyB = false;
+                    proc.targetPath = path;
+                    proc.running = false;
+                    proc.running = true;
                 }
 
                 function isVideo(p) {
@@ -562,6 +618,7 @@ ShellRoot {
 
                     let cleanPath = String(path).trim();
                     let vid = barWindow.isVideo(cleanPath);
+                    if (vid) barWindow.snapshotLayer(barWindow.activeLayer === 1 ? 0 : 1, cleanPath);
 
                     let slash = cleanPath.lastIndexOf("/");
                     let filename = cleanPath.substring(slash + 1);
@@ -891,7 +948,7 @@ ShellRoot {
                         id: transitionShaderA
                         anchors.fill: parent
                         visible: false
-                        layer.enabled: true
+                        layer.enabled: layerA.layer.enabled
 
                         property vector2d itemSize: Qt.vector2d(width, height)
                         property real progress: barWindow.transitionProgress
@@ -958,7 +1015,7 @@ ShellRoot {
                         id: transitionShaderB
                         anchors.fill: parent
                         visible: false
-                        layer.enabled: true
+                        layer.enabled: layerB.layer.enabled
 
                         property vector2d itemSize: Qt.vector2d(width, height)
                         property real progress: barWindow.transitionProgress

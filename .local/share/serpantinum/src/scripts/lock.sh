@@ -7,4 +7,4 @@ qs_ensure_cache "lock"
 # under the lock; the intro removes it on unlock.
 [ -e "$QS_RUN_DIR/lock/locked" ] || bash ~/scripts/outro-cover.sh
 
-quickshell -p $MAIN_QML ipc call lock activate 
+quickshell -p $MAIN_QML ipc call lock "$([[ "$1" == "--static" ]] && echo activateStatic || echo activate)"

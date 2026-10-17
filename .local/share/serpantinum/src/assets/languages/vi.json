@@ -101,6 +101,10 @@
         "title": "Hoạt ảnh trung tâm trống",
         "desc": "Hiển thị hình chú mèo đang ngủ trong trung tâm thông báo khi không có thông báo"
       },
+      "right_click_close": {
+        "title": "Đóng bằng chuột phải",
+        "desc": "Đóng thông báo bằng cách nhấp chuột phải"
+      },
       "test": "Thử nghiệm thông báo",
       "test_desc": "Đây là thông báo thử nghiệm"
     },
@@ -165,7 +169,11 @@
       "hooks": {
         "title": "Hook (lệnh shell)"
       },
-      "custom_action_desc": "Hành động và lệnh hết thời gian tùy chỉnh"
+      "custom_action_desc": "Hành động và lệnh hết thời gian tùy chỉnh",
+      "lock_on_sleep": {
+        "title": "Khóa trước khi ngủ",
+        "desc": "Khóa phiên trước khi hệ thống tạm ngưng, ví dụ khi đóng nắp"
+      }
     },
     "welcome": {
       "by_author": "bởi @{author}",
@@ -325,6 +333,11 @@
         "title": "Chiều rộng thanh tác vụ",
         "desc": "Đặt chiều rộng của thanh tác vụ theo phần trăm"
       },
+      "center_by_edges": {
+        "title": "Căn giữa theo mép",
+        "desc": "Giữ lề bằng nhau ở mép trái và phải của thanh thay vì căn giữa theo mô-đun ở giữa",
+        "desc_vertical": "Giữ lề bằng nhau ở mép trên và dưới của thanh thay vì căn giữa theo mô-đun ở giữa"
+      },
       "workspaces": {
         "title": "Chọn số lượng không gian làm việc để hiển thị",
         "disc": "Lưu ý: điều này không ảnh hưởng đến số lượng không gian làm việc thực tế trong compositor",
@@ -337,10 +350,6 @@
           "title": "Kiểu",
           "desc": "Chọn kiểu hiển thị cho các chỉ báo không gian làm việc"
         }
-      },
-      "opacity": {
-        "title": "Độ mờ thanh tác vụ",
-        "desc": "Đặt độ mờ của thanh tác vụ theo phần trăm"
       },
       "style": {
         "title": "Kiểu thanh tác vụ",
@@ -554,6 +563,10 @@
           "title": "Tên bài hát",
           "author": "Song author"
         }
+      },
+      "thickness": {
+        "title": "Độ dày thanh",
+        "desc": "Thay đổi độ dày của thanh, các mô-đun sẽ tự điều chỉnh"
       }
     },
     "theme": {
@@ -787,10 +800,6 @@
         "done": "Xong",
         "empty": "Không tìm thấy ứng dụng phù hợp"
       },
-      "opacity": {
-        "title": "Độ đục của dock",
-        "desc": "Điều chỉnh mức độ đục của nền dock"
-      },
       "override_bounds": {
         "title": "Ghi đè điều chỉnh kích thước ngoài giới hạn màn hình",
         "desc": "Giữ nguyên kích thước phần tử ngay cả khi dock vượt quá giới hạn màn hình"
@@ -954,6 +963,26 @@
     "eq": {
       "apply": "Áp dụng",
       "saved": "Đã lưu"
+    },
+    "audio": {
+      "title": "Âm thanh",
+      "balance": "Cân bằng kênh",
+      "reset": "Đặt lại",
+      "centered": "Cân giữa",
+      "left_slightly_favored": "Hơi thiên trái",
+      "right_slightly_favored": "Hơi thiên phải",
+      "left_only": "Chỉ kênh trái",
+      "right_only": "Chỉ kênh phải",
+      "left_favored": "Thiên trái",
+      "right_favored": "Thiên phải",
+      "test": "Kiểm tra",
+      "stop_test": "Dừng",
+      "mono": "Âm thanh mono",
+      "swap": "Đổi trái/phải",
+      "dynamic_range": "Dải động",
+      "off": "Tắt",
+      "balanced": "Cân bằng",
+      "night": "Ban đêm"
     },
     "presets": {
       "flat": "Phẳng",
@@ -1514,7 +1543,11 @@
     "deploy": {
       "configuring_sddm": "Đang cấu hình trình quản lý hiển thị SDDM...",
       "disabling_dm": "-> Đang vô hiệu hóa trình quản lý hiển thị xung đột: {dm}",
-      "sddm_success": "-> Đã cài đặt chủ đề Material You cho SDDM và bật dịch vụ [ OK ]"
+      "sddm_success": "-> Đã cài đặt chủ đề Material You cho SDDM và bật dịch vụ [ OK ]",
+      "sddm_no_wayland_compositor": "Không tìm thấy compositor Wayland được hỗ trợ cho màn hình đăng nhập (kwin_wayland/weston), SDDM dùng X11.",
+      "sddm_no_xorg": "Không tìm thấy Xorg, SDDM dùng {compositor}.",
+      "sddm_no_backend": "Không tìm thấy Xorg hay compositor Wayland được hỗ trợ cho màn hình đăng nhập (kwin_wayland/weston) trong /usr/local/bin, /usr/bin hoặc /bin.",
+      "sddm_skipped": "Bỏ qua thiết lập SDDM: không tìm thấy máy chủ hiển thị hoặc compositor đăng nhập khả dụng. Trình quản lý đăng nhập hiện tại được giữ nguyên."
     }
   },
   "translator": {
