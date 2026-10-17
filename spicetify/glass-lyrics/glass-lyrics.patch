@@ -1222,6 +1222,65 @@ index 4857b6e..51cec3e 100644
  const DurationTimeOffset = 0;
  const BlurMultiplier = 1.25;
  
+diff --git a/src/utils/Lyrics/Global/Applyer.ts b/src/utils/Lyrics/Global/Applyer.ts
+index 0dbc75a..443bde4 100644
+--- a/src/utils/Lyrics/Global/Applyer.ts
++++ b/src/utils/Lyrics/Global/Applyer.ts
+@@ -109,6 +109,10 @@ export default async function ApplyLyrics(lyricsContent: FetchLyricsResult): Pro
+       noticeContent = `We don't have any lyrics for this song`
+       break;
+     }
++    case "instrumental": {
++      noticeContent = `♪ Instrumental`
++      break;
++    }
+     case "dj": {
+       noticeContent = `Viewing lyrics, while using the DJ, is not supported`
+       break;
+@@ -162,7 +166,7 @@ export default async function ApplyLyrics(lyricsContent: FetchLyricsResult): Pro
+   if (noticeContent) {
+     $currentLyricsType.set("None");
+ 
+-    if (descriptor === "lyrics-not-found") {
++    if (descriptor === "lyrics-not-found" || descriptor === "instrumental") {
+       // Key the sentinel off the uri the fetch was made for, never off whatever
+       // happens to be playing now — see the staleness check above.
+       const uri = requestedUri ?? currentUri ?? "";
+@@ -185,14 +189,14 @@ export default async function ApplyLyrics(lyricsContent: FetchLyricsResult): Pro
+     currentNoticeElement.classList.add("LyricsNotice");
+     lyricsContainer.appendChild(currentNoticeElement);
+ 
+-    if (!IsCompactMode() && (Fullscreen.IsOpen || Fullscreen.CinemaViewOpen) && (descriptor === "lyrics-not-found" || descriptor === "local-track")) {
++    if (!IsCompactMode() && (Fullscreen.IsOpen || Fullscreen.CinemaViewOpen) && (descriptor === "lyrics-not-found" || descriptor === "instrumental" || descriptor === "local-track")) {
+       PageContainer?.querySelector<HTMLElement>(".ContentBox .LyricsContainer")?.classList.add("Hidden");
+       PageContainer?.querySelector<HTMLElement>(".ContentBox")?.classList.add("LyricsHidden");
+     }
+ 
+     currentNoticeElement.innerHTML = `
+       <p class="notice-descriptor">${noticeContent.trim()}</p>
+-      <p class="notice-footer">Need more help? Join our <a>Discord</a>.</p>
++      ${descriptor === "instrumental" ? "" : `<p class="notice-footer">Need more help? Join our <a>Discord</a>.</p>`}
+     `;
+ 
+     // Add click handler to log when the Discord link is clicked
+diff --git a/src/utils/Lyrics/fetchLyrics.ts b/src/utils/Lyrics/fetchLyrics.ts
+index 75d4903..167542a 100644
+--- a/src/utils/Lyrics/fetchLyrics.ts
++++ b/src/utils/Lyrics/fetchLyrics.ts
+@@ -161,6 +161,13 @@ async function runFetchLyrics(uri: string): Promise<[object | string, number] |
+     return ["unknown-track", 400];
+   }
+ 
++  // Instrumental tracks have nothing to sing: skip the fetch and show the
++  // music-note view instead of a skeleton and a pointless 404 round trip.
++  if (/\b(instrumental|inst\.|karaoke|backing track)\b/i.test(SpotifyPlayer.GetName() ?? "")) {
++    $currentlyFetching.set(false);
++    return ["instrumental", 404];
++  }
++
+   const trackId = uri.split(":")[2];
+ 
+   if (IsLyricsSkeletonEnabled()) ShowLyricsSkeleton();
 diff --git a/src/utils/settings.ts b/src/utils/settings.ts
 index 87dd1f0..7d4e32e 100644
 --- a/src/utils/settings.ts

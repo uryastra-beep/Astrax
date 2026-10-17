@@ -12,6 +12,8 @@ Spicy Lyrics. The fork only adds a visual layer on top:
 - **Word sync**: a drift auditor (checks the lyric clock every 2 s), a 50 ms lead per word and a
   per-output-device audio latency. While lyrics are open, press `,` (earlier) or `.` (later) to
   nudge the lead for the current output device (10 ms steps); it is remembered per device.
+- **Instrumental mode**: titles containing "instrumental", "inst.", "karaoke" or "backing track"
+  skip the lyrics fetch and show "♪ Instrumental".
 
 Everything else is configurable under **Glass Lyrics** in the lyrics settings panel.
 

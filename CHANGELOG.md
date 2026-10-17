@@ -2,6 +2,9 @@
 
 ## 1.8.1
 
+- **Glass Lyrics: instrumental mode**. If the song title contains "instrumental", "inst.", "karaoke" or
+  "backing track", the lyrics fetch is skipped and a "♪ Instrumental" notice is shown (no Discord
+  link; hidden in fullscreen like "lyrics not found"), instead of a skeleton and a pointless 404.
 - **Glass Lyrics: better word-by-word sync**.
   - A drift auditor checks the lyric clock against the player every 2 seconds and gently corrects
     only a *change* in the gap (stalled source, output-latency shifts, crossfades), so a calibrated
