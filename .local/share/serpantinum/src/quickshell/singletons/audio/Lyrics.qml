@@ -13,9 +13,32 @@ Item {
     property var customPlayer: null
     readonly property var player: customPlayer || MprisController.activePlayer
 
+    // Sources that have no real song lyrics: Spotify's DJ narration (not a
+    // track) and short-video sites playing through a browser (TikTok etc.),
+    // where the title/artist are a username or caption and lrclib/YouTube
+    // would "match" some unrelated song in another language.
+    readonly property bool lyricsEligible: {
+        try {
+            if (!player) return false;
+            const md = player.metadata || {};
+            const id = String(md["mpris:trackid"] || "");
+            const title = String(player.trackTitle || "");
+            const artist = String(player.trackArtist || "");
+            const url = String(md["xesam:url"] || "").toLowerCase();
+            const who = String(player.identity || player.desktopEntry || "").toLowerCase();
+            if (/spotify/.test(who) && id !== "" && !/\/track\/|:track:/.test(id)) return false;
+            if (/^dj\b/i.test(artist.trim()) || /^dj\b/i.test(title.trim())) return false;
+            if (/(tiktok|instagram|facebook|twitter|snapchat|reddit)\.|fb\.watch|\/\/(www\.)?x\.com/.test(url)) return false;
+            if (/tiktok/i.test(title) || /tiktok/i.test(artist)) return false;
+            return true;
+        } catch (e) {
+            return true;
+        }
+    }
+
     readonly property bool isMediaActive: {
         try {
-            return !!player && player.playbackState !== MprisPlaybackState.Stopped && (player.trackTitle || "") !== "";
+            return lyricsEligible && !!player && player.playbackState !== MprisPlaybackState.Stopped && (player.trackTitle || "") !== "";
         } catch (e) {
             return false;
         }

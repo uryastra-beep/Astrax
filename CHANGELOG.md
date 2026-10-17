@@ -2,6 +2,11 @@
 
 ## 1.8.1
 
+- **No more invented lyrics for non-songs**: the lyrics lookup (`Lyrics.qml`) now has a `lyricsEligible` check.
+  It skips Spotify's DJ narration (a track id that isn't `/track/`, or an artist/title starting with "DJ")
+  and browsers playing TikTok, Instagram, Facebook, Twitter/X, Snapchat or Reddit, which used to match an
+  unrelated song in another language. `patches/serpantinum-Lyrics.qml-eligible.patch` re-applies it on
+  Serpantinum's own file after a Serpantinum update (or run `./install.sh` again).
 - **Glass Lyrics: instrumental mode**. If the song title contains "instrumental", "inst.", "karaoke" or
   "backing track", the lyrics fetch is skipped and a "♪ Instrumental" notice is shown (no Discord
   link; hidden in fullscreen like "lyrics not found"), instead of a skeleton and a pointless 404.
