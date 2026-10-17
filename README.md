@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.8.0 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.8.1 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.12** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install

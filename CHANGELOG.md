@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.8.1
+
+- **Glass Lyrics: better word-by-word sync**.
+  - A drift auditor checks the lyric clock against the player every 2 seconds and gently corrects
+    only a *change* in the gap (stalled source, output-latency shifts, crossfades), so a calibrated
+    lead is never fought. Jumps above 400 ms (seeks, track changes) are left to the normal snap.
+  - Each word now lights up 50 ms early (it was 0) to match how it is perceived.
+  - Per-device audio latency: Bluetooth sits 150-250 ms behind wired audio, so the lead is
+    remembered per output device. Nudge it with `,` (earlier) or `.` (later) while lyrics are open
+    (10 ms steps, from -200 to 600 ms, default 100 ms); a notification shows the value.
+  - `spicetify/glass-lyrics/glass-lyrics.js` is rebuilt and `glass-lyrics.patch` regenerated (still
+    on Spicy Lyrics `fcc5f83`). Re-run `spicetify/glass-lyrics/install.sh` to update it.
+
 ## 1.8.0
 
 - **Astrax version and updates in Serpantinum's menu**: `SUPER+C` > About shows `Astrax v1.8.0` under

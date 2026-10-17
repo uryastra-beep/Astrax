@@ -463,10 +463,10 @@ index 0000000..79647a8
 +}
 diff --git a/src/custom/index.ts b/src/custom/index.ts
 new file mode 100644
-index 0000000..f7df391
+index 0000000..ba4a002
 --- /dev/null
 +++ b/src/custom/index.ts
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,78 @@
 +// Glass Lyrics fork — entry point for everything custom.
 +// Upstream files only carry two hooks: `onNowBarUpdate` (NowBar.ts) and the
 +// <GlassSection> row in the settings panel. Everything else lives here.
@@ -483,6 +483,7 @@ index 0000000..f7df391
 +  $mixEnabled,
 +  $mixLearnKey,
 +} from "./settings.ts";
++import { initLatency } from "./latency.ts";
 +import { initTransition, mixStartTaught } from "./transition.ts";
 +
 +function applyGlass() {
@@ -518,6 +519,7 @@ index 0000000..f7df391
 +  initialized = true;
 +  initCrossfade();
 +  initTransition();
++  initLatency();
 +  applyGlass();
 +  for (const store of [$glassEnabled, $glassStroke, $glassUnsungAlpha, $glassGlow]) store.listen(applyGlass);
 +  window.addEventListener("keydown", onLearnKey);
@@ -542,6 +544,73 @@ index 0000000..f7df391
 +    clearInterval(wait);
 +    init();
 +  }, 300);
++}
+diff --git a/src/custom/latency.ts b/src/custom/latency.ts
+new file mode 100644
+index 0000000..56017fa
+--- /dev/null
++++ b/src/custom/latency.ts
+@@ -0,0 +1,61 @@
++// Per-output-device audio latency. Bluetooth sits 150-250ms behind wired, so a
++// single fixed lead can't suit both. Nudge with "," (earlier) and "." (later);
++// the value is remembered per output device label.
++import { setOutputLatency } from "../utils/Gets/GetProgress.ts";
++
++const KEY = "GL:latencyByDevice";
++const DEFAULT_MS = 100;
++const STEP = 10;
++let device = "default";
++let table: Record<string, number> = {};
++
++function load() {
++  try {
++    table = JSON.parse(Spicetify.LocalStorage.get(KEY) || "{}") || {};
++  } catch {
++    table = {};
++  }
++}
++
++function apply() {
++  setOutputLatency(table[device] ?? DEFAULT_MS);
++}
++
++async function detectDevice() {
++  try {
++    const list = await navigator.mediaDevices.enumerateDevices();
++    const out = list.find((d) => d.kind === "audiooutput" && d.deviceId === "default") ??
++      list.find((d) => d.kind === "audiooutput");
++    const next = out?.label || "default";
++    if (next !== device) {
++      device = next;
++      apply();
++    }
++  } catch {
++    /* no device info: keep the shared default */
++  }
++}
++
++function onKey(e: KeyboardEvent) {
++  if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
++  if (e.key !== "," && e.key !== ".") return;
++  const t = e.target as HTMLElement | null;
++  if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
++  const next = (table[device] ?? DEFAULT_MS) + (e.key === "." ? STEP : -STEP);
++  table[device] = Math.max(-200, Math.min(600, next));
++  try {
++    Spicetify.LocalStorage.set(KEY, JSON.stringify(table));
++  } catch {
++    /* not persisted */
++  }
++  apply();
++  Spicetify.showNotification(`Glass Lyrics: lead ${table[device]}ms (${device})`);
++}
++
++export function initLatency() {
++  load();
++  apply();
++  detectDevice();
++  setInterval(detectDevice, 5000);
++  window.addEventListener("keydown", onKey);
 +}
 diff --git a/src/custom/mixTimes.ts b/src/custom/mixTimes.ts
 new file mode 100644
@@ -1056,6 +1125,103 @@ index 0000000..ec93314
 +    if (!on && s.phase !== "idle") teardown();
 +  });
 +}
+diff --git a/src/utils/Gets/GetProgress.ts b/src/utils/Gets/GetProgress.ts
+index d9e0648..6acb625 100644
+--- a/src/utils/Gets/GetProgress.ts
++++ b/src/utils/Gets/GetProgress.ts
+@@ -49,7 +49,11 @@ let canSyncNonLocalTimestamp = SpotifyPlayer?.IsPlaying ? syncTimings.length : 0
+ // Forward lead (ms) added to every position to compensate for audio-output
+ // latency. A perceptual dial, not a correctness value: raise it if the sweep
+ // lands behind the beat, lower it if it runs ahead.
+-const PROGRESS_POSITION_OFFSET = 100;
++let PROGRESS_POSITION_OFFSET = 100;
++/** Per-output-device latency lead (ms), set by custom/latency.ts. */
++export const setOutputLatency = (ms: number) => {
++  PROGRESS_POSITION_OFFSET = ms;
++};
+ // Deltas within this window are treated as jitter and smoothed; larger deltas
+ // (seeks/track changes) snap immediately. Kept well below any deliberate seek (>=1s).
+ const JITTER_RESYNC_THRESHOLD = 500;
+@@ -137,6 +141,53 @@ function normalizeProgress(position: number, isPlaying: boolean): number {
+   return predicted;
+ }
+ 
++// --- 2s drift auditor -------------------------------------------------------
++// Lyrics are timed in absolute ms, so a tempo change in the song never moves
++// them; what moves is the *clock* (stalled source, output-latency shifts,
++// crossfades). Every AUDIT_INTERVAL the auditor compares the lyric clock with
++// the player's own independent estimate. The steady gap between the two is
++// the calibrated lead and is left alone; only a *change* in that gap (relative
++// drift) is corrected, gently, so the calibration is never fought.
++const AUDIT_INTERVAL = 2000;
++// Relative drift below this is noise from the two sources' jitter.
++const AUDIT_DEADBAND = 45;
++// Drift above this is a seek/track change, handled by normalizeProgress snap.
++const AUDIT_MAX_FIX = 400;
++// Fraction of the measured drift corrected per audit (avoids overshoot).
++const AUDIT_GAIN = 0.6;
++let driftCorrection = 0;
++let auditBaseline: { Gap: number; TrackId: string | null } | null = null;
++let lastClock = 0;
++
++function auditLyricClock() {
++  try {
++    if (!Spicetify.Player.isPlaying() || SpotifyPlayer.GetContentType() !== "track") {
++      auditBaseline = null;
++      return;
++    }
++    const trackId = SpotifyPlayer.GetId() ?? null;
++    const gap = clampToTrack(Spicetify.Player.getProgress()) - lastClock;
++    if (!auditBaseline || auditBaseline.TrackId !== trackId || Math.abs(gap - auditBaseline.Gap) > AUDIT_MAX_FIX) {
++      driftCorrection = 0;
++      auditBaseline = { Gap: gap, TrackId: trackId };
++      return;
++    }
++    const drift = gap - auditBaseline.Gap;
++    if (Math.abs(drift) < AUDIT_DEADBAND) return;
++    const fix = drift * AUDIT_GAIN;
++    driftCorrection = Clamp(driftCorrection + fix, -AUDIT_MAX_FIX, AUDIT_MAX_FIX);
++    auditBaseline = { Gap: gap - fix, TrackId: trackId };
++  } catch (error) {
++    console.error("Lyrics auditor failed:", error);
++  }
++}
++
++function Clamp(v: number, min: number, max: number) {
++  return Math.max(min, Math.min(max, v));
++}
++
++setInterval(auditLyricClock, AUDIT_INTERVAL);
++
+ export const requestPositionSync = () => {
+   try {
+     const SpotifyPlatform = Spicetify.Platform;
+@@ -412,7 +463,11 @@ export default function GetProgress() {
+   }
+ 
+   const FinalPosition = Position + deltaTime;
+-  return normalizeProgress(FinalPosition + PROGRESS_POSITION_OFFSET - playbackOffset, true);
++  lastClock = normalizeProgress(
++    FinalPosition + PROGRESS_POSITION_OFFSET - playbackOffset + driftCorrection,
++    true
++  );
++  return lastClock;
+ }
+ 
+ // DEPRECATED
+diff --git a/src/utils/Lyrics/Animator/Shared.ts b/src/utils/Lyrics/Animator/Shared.ts
+index 4857b6e..51cec3e 100644
+--- a/src/utils/Lyrics/Animator/Shared.ts
++++ b/src/utils/Lyrics/Animator/Shared.ts
+@@ -1,6 +1,7 @@
+ const IdleLyricsScale = 0.95;
+ const IdleEmphasisLyricsScale = 0.95;
+-const timeOffset = 0;
++// Perceptual word lead (ms): light slightly before the sound reads as on time.
++const timeOffset = 50;
+ const DurationTimeOffset = 0;
+ const BlurMultiplier = 1.25;
+ 
 diff --git a/src/utils/settings.ts b/src/utils/settings.ts
 index 87dd1f0..7d4e32e 100644
 --- a/src/utils/settings.ts
