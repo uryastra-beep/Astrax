@@ -2,8 +2,6 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
     set -l config "$HOME/.config/hypr/config/plugins.lua"
     set -l config_fix "$HOME/.config/hypr/config/misc.lua"
     set -l modes tilt rotate stretch none
-    set -l stock_so "/var/cache/hyprpm/$USER/dynamic-cursors/dynamic-cursors.so"
-    set -l trail_so "$HOME/.local/share/hypr-plugins/dynamic-cursors-trail.so"
 
     if not test -f "$config"
         echo "mouse: $config doesn't exist" >&2
@@ -30,9 +28,6 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
             echo "  mouse stretch   stretches/deforms the cursor with speed"
             echo "  mouse none      no movement animation (keeps only shake to find)"
             echo
-            echo "  mouse trail on  cursor trail (UNOFFICIAL build, PR #161)"
-            echo "  mouse trail off back to the normal plugin"
-            echo
             echo "  mouse fix on    software cursor (visible when screen sharing, e.g. Discord/Vesktop)"
             echo "  mouse fix off   back to the hardware cursor (default)"
             echo
@@ -44,8 +39,10 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
             echo
             echo "Fixed modes per cursor shape (shape_rule in plugins.lua,"
             echo "not touched by this command):"
-            echo "  text (I)     stretch"
-            echo "  hand         tilt"
+            echo "  text (I)     rotate"
+            echo "  hand         rotate"
+            echo
+            echo "The reactive cursor's style and animations: cursor-style (SUPER+C > General)."
             return 0
 
         case $modes
@@ -71,79 +68,6 @@ function mouse --description 'Change the cursor animation mode (hypr-dynamic-cur
                 echo "mouse: wrote '$new_value' but Hyprland reports '$applied'" >&2
                 echo "       check the error banner on screen" >&2
                 return 1
-            end
-
-        case trail
-            # The trail lives in a patched build that is NOT in the config:
-            # it is loaded/unloaded live, so it never survives a restart
-            # (or a hyprctl reload triggered by something else).
-            switch "$argv[2]"
-                case on
-                    if not test -f "$trail_so"
-                        echo "mouse: missing $trail_so" >&2
-                        echo "       rebuild it with ~/.local/share/hypr-plugins/build-trail.sh" >&2
-                        return 1
-                    end
-
-                    if test (hyprctl getoption plugin:dynamic-cursors:trail:enabled 2>/dev/null | head -1) != "no such option"
-                        echo "trail: already on"
-                        return 0
-                    end
-
-                    hyprctl plugin unload "$stock_so" >/dev/null 2>&1
-                    if not string match -q "ok*" (hyprctl plugin load "$trail_so" 2>&1)
-                        echo "mouse: couldn't load the trail build" >&2
-                        hyprctl plugin load "$stock_so" >/dev/null 2>&1
-                        hyprctl reload >/dev/null 2>&1
-                        return 1
-                    end
-
-                    # the plugin was loaded live, so it starts with the
-                    # defaults: re-apply the global mode, shake and the
-                    # per-shape rules that plugins.lua normally sets.
-                    set -l current_mode (string match -rg '^\s*mode = "([a-z]+)", -- @mouse-mode$' < "$config" | head -1)
-                    test -n "$current_mode"; or set current_mode rotate
-                    set -l shake_actual (string match -rg '^\s*enabled = (true|false), -- @mouse-shake$' < "$config" | head -1)
-                    test -n "$shake_actual"; or set shake_actual false
-                    hyprctl repl "hl.config({ plugin = { dynamic_cursors = { enabled = true, mode = \"$current_mode\", shake = { enabled = $shake_actual }, trail = { enabled = true, rate = 3, lifetime = 500.0, fade = true } } } })" >/dev/null 2>&1
-                    hyprctl repl 'hl.plugin.dynamic_cursors.shape_rule({ shape = "text", mode = "stretch" })' >/dev/null 2>&1
-                    hyprctl repl 'hl.plugin.dynamic_cursors.shape_rule({ shape = "pointer", mode = "tilt" })' >/dev/null 2>&1
-
-                    if test (hyprctl getoption plugin:dynamic-cursors:trail:enabled 2>/dev/null | head -1) = "bool: true"
-                        echo "trail: on  (mode $current_mode -- ephemeral, gone on any reload)"
-                    else
-                        echo "mouse: the build loaded but the trail isn't active" >&2
-                        return 1
-                    end
-
-                case off
-                    if test (hyprctl getoption plugin:dynamic-cursors:trail:enabled 2>/dev/null | head -1) = "no such option"
-                        echo "trail: already off"
-                        return 0
-                    end
-
-                    hyprctl plugin unload "$trail_so" >/dev/null 2>&1
-                    hyprctl reload >/dev/null 2>&1
-
-                    # unloading by hand leaves the plugin bookkeeping out
-                    # of sync and the config's hl.plugin.load becomes a
-                    # no-op: if no plugin is left, load it explicitly.
-                    if test -z (hyprctl plugin list 2>/dev/null | string match -r 'dynamic-cursors')
-                        hyprctl plugin load "$stock_so" >/dev/null 2>&1
-                        hyprctl reload >/dev/null 2>&1
-                    end
-
-                    set -l m (hyprctl getoption plugin:dynamic-cursors:mode 2>/dev/null | string match -rg '^str: (.+)$')
-                    if test -n "$m"
-                        echo "trail: off  (mode $m)"
-                    else
-                        echo "mouse: the normal plugin didn't load back" >&2
-                        return 1
-                    end
-
-                case '*'
-                    echo "mouse: use 'mouse trail on' or 'mouse trail off'" >&2
-                    return 1
             end
 
         case fix

@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.6.1 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.7.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.2.12** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -168,11 +168,13 @@ colored bubbles that melt into each other. The colors follow what you're doing:
 
 1. **Music playing**: the same colors as the visualizer (the special mode's palette, or the song
    colors). Without a special mode they come from the album art.
-2. **No music**: the colors of the focused app's icon.
+2. **No music**: the colors of the focused app's icon (a terminal counts as no app).
 3. **Nothing**: a purple palette.
 4. **TV Girl mode** adds two black bubbles.
 
 Serpantinum's theme follows the lava colors too, except while a special song mode is active.
+The bubbles swell with the bass and the colors brighten with any loud sound (a small cava of its
+own, `cava.conf`), a bit softer when the palette is mostly white.
 
 Pick **`lava-live.mp4`** in `SUPER+W` > Videos to turn it on (the installer puts that small
 placeholder video in your wallpaper folder; it is paused while the lava runs). Picking any other
@@ -185,6 +187,55 @@ Serpantinum update; `patches/serpantinum-Wallpaper.qml-wort.patch` re-applies th
 ```bash
 cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum-Wallpaper.qml-wort.patch
 ```
+
+### Reactive cursor
+
+A patched [hypr-dynamic-cursors](https://github.com/virtcode/hypr-dynamic-cursors) (BSD-3-Clause,
+source in [`plugins/dynamic-cursors`](plugins/dynamic-cursors), changes in its `PATCHES.md`) draws a
+colored glow around a plain arrow, depending on what the cursor means:
+
+| Glow | Cursor type |
+|---|---|
+| blue | clickable (links, buttons) |
+| white | text |
+| light blue | draggable |
+| orange | crosshair |
+| pink | resize |
+| green | copy |
+| red | error / not allowed |
+| half blue, half white | alias |
+| every color, spinning | loading |
+| purple | anything else |
+
+Animations: a continuous light trail, the arrow shrinks on click, arrow and light stretch toward the
+scroll direction and spring back, a 320 ms color fade, stretch by speed and rotation with movement.
+
+Pick the style live in Serpantinum's menu (`SUPER+C` > General > **Cursor style**):
+**Normal (classic white)** (Bibata-Modern-Ice, no glow and no animations), **Astrax** or
+**High contrast** (another palette, based on Okabe-Ito). Under the selector there's a legend (each
+color and what it means) and a switch for every animation. From a terminal: `cursor-style
+normal|astrax|highcontrast`, `cursor-style anim <name> 0|1`.
+
+Color is the only cue that tells the cursor types apart. Making the colors configurable, or adding
+different shapes per type, is future work.
+
+- **Cursor lock:** apps can't set their own cursor image (they all show the arrow), except a hidden
+  cursor and the window classes listed in `~/.config/cursor-allow.txt` (games, by default).
+- **Safety net** (`plugins.lua`): the patched plugin only loads at login, and only if it was built
+  against the installed Hyprland headers. If it crashes in the first 25 s, the next login falls back to
+  the stock hyprpm plugin (`rm -r ~/.cache/hypr-trail` to try again).
+- **Rebuild it after every Hyprland update**: `cursor-plugin check` tells you, `cursor-plugin build`
+  rebuilds it (until then the stock plugin is used). **Never hot-reload the plugin** (`hyprctl plugin
+  load/unload`): log out and back in instead.
+- The arrow-only theme `Bibata-ArrowBare` is derived from [Bibata](https://github.com/ful1e5/Bibata_Cursor)
+  (GPL-3.0, see its `LICENSE-NOTE.md`).
+- [`docs/cursor-test.html`](docs/cursor-test.html) is a page with every cursor type, to try them all.
+- Serpantinum's menu row is a patch to its `GeneralTab.qml`: a Serpantinum update overwrites it.
+  `./install.sh` puts it back, or re-apply it by hand:
+
+  ```bash
+  cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum-GeneralTab.qml-cursor-style.patch
+  ```
 
 ### Intro, outro and the power wave
 
@@ -216,7 +267,9 @@ cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum
 | `vm caelestia\|serpantium\|status` | switch shells live without restarting Hyprland; it reloads the binds of the new shell and goes back to the old one if the new one fails to start |
 | `hz p1\|p2 set <hz>`, `check Hz all` | refresh rate per monitor, capped at what the screen advertises (overclocks only for panels you list in `~/.config/astrax/hz-limits`) |
 | `workspace status` | open apps per workspace and the bind to reach each one |
-| `mouse rotate\|tilt\|stretch\|none` | cursor animation (hypr-dynamic-cursors); `mouse trail on` needs `~/.local/share/hypr-plugins/build-trail.sh` first |
+| `mouse rotate\|tilt\|stretch\|none` | cursor movement animation (hypr-dynamic-cursors) |
+| `cursor-style normal\|astrax\|highcontrast` | reactive cursor style; `cursor-style anim <name> 0\|1` toggles an animation (also in `SUPER+C` > General) |
+| `cursor-plugin check\|build` | is the reactive cursor built for this Hyprland? / rebuild it (after every Hyprland update) |
 | `lava-wallpaper on\|off\|toggle\|status` | WORT, the lava wallpaper (normally driven by picking `lava-live.mp4` in `SUPER+W`) |
 | `srp-update` | back up everything, then update Serpantinum (see the warning under Install) |
 | `astrax-restore` | undo `srp-update`: restore the latest backup (`--list`, or pass a file) |

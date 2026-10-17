@@ -393,7 +393,14 @@ def activate_mode(mode, a, b):
 def clear_special_mode():
     global _active_mode
     if _active_mode == "":
-        return
+        # A restored state file can disagree with the running detector:
+        # only skip when the flag file also says no mode is active.
+        try:
+            with open(MODE_FLAG_FILE) as f:
+                if f.read().strip() in ("", "0"):
+                    return
+        except FileNotFoundError:
+            pass
     prev = _active_mode
     _active_mode = ""
     write_flag("0")
@@ -721,7 +728,11 @@ def tick():
     set_cava_mode("cava")
 
     if playerctl_status() != "Playing":
-        return  # paused: leave the border as it is
+        clear_special_mode()
+        # Re-evaluate the same track when playback resumes.
+        _last_applied_art_url = None
+        _candidate_art_url = None
+        return  # paused: keep the border colors, turn the special shell theme off
 
     _reverted_since_stop = False
 

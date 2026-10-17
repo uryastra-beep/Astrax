@@ -53,6 +53,16 @@ check "lava-live.mp4 in Serpantinum's wallpaperDir ($wall_dir)" cmp -s wallpaper
 check "lava shader is compiled" [ -s "$HOME/.config/quickshell/lava-wallpaper/lava.frag.qsb" ]
 check "Wallpaper.qml has the WORT hooks" grep -q lavaBootTimer "$HOME/.local/share/serpantinum/src/quickshell/singletons/theme/Wallpaper.qml"
 
+echo "== reactive cursor"
+cdir="$HOME/.local/share/hypr-plugins/astrax-cursor"
+check "plugin source copied" [ -f "$cdir/Makefile" ]
+check "plugin built" [ -s "$cdir/out/dynamic-cursors.so" ]
+check "built against the installed Hyprland headers" [ "$(cat "$cdir/built.hash" 2>/dev/null)" = "$(bash scripts/cursor-plugin.sh hash)" ]
+check "cursor-plugin check says up to date" bash scripts/cursor-plugin.sh check
+check "Bibata-ArrowBare theme installed" [ -f "$HOME/.local/share/icons/Bibata-ArrowBare/index.theme" ]
+check "default style is astrax" [ "$(bash scripts/cursor-style.sh get)" = astrax ]
+check "Serpantinum menu has the cursor style row" grep -q cursorStyleCodes "$HOME/.local/share/serpantinum/src/quickshell/guide/general/GeneralTab.qml"
+
 echo "== system files"
 check "SDDM session installed" cmp -s system/hyprland-serpantinum.desktop /usr/share/wayland-sessions/hyprland-serpantinum.desktop
 

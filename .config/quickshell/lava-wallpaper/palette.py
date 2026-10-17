@@ -183,6 +183,11 @@ def theme_from_palette(data, special_mode_active):
 PURPLES = [{"hex": h, "w": w} for h, w in (("a855f7", 1.0), ("7552b3", 0.9), ("5b3a9e", 0.8), ("c084fc", 0.6),
                                             ("3b2470", 0.7), ("8b5cf6", 0.8), ("2a1a4e", 0.5))]
 
+# terminals have no colorful icon of their own: treat them like no app at all (purple palette)
+TERMINALS = {"kitty", "alacritty", "foot", "footclient", "ghostty", "com.mitchellh.ghostty", "wezterm",
+             "org.wezfurlong.wezterm", "konsole", "xterm", "urxvt", "st", "org.gnome.terminal",
+             "gnome-terminal-server", "xfce4-terminal", "tilix", "terminator", "cool-retro-term"}
+
 WALL_DIR = os.path.expanduser("~/.cache/serpantinum/wallpaper")
 
 def current_wallpapers():
@@ -227,7 +232,7 @@ def main():
                 key = ("app", cls)
                 if key != state:
                     state = key
-                    data = extract_app(cls) if cls else None
+                    data = None if (not cls or cls.lower() in TERMINALS) else extract_app(cls)
                     publish(data or PURPLES)
         except Exception as e:
             print(e, file=sys.stderr, flush=True)

@@ -49,6 +49,48 @@ ShellRoot {
     Behavior on k5 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
     Behavior on k6 { ColorAnimation { duration: 800; easing.type: Easing.InOutQuad } }
 
+    // Bass pulse: a small cava of its own (cava.conf, 6 mono bars) makes the bubbles swell
+    // with the bass and the colors brighten with any loud sound. pulseGain tones it down when
+    // the palette is mostly white, where the brightening would blow out.
+    property real bass: 0
+    property real bassAvg: 0
+    property real loud: 0      // hits across the whole spectrum (for the brightness)
+    property real loudAvg: 0
+
+    // Palette with whites (high brightness, low saturation) -> softer pulse
+    readonly property real pulseGain: {
+        let white = 0;
+        for (const c of target) {
+            const mx = Math.max(c.r, c.g, c.b), mn = Math.min(c.r, c.g, c.b);
+            const sat = mx > 0 ? (mx - mn) / mx : 0;
+            const w = Math.max(0, Math.min(1, (mx - 0.65) / 0.25)) * Math.max(0, Math.min(1, (0.45 - sat) / 0.3));
+            white = Math.max(white, w);
+        }
+        return 1.0 - 0.7 * white;
+    }
+    Process {
+        id: cavaProc
+        running: true
+        command: ["cava", "-p", Qt.resolvedUrl("cava.conf").toString().replace("file://", "")]
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                const p = data.split(";").filter(s => s.length > 0).map(s => parseInt(s, 10) || 0);
+                if (p.length < 2) return;
+                // hit = bass above its recent average (~1 s): only the beats light up,
+                // sustained volume doesn't
+                const b = (p[0] + p[1]) / 2 / 1000;
+                root.bassAvg = root.bassAvg * 0.98 + b * 0.02;
+                root.bass = Math.min(1, Math.max(0, b - root.bassAvg * 1.15 - 0.05) * 3.5);
+                const l = p.reduce((a, v) => a + v, 0) / p.length / 1000;
+                root.loudAvg = root.loudAvg * 0.98 + l * 0.02;
+                root.loud = Math.min(1, Math.max(0, l - root.loudAvg * 1.15 - 0.04) * 3.5);
+            }
+        }
+        onExited: cavaRestart.restart()
+    }
+    Timer { id: cavaRestart; interval: 500; onTriggered: cavaProc.running = true }
+
     property real t: 0
     Timer {
         interval: 33; running: true; repeat: true
@@ -78,6 +120,8 @@ ShellRoot {
 
                 property real time: root.t
                 property real aspect: width / Math.max(1, height)
+                property real bass: root.bass * root.pulseGain
+                property real loud: root.loud * root.pulseGain
                 function k(c, i) { return Qt.rgba(c.r, c.g, c.b, root.weights[i]); }
                 property vector4d k0: Qt.vector4d(root.k0.r, root.k0.g, root.k0.b, root.weights[0])
                 property vector4d k1: Qt.vector4d(root.k1.r, root.k1.g, root.k1.b, root.weights[1])

@@ -32,6 +32,8 @@ hl.on("hyprland.start", function ()
     -- waves (~5s, closes by itself). Runs first so it covers the startup.
     -- By hand: the `intro` command.
     hl.exec_cmd(os.getenv("HOME") .. "/scripts/intro.sh --boot")
+    -- reactive cursor: apply the saved style's theme (cursor-style, SUPER+C > General)
+    hl.exec_cmd(os.getenv("HOME") .. "/scripts/cursor-style.sh apply")
     -- intro when waking from suspend/hibernate without a lock (e.g. lid)
     hl.exec_cmd([[sh -c 'flock -n /tmp/resume-intro.lock bash ~/scripts/resume-intro.sh > /dev/null 2>&1']])
     -- HYPR_SHELL=serpantinum comes from the alternative SDDM session

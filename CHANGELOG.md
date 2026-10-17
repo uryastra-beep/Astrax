@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.7.0
+
+- **Reactive cursor**: a patched hypr-dynamic-cursors (`plugins/dynamic-cursors`, BSD-3-Clause) draws
+  a colored glow around the arrow depending on the cursor type: blue = clickable, white = text, light
+  blue = draggable, orange = crosshair, pink = resize, green = copy, red = error / not allowed, half
+  blue and half white = alias, every color spinning = loading, purple = anything else.
+  - Animations: a continuous light trail, shrink on click, scroll stretch (arrow and light) with a
+    spring back, a 320 ms color fade, stretch by speed and rotation with movement.
+  - Three styles picked live in Serpantinum's menu (`SUPER+C` > General > Cursor style): Normal
+    (classic white, no glow or animations), Astrax and High contrast (an Okabe-Ito based palette),
+    with a legend and a switch per animation. Also `cursor-style` from a terminal.
+  - Cursor lock: apps can't set their own cursor image, except a hidden cursor and the window
+    classes in `~/.config/cursor-allow.txt`.
+  - Safety net in `plugins.lua`: the patched plugin only loads at login and only if it was built
+    against the installed Hyprland headers; if it crashes in the first 25 s, the next login uses the
+    stock plugin. `cursor-plugin check|build` after Hyprland updates. Never hot-reload it.
+  - Color is the only cue between cursor types; configurable colors or distinct shapes are future work.
+  - New arrow-only cursor theme `Bibata-ArrowBare` (derived from Bibata, GPL-3.0),
+    `docs/cursor-test.html` to try every cursor, and `patches/serpantinum-GeneralTab.qml-cursor-style.patch`
+    for the menu row (re-apply it after a Serpantinum update, or run `./install.sh` again).
+  - The old unofficial trail build (`build-trail.sh`, `mouse trail on|off`, which hot-loaded the
+    plugin) is gone: the reactive cursor replaces it.
+- **WORT**: the bubbles swell with the bass and the colors brighten with any loud sound (its own small
+  cava, `cava.conf`), softer when the palette is mostly white. A focused terminal no longer counts as
+  an app: the lava keeps the idle purple palette.
+- **Special song modes**: pausing the music turns the special theme off (and the same song is
+  re-checked when it resumes), and a mode left on by a restored state file is now cleared too.
+- CI checks the reactive cursor after a clean install (built against the installed headers, theme,
+  menu row).
+
 ## 1.6.1
 
 **Faster song change detection.** The border, the widgets and the lava wallpaper now switch to the

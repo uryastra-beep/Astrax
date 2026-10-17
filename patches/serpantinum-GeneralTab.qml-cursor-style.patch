@@ -1,0 +1,231 @@
+--- a/src/quickshell/guide/general/GeneralTab.qml
++++ b/src/quickshell/guide/general/GeneralTab.qml
+@@ -2,6 +2,7 @@
+ import QtQuick.Layouts
+ import QtQuick.Effects
+ import Quickshell
++import Quickshell.Io
+ import "../../"
+ import "../../reusables"
+ import "../../reusables/guide"
+@@ -78,6 +79,78 @@
+     property var weatherUnitCodes: ["metric", "imperial", "standard"]
+     property var weatherUnitNames: ["Celsius", "Fahrenheit", "Kelvin"]
+ 
++    // ---- CURSOR STYLE (normal / astrax / highcontrast), see scripts/cursor-style.sh in Astrax ----
++    property string cursorStyle: "astrax"
++    property var cursorStyleCodes: ["normal", "astrax", "highcontrast"]
++    property var cursorStyleNames: ["Normal (classic white)", "Astrax (glow + animations)", "High contrast"]
++
++    function cursorSolid(c) { return [[0, c], [0.2, c], [0.4, c], [0.6, c], [0.8, c], [1, c]]; }
++    function cursorSplit(a, b) { return [[0, a], [0.3, a], [0.35, a], [0.65, b], [0.7, b], [1, b]]; }
++    function cursorWheel(cs) { return [[0, cs[0]], [0.2, cs[1]], [0.4, cs[2]], [0.6, cs[3]], [0.8, cs[4]], [1, cs[5]]]; }
++
++    // what each glow color means (same palettes as the dynamic-cursors plugin)
++    property var cursorLegend: {
++        let p = cursorStyle === "highcontrast"
++            ? { click: "#56b4e9", text: "#ffffff", drag: "#f0e442", cross: "#e69f00", resize: "#cc79a7", copy: "#009e73", error: "#d55e00", def: "#9b8cff",
++                wheel: ["#56b4e9", "#ffffff", "#f0e442", "#e69f00", "#cc79a7", "#009e73"] }
++            : { click: "#2f6bff", text: "#ffffff", drag: "#5cd6ff", cross: "#ff8a1f", resize: "#ff4fb8", copy: "#2ee86b", error: "#ff2d3d", def: "#7a2cf0",
++                wheel: ["#2f6bff", "#ffffff", "#5cd6ff", "#ff8a1f", "#ff4fb8", "#7a2cf0"] };
++        if (cursorStyle === "normal") return [];
++        return [
++            { stops: cursorSolid(p.click),  label: "Clickable: links and buttons (where the hand used to appear)" },
++            { stops: cursorSolid(p.text),   label: "Text: text fields and selectable text" },
++            { stops: cursorSolid(p.drag),   label: "Draggable: grab, move and drag & drop" },
++            { stops: cursorSolid(p.cross),  label: "Crosshair: precise selection and cells" },
++            { stops: cursorSolid(p.resize), label: "Resizable: window and panel edges" },
++            { stops: cursorWheel(p.wheel),  label: "Loading: the glow splits into every color and spins" },
++            { stops: cursorSolid(p.copy),   label: "Copy: copy on drop" },
++            { stops: cursorSplit(p.click, p.text), label: "Alias: create a link or shortcut" },
++            { stops: cursorSolid(p.error),  label: "Forbidden: not allowed / cannot drop here" },
++            { stops: cursorSolid(p.def),    label: "Normal: default arrow, help, menus and zoom" }
++        ];
++    }
++
++    // which animations of the Astrax cursor are on (~/.config/cursor-anims, managed by cursor-style)
++    property var cursorAnims: ({ trail: true, click: true, scroll: true, colorfade: true, roulette: true, speed: true, rotate: true })
++    property var cursorAnimList: [
++        { key: "trail",     label: "Light trail",            desc: "The glow leaves a continuous streak behind the mouse" },
++        { key: "click",     label: "Click shrink",           desc: "The arrow shrinks while a mouse button is held" },
++        { key: "scroll",    label: "Scroll stretch",         desc: "The arrow and glow stretch toward the scroll direction, then spring back" },
++        { key: "colorfade", label: "Glow color fade",        desc: "The glow fades smoothly when its color changes" },
++        { key: "roulette",  label: "Loading roulette",       desc: "While loading, the glow splits into every color and spins" },
++        { key: "speed",     label: "Stretch by speed",       desc: "The arrow stretches when you move the mouse fast" },
++        { key: "rotate",    label: "Rotate with movement",   desc: "The arrow turns toward where the mouse is moving" }
++    ]
++
++    Process {
++        id: cursorAnimsReader
++        running: true
++        command: ["cursor-style", "anims"]
++        stdout: StdioCollector {
++            onStreamFinished: {
++                let o = Object.assign({}, generalTabRoot.cursorAnims);
++                this.text.split("\n").forEach(function(line) {
++                    let m = line.trim().split("=");
++                    if (m.length === 2 && o[m[0]] !== undefined) o[m[0]] = (m[1] !== "0");
++                });
++                generalTabRoot.cursorAnims = o;
++            }
++        }
++    }
++
++    Process {
++        id: cursorStyleReader
++        running: true
++        command: ["cursor-style", "get"]
++        stdout: StdioCollector {
++            onStreamFinished: {
++                let v = this.text.trim();
++                if (generalTabRoot.cursorStyleCodes.indexOf(v) !== -1)
++                    generalTabRoot.cursorStyle = v;
++            }
++        }
++    }
++
+     Connections {
+         target: Config
+         function onSettingsLoaded() {
+@@ -623,6 +696,141 @@
+                 }
+             }
+ 
++            SettingsBlob {
++                SettingsRow {
++                    rootObj: generalTabRoot.rootObj
++                    icon: "󰍽"
++                    title: "Cursor style"
++                    description: "Classic white cursor, our glowing cursor or a high-contrast palette"
++                    searchKeywords: "cursor mouse pointer halo glow contrast accessibility palette style"
++
++                    Dropdown {
++                        id: cursorStyleDropdown
++                        implicitWidth: rootObj.s(230)
++                        implicitHeight: rootObj.s(32)
++                        options: generalTabRoot.cursorStyleNames
++                        currentIndex: Math.max(0, generalTabRoot.cursorStyleCodes.indexOf(generalTabRoot.cursorStyle))
++                        accentColor: ThemeBackend.mauve
++                        baseColor: ThemeBackend.surface0
++                        hoverColor: ThemeBackend.surface1
++                        dropdownColor: ThemeBackend.surface0
++                        borderColor: Qt.alpha(ThemeBackend.surface2, 0.6)
++                        textColor: ThemeBackend.text
++                        activeTextColor: ThemeBackend.crust
++                        cornerRadius: ThemeBackend.borderRadius
++                        fontPixelSize: rootObj.s(11)
++                        onValueChanged: function(index, value) {
++                            generalTabRoot.cursorStyle = generalTabRoot.cursorStyleCodes[index];
++                            Quickshell.execDetached(["cursor-style", generalTabRoot.cursorStyle]);
++                        }
++                    }
++
++                    bottomContent: [
++                        ColumnLayout {
++                            Layout.fillWidth: true
++                            spacing: rootObj.s(6)
++
++                            Text {
++                                visible: generalTabRoot.cursorStyle === "normal"
++                                Layout.fillWidth: true
++                                wrapMode: Text.WordWrap
++                                text: "Classic white cursor: no glow, no animations, and apps can use their own cursors."
++                                color: ThemeBackend.subtext0
++                                font.family: ThemeBackend.fontFamily
++                                font.pixelSize: rootObj.s(12)
++                            }
++
++                            Repeater {
++                                model: generalTabRoot.cursorLegend
++                                delegate: RowLayout {
++                                    required property var modelData
++                                    Layout.fillWidth: true
++                                    spacing: rootObj.s(10)
++
++                                    Rectangle {
++                                        Layout.preferredWidth: rootObj.s(14)
++                                        Layout.preferredHeight: rootObj.s(14)
++                                        radius: height / 2
++                                        border.width: 1
++                                        border.color: Qt.alpha(ThemeBackend.text, 0.25)
++                                        gradient: Gradient {
++                                            orientation: Gradient.Horizontal
++                                            GradientStop { position: modelData.stops[0][0]; color: modelData.stops[0][1] }
++                                            GradientStop { position: modelData.stops[1][0]; color: modelData.stops[1][1] }
++                                            GradientStop { position: modelData.stops[2][0]; color: modelData.stops[2][1] }
++                                            GradientStop { position: modelData.stops[3][0]; color: modelData.stops[3][1] }
++                                            GradientStop { position: modelData.stops[4][0]; color: modelData.stops[4][1] }
++                                            GradientStop { position: modelData.stops[5][0]; color: modelData.stops[5][1] }
++                                        }
++                                    }
++
++                                    Text {
++                                        Layout.fillWidth: true
++                                        text: modelData.label
++                                        wrapMode: Text.WordWrap
++                                        color: ThemeBackend.text
++                                        font.family: ThemeBackend.fontFamily
++                                        font.pixelSize: rootObj.s(12)
++                                    }
++                                }
++                            }
++
++                            Text {
++                                visible: generalTabRoot.cursorStyle !== "normal"
++                                Layout.topMargin: rootObj.s(8)
++                                text: "Animations"
++                                color: ThemeBackend.mauve
++                                font.family: ThemeBackend.fontFamily
++                                font.pixelSize: rootObj.s(13)
++                                font.bold: true
++                            }
++
++                            Repeater {
++                                model: generalTabRoot.cursorStyle !== "normal" ? generalTabRoot.cursorAnimList : []
++                                delegate: RowLayout {
++                                    required property var modelData
++                                    Layout.fillWidth: true
++                                    spacing: rootObj.s(10)
++
++                                    ColumnLayout {
++                                        Layout.fillWidth: true
++                                        spacing: 0
++                                        Text {
++                                            text: modelData.label
++                                            color: ThemeBackend.text
++                                            font.family: ThemeBackend.fontFamily
++                                            font.pixelSize: rootObj.s(12)
++                                        }
++                                        Text {
++                                            Layout.fillWidth: true
++                                            text: modelData.desc
++                                            wrapMode: Text.WordWrap
++                                            color: ThemeBackend.subtext0
++                                            font.family: ThemeBackend.fontFamily
++                                            font.pixelSize: rootObj.s(10)
++                                        }
++                                    }
++
++                                    Toggle {
++                                        checked: generalTabRoot.cursorAnims[modelData.key] !== false
++                                        accentColor: ThemeBackend.mauve
++                                        baseColor: ThemeBackend.surface1
++                                        handleColor: ThemeBackend.crust
++                                        handleOffColor: ThemeBackend.text
++                                        onToggled: function(c) {
++                                            let o = Object.assign({}, generalTabRoot.cursorAnims);
++                                            o[modelData.key] = c;
++                                            generalTabRoot.cursorAnims = o;
++                                            Quickshell.execDetached(["cursor-style", "anim", modelData.key, c ? "1" : "0"]);
++                                        }
++                                    }
++                                }
++                            }
++                        }
++                    ]
++                }
++            }
++
+             SettingsRow {
+                 rootObj: generalTabRoot.rootObj
+                 icon: "󰆏"

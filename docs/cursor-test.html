@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cursor test</title>
+<style>
+  /* Dark night-blue theme */
+  :root {
+    --bg: #0a1230; --card: #121c46; --card2: #172256; --line: #26356f; --txt: #e8edff; --dim: #93a0d4;
+    --blue: #2f6bff; --white: #ffffff; --lightblue: #5cd6ff; --orange: #ff8a1f; --pink: #ff4fb8;
+    --green: #2ee86b; --red: #ff2d3d; --purple: #7a2cf0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--txt); font: 15px/1.45 "Noto Sans", system-ui, sans-serif; padding: 130px 28px 60px; }
+
+  /* Fixed bar: legend + current cursor */
+  #top { position: fixed; inset: 0 0 auto 0; z-index: 10; background: #070d24ee; backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); padding: 10px 28px; }
+  #top h1 { margin: 0 0 6px; font-size: 17px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--dim); }
+  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+  #status { position: fixed; right: 20px; bottom: 20px; z-index: 11; background: var(--card2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; min-width: 250px; box-shadow: 0 8px 30px #0008; }
+  #status small { display: block; color: var(--dim); font-size: 12px; }
+  #status b { font-size: 22px; font-family: ui-monospace, monospace; }
+
+  section { margin: 0 0 34px; }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: center; gap: 10px; }
+  h2 .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+  h2 small { color: var(--dim); font-weight: 400; font-size: 13px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+
+  /* Test zone: big, so it's easy to move in and out */
+  .zone { min-height: 100px; min-width: 160px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; justify-content: center; gap: 4px; transition: background .15s, border-color .15s; user-select: none; }
+  .zone:hover { background: var(--card2); }
+  .zone b { font-family: ui-monospace, monospace; font-size: 14px; }
+  .zone span { color: var(--dim); font-size: 12px; }
+  .zone.sel { user-select: text; }
+
+  /* Each category with the glow's reference color */
+  .blue .zone:hover { border-color: var(--blue); } .blue .dot { background: var(--blue); }
+  .white .zone:hover { border-color: var(--white); } .white .dot { background: var(--white); }
+  .lightblue .zone:hover { border-color: var(--lightblue); } .lightblue .dot { background: var(--lightblue); }
+  .orange .zone:hover { border-color: var(--orange); } .orange .dot { background: var(--orange); }
+  .pink .zone:hover { border-color: var(--pink); } .pink .dot { background: var(--pink); }
+  .wheel .dot { background: conic-gradient(var(--blue), var(--white), var(--lightblue), var(--orange), var(--pink), var(--purple), var(--blue)); }
+  .green .zone:hover { border-color: var(--green); } .green .dot { background: var(--green); }
+  .alias .zone:hover { border-color: var(--blue); } .alias .dot { background: linear-gradient(90deg, var(--blue) 35%, var(--white) 65%); }
+  .red .zone:hover { border-color: var(--red); } .red .dot { background: var(--red); }
+  .purple .zone:hover { border-color: var(--purple); } .purple .dot { background: var(--purple); }
+
+  /* Real elements inside the zones */
+  button.fake, a.fake { font: inherit; color: #fff; background: var(--blue); border: 0; border-radius: 8px; padding: 9px 14px; width: fit-content; text-decoration: none; }
+  a.fake { background: transparent; color: var(--lightblue); text-decoration: underline; padding: 0; }
+  input[type=text], textarea { font: inherit; color: var(--txt); background: #0a1230; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; }
+  textarea { resize: none; height: 60px; }
+  .vertical { writing-mode: vertical-rl; height: 90px; }
+  #drag { width: 130px; height: 70px; background: var(--lightblue); color: #04202c; border-radius: 10px; display: grid; place-items: center; font-weight: 700; position: relative; }
+  #canvas { height: 130px; background: repeating-linear-gradient(0deg, transparent 0 24px, #26356f55 24px 25px), repeating-linear-gradient(90deg, transparent 0 24px, #26356f55 24px 25px), var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  #resizable { resize: both; overflow: auto; width: 220px; height: 110px; min-width: 120px; min-height: 70px; background: var(--card); border: 1px solid var(--pink); border-radius: 12px; padding: 12px; cursor: default; }
+  #split { display: grid; grid-template-columns: 1fr 10px 1fr; height: 90px; }
+  #split > div:not(.bar) { background: var(--card); border-radius: 10px; padding: 10px; }
+  #split .bar { cursor: col-resize; background: var(--pink); border-radius: 6px; margin: 0 2px; }
+
+  .wide { grid-column: 1 / -1; }
+  .note { color: var(--dim); font-size: 13px; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+
+<div id="top">
+  <h1>Cursor test</h1>
+  <!-- Open it in a browser to see every cursor type of Astrax's reactive cursor. Color is the only cue that tells them apart. -->
+  <div class="legend">
+    <span><i style="background:var(--blue)"></i>blue = clickable</span>
+    <span><i style="background:var(--white)"></i>white = text</span>
+    <span><i style="background:var(--lightblue)"></i>light blue = draggable</span>
+    <span><i style="background:var(--orange)"></i>orange = crosshair</span>
+    <span><i style="background:var(--pink)"></i>pink = resize</span>
+    <span><i style="background:conic-gradient(var(--blue),var(--white),var(--lightblue),var(--orange),var(--pink),var(--purple),var(--blue))"></i>spinning colors = loading</span>
+    <span><i style="background:var(--green)"></i>green = copy</span>
+    <span><i style="background:linear-gradient(90deg,var(--blue) 35%,var(--white) 65%)"></i>blue/white = alias</span>
+    <span><i style="background:var(--red)"></i>red = forbidden</span>
+    <span><i style="background:var(--purple)"></i>purple = default</span>
+  </div>
+</div>
+
+<div id="status"><small>Cursor in this zone</small><b id="cur">default</b></div>
+
+<!-- 1. CLICKABLE (blue) -->
+<section class="blue">
+  <h2><span class="dot"></span>Clickable <small>blue · cursor: pointer</small></h2>
+  <div class="grid">
+    <div class="zone" style="cursor:pointer"><b>pointer</b><span>clickable zone</span><button class="fake" style="cursor:pointer">Button</button></div>
+    <div class="zone" style="cursor:pointer"><b>pointer</b><span>link</span><a class="fake" href="#" style="cursor:pointer" onclick="return false">A test link</a></div>
+    <div class="zone" style="cursor:pointer"><b>pointer</b><span>clickable card</span></div>
+    <div class="zone" style="cursor:pointer"><b>pointer</b><span>clickable icon</span><span style="font-size:30px">⚙️</span></div>
+  </div>
+</section>
+
+<!-- 2. TEXT (white) -->
+<section class="white">
+  <h2><span class="dot"></span>Text <small>white · text, vertical-text</small></h2>
+  <div class="grid">
+    <div class="zone sel" style="cursor:text"><b>text</b><span>selectable paragraph</span><p style="margin:0">Hover and select this text with the mouse.</p></div>
+    <div class="zone" style="cursor:text"><b>text</b><span>input</span><input type="text" value="Type here" style="cursor:text"></div>
+    <div class="zone" style="cursor:text"><b>text</b><span>textarea</span><textarea style="cursor:text">Multi-line text</textarea></div>
+    <div class="zone" style="cursor:vertical-text"><b>vertical-text</b><span class="vertical" style="cursor:vertical-text">Vertical text</span></div>
+  </div>
+</section>
+
+<!-- 3. DRAGGABLE (light blue) -->
+<section class="lightblue">
+  <h2><span class="dot"></span>Draggable <small>light blue · grab, grabbing, move, all-scroll</small></h2>
+  <div class="grid">
+    <div class="zone"><b>grab → grabbing</b><span>drag the box, the cursor changes</span><div id="drag" style="cursor:grab">Drag me</div></div>
+    <div class="zone" style="cursor:grab"><b>grab</b><span>open hand</span></div>
+    <div class="zone" style="cursor:grabbing"><b>grabbing</b><span>closed hand</span></div>
+    <div class="zone" style="cursor:move"><b>move</b><span>move</span></div>
+    <div class="zone" style="cursor:all-scroll"><b>all-scroll</b><span>scroll in every direction</span></div>
+  </div>
+</section>
+
+<!-- 4. CROSSHAIR (orange) -->
+<section class="orange">
+  <h2><span class="dot"></span>Crosshair <small>orange · crosshair, cell</small></h2>
+  <div class="grid">
+    <div class="zone wide" id="canvas" style="cursor:crosshair"><b>crosshair</b><span>canvas with a crosshair cursor</span></div>
+    <div class="zone" style="cursor:cell"><b>cell</b><span>table cell</span></div>
+  </div>
+</section>
+
+<!-- 5. RESIZE (pink) -->
+<section class="pink">
+  <h2><span class="dot"></span>Resize <small>pink · every *-resize</small></h2>
+  <p class="note">The real panel is resized by dragging its bottom-right corner; the pink bar moves the divider.</p>
+  <div class="grid">
+    <div class="zone" style="cursor:n-resize"><b>n-resize</b></div>
+    <div class="zone" style="cursor:s-resize"><b>s-resize</b></div>
+    <div class="zone" style="cursor:e-resize"><b>e-resize</b></div>
+    <div class="zone" style="cursor:w-resize"><b>w-resize</b></div>
+    <div class="zone" style="cursor:ne-resize"><b>ne-resize</b></div>
+    <div class="zone" style="cursor:nw-resize"><b>nw-resize</b></div>
+    <div class="zone" style="cursor:se-resize"><b>se-resize</b></div>
+    <div class="zone" style="cursor:sw-resize"><b>sw-resize</b></div>
+    <div class="zone" style="cursor:ew-resize"><b>ew-resize</b></div>
+    <div class="zone" style="cursor:ns-resize"><b>ns-resize</b></div>
+    <div class="zone" style="cursor:nesw-resize"><b>nesw-resize</b></div>
+    <div class="zone" style="cursor:nwse-resize"><b>nwse-resize</b></div>
+    <div class="zone" style="cursor:col-resize"><b>col-resize</b></div>
+    <div class="zone" style="cursor:row-resize"><b>row-resize</b></div>
+    <div class="zone wide">
+      <b>A real resizable panel</b>
+      <div id="resizable"><span>Drag the bottom-right corner →</span></div>
+    </div>
+    <div class="zone wide">
+      <b>Draggable divider (col-resize)</b>
+      <div id="split"><div>Panel A</div><div class="bar"></div><div>Panel B</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. LOADING (spinning colors) -->
+<section class="wheel">
+  <h2><span class="dot"></span>Loading <small>every color, spinning · wait, progress</small></h2>
+  <div class="grid">
+    <div class="zone" style="cursor:wait"><b>wait</b><span>wait</span></div>
+    <div class="zone" style="cursor:progress"><b>progress</b><span>working in the background</span></div>
+    <div class="zone">
+      <b>Simulate loading</b><span>sets the cursor to "wait" for 4 seconds on the whole page</span>
+      <button class="fake" style="cursor:pointer" onclick="document.body.style.cursor='wait';document.querySelectorAll('*').forEach(e=>e.dataset.c=e.style.cursor);setTimeout(()=>{document.body.style.cursor='';},4000)">Load 4 s</button>
+    </div>
+  </div>
+</section>
+
+<!-- 7. COPY (green) and ALIAS -->
+<section class="green">
+  <h2><span class="dot"></span>Copy <small>green · copy</small></h2>
+  <div class="grid"><div class="zone" style="cursor:copy"><b>copy</b><span>copy on drop</span></div></div>
+</section>
+
+<section class="alias">
+  <h2><span class="dot"></span>Alias <small>half blue / half white with a fade · alias</small></h2>
+  <div class="grid"><div class="zone" style="cursor:alias"><b>alias</b><span>create a shortcut / link</span></div></div>
+</section>
+
+<!-- 8. FORBIDDEN (red) -->
+<section class="red">
+  <h2><span class="dot"></span>Forbidden <small>error red · no-drop, not-allowed</small></h2>
+  <div class="grid">
+    <div class="zone" style="cursor:no-drop"><b>no-drop</b><span>can't drop here</span></div>
+    <div class="zone" style="cursor:not-allowed"><b>not-allowed</b><span>action not allowed</span></div>
+    <div class="zone" style="cursor:not-allowed;opacity:.55"><b>not-allowed</b><span>disabled button</span><button class="fake" disabled style="cursor:not-allowed;background:#555">Disabled</button></div>
+  </div>
+</section>
+
+<!-- 9. DEFAULT (purple) -->
+<section class="purple">
+  <h2><span class="dot"></span>Default <small>purple · default, context-menu, help, zoom-in, zoom-out</small></h2>
+  <div class="grid">
+    <div class="zone" style="cursor:default"><b>default</b><span>normal arrow</span></div>
+    <div class="zone" style="cursor:context-menu"><b>context-menu</b><span>context menu</span></div>
+    <div class="zone" style="cursor:help"><b>help</b><span>help</span></div>
+    <div class="zone" style="cursor:zoom-in"><b>zoom-in</b><span>zoom in</span></div>
+    <div class="zone" style="cursor:zoom-out"><b>zoom-out</b><span>zoom out</span></div>
+  </div>
+</section>
+
+<script>
+  // Shows the CSS cursor of the zone under the mouse
+  const cur = document.getElementById('cur');
+  document.addEventListener('mouseover', e => {
+    cur.textContent = getComputedStyle(e.target).cursor.split(',')[0] || 'default';
+  });
+
+  // Draggable box: grab -> grabbing while dragging
+  const drag = document.getElementById('drag');
+  let dx = 0, dy = 0, sx, sy, down = false;
+  drag.addEventListener('mousedown', e => { down = true; sx = e.clientX - dx; sy = e.clientY - dy; drag.style.cursor = 'grabbing'; cur.textContent = 'grabbing'; e.preventDefault(); });
+  window.addEventListener('mousemove', e => { if (!down) return; dx = e.clientX - sx; dy = e.clientY - sy; drag.style.transform = `translate(${dx}px,${dy}px)`; });
+  window.addEventListener('mouseup', () => { if (!down) return; down = false; drag.style.cursor = 'grab'; });
+
+  // col-resize divider that really moves the columns
+  const split = document.getElementById('split'), bar = split.querySelector('.bar');
+  let resizing = false;
+  bar.addEventListener('mousedown', e => { resizing = true; e.preventDefault(); });
+  window.addEventListener('mouseup', () => resizing = false);
+  window.addEventListener('mousemove', e => {
+    if (!resizing) return;
+    const r = split.getBoundingClientRect();
+    const p = Math.min(80, Math.max(20, ((e.clientX - r.left) / r.width) * 100));
+    split.style.gridTemplateColumns = `${p}fr 10px ${100 - p}fr`;
+  });
+</script>
+</body>
+</html>

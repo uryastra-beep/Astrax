@@ -1,0 +1,4 @@
+# Apps whose own cursor IS respected (prefix of the window class, case-insensitive).
+# Every other app shows the theme's arrow. One per line.
+steam_app_
+gamescope

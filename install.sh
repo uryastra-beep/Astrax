@@ -79,6 +79,8 @@ declare -A CMD_TARGETS=(
     [srp-update]=srp-update.sh
     [astrax-restore]=astrax-restore.sh
     [lava-wallpaper]=lava-wallpaper.sh
+    [cursor-style]=cursor-style.sh
+    [cursor-plugin]=cursor-plugin.sh
     [outro]=outro.sh
     [hz]=hz-ctl.sh [Hz]=hz-ctl.sh [check]=hz-ctl.sh
     [widget]=widget-ctl.sh [widgets]=widget-ctl.sh
@@ -273,6 +275,25 @@ if confirm "Build/enable hypr-dynamic-cursors and infinite-desktop-v2 now? (sudo
     fi
 else
     echo "Skipped -- the \"m~N\" workspace binds need infinite-desktop-v2 to work."
+fi
+
+step "Reactive cursor (patched hypr-dynamic-cursors)"
+# The source goes to ~/.local/share/hypr-plugins/astrax-cursor and is built
+# there. plugins.lua only loads it at login, and only if it was built against
+# the installed Hyprland headers; otherwise it uses the stock hyprpm plugin.
+CURSOR_DIR="$HOME/.local/share/hypr-plugins/astrax-cursor"
+mkdir -p "$CURSOR_DIR"
+cp -r plugins/dynamic-cursors/. "$CURSOR_DIR/"
+[ -f "$HOME/.config/cursor-style" ] || echo astrax > "$HOME/.config/cursor-style"
+if confirm "Build the reactive cursor plugin now? (needs Hyprland's headers, about a minute)" y; then
+    if bash scripts/cursor-plugin.sh build; then
+        echo "Built -- it loads at your next login. Rebuild it after every Hyprland update: cursor-plugin build"
+    else
+        PLUGIN_FAILURES+=("build the reactive cursor (cursor-plugin build)")
+        echo "WARNING: the reactive cursor didn't build; the stock plugin is used meanwhile." >&2
+    fi
+else
+    echo "Skipped -- build it later with: cursor-plugin build"
 fi
 
 step "Glass Lyrics (Spotify, via Spicetify)"
