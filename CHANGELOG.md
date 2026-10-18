@@ -8,6 +8,7 @@
   lyrics Liner already downloaded to `127.0.0.1:8778`, and `liner-bridge` writes them where the bar
   lyrics module reads them. Liner's syllable timing is shown syllable by syllable ("Cu", "Cuan",
   "Cuando"). Nothing of Liner is modified or redistributed. See `docs/liner.md`.
+- **Background vocals (adlibs) word by word.** The lines shown under the main lyric build up as they are sung ("and", "and i", "and i wanna"...), and syllable by syllable with Liner. Only when the adlib has per-word timing; without it, it shows whole, never estimated.
 - **MPRIS mirror "Liner"** (`org.mpris.MediaPlayer2.astrax_liner`): Chromium sometimes drops
   Liner's title, artist or cover from MPRIS. The mirror always has them and forwards play, pause,
   next, previous and seek to Chromium's own player.
