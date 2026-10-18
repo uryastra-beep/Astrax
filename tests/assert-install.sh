@@ -66,6 +66,10 @@ check "Serpantinum menu has the cursor style row" grep -q cursorStyleCodes "$HOM
 
 echo "== Astrax version / update check"
 check "installed version recorded" [ "$(cat "$HOME/.local/state/astrax/version" 2>/dev/null)" = "$(tr -d '[:space:]' < VERSION)" ]
+check "liner-bridge linked" [ -L "$HOME/.local/bin/liner-bridge" ]
+check "liner-bridge is executable" test -x "$HOME/scripts/liner/liner-bridge"
+check "liner-bridge page script installed" test -f "$HOME/scripts/liner/page.bundle.js"
+check "astrax-lyrics-rating linked" [ -x "$HOME/.local/bin/astrax-lyrics-rating" ]
 check "astrax-update version" [ "$(bash scripts/astrax-update.sh version)" = "$(tr -d '[:space:]' < VERSION)" ]
 check "About page shows Astrax's version" grep -q astraxUpdate "$HOME/.local/share/serpantinum/src/quickshell/guide/AboutTab.qml"
 

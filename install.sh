@@ -20,7 +20,7 @@
 # ./install.sh --non-interactive (or ASTRAX_NONINTERACTIVE=1) answers every
 # question with a safe default instead of asking: keep Astrax's keymap,
 # install the SDDM session file, skip the Hyprland plugins, Glass Lyrics,
-# enabling sddm and chsh, and stop if a different Serpantinum is installed.
+# enabling sddm, chsh and Liner (ASTRAX_LINER=1 turns Liner on), and stop if a different Serpantinum is installed.
 # Serpantinum's own installer gets its defaults with telemetry turned off
 # (keys in ASTRAX_SERP_KEYS, default "56"). Used by the CI test.
 
@@ -85,6 +85,8 @@ declare -A CMD_TARGETS=(
     [astrax-safe]=astrax-safe.sh
     [astrax-hypr-guard]=astrax-hypr-guard.sh
     [astrax-tour]=astrax-tour.sh
+    [liner-bridge]=liner/liner-bridge
+    [astrax-lyrics-rating]=astrax-lyrics-rating
     [lava-wallpaper]=lava-wallpaper.sh
     [cursor-style]=cursor-style.sh
     [cursor-plugin]=cursor-plugin.sh
@@ -224,7 +226,7 @@ cp -r .config "$HOME/"
 cp -r .local "$HOME/"
 cp -r scripts "$HOME/"
 cp .zshrc .p10k.zsh "$HOME/"
-chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py 2>/dev/null || true
+chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py "$HOME"/scripts/astrax-lyrics-rating "$HOME"/scripts/liner/liner-bridge 2>/dev/null || true
 # a few JSON/QML files can't expand $HOME by themselves: fill in the placeholder
 grep -rlI "@HOME@" .config .local 2>/dev/null |
     while read -r f; do sed -i "s|@HOME@|$HOME|g" "$HOME/$f"; done || true
@@ -316,6 +318,16 @@ if command -v spicetify >/dev/null; then
 else
     echo "Spicetify isn't installed -- see the README to set it up, then run"
     echo "spicetify/glass-lyrics/install.sh."
+fi
+
+step "Liner (optional, unofficial -- see docs/liner.md)"
+echo "Liner (tryliner.fun) has word and syllable synced lyrics. liner-bridge shares"
+echo "them with Astrax. Not affiliated with Liner; nothing of Liner is modified or"
+echo "redistributed -- its official AppImage is downloaded from its own releases."
+if [ "${ASTRAX_LINER:-0}" = 1 ] || confirm "Download Liner and set it up for Astrax? (sudo for a few packages)"; then
+    bash scripts/liner/install-liner.sh || echo "WARNING: the Liner setup failed (Astrax works without it)." >&2
+else
+    echo "Skipped -- run bash scripts/liner/install-liner.sh any time."
 fi
 
 step "Monitors"

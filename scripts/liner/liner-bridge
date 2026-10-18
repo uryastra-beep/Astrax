@@ -1,0 +1,423 @@
+#!/usr/bin/env python3
+"""liner-bridge: opens Liner and passes its word/syllable-synced lyrics to Serpantinum.
+
+Liner (tryliner.fun) already downloads syllable-timed lyrics for every song, but it
+does not share them with other apps. This launcher starts Liner with a private
+DevTools pipe (no network port), puts a small reporter in Liner's page and detaches.
+The reporter pushes the real <audio> position and the lyrics Liner cached for the
+current song to 127.0.0.1:8778 (like glass-lyrics -> spicy-bridge), written as:
+
+  ~/.cache/liner-bridge/current.json   {key, player, provider, stamp, lyrics:[...]}
+  ~/.cache/liner-bridge/progress.json  {key, player, progress, playing, rate, stamp}
+
+`key` is "Artist - Title" exactly as MPRIS shows it, which is what Lyrics.qml matches.
+It only reads; it never changes anything inside Liner. When Liner closes, it exits.
+
+Usage: liner-bridge [extra Liner args...]
+       LINER_APPIMAGE=/path/to/Liner.AppImage liner-bridge
+"""
+import fcntl, glob, json, os, re, signal, subprocess, sys, threading, time
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+PAGE_JS = [os.path.join(HERE, "page.bundle.js"),
+           os.path.expanduser("~/.local/share/liner-bridge/page.bundle.js")]
+OUT_DIR = os.path.expanduser("~/.cache/liner-bridge")
+CURRENT = os.path.join(OUT_DIR, "current.json")
+PROGRESS = os.path.join(OUT_DIR, "progress.json")
+POLL = 1.0          # s between reporter health checks
+RECEIVER_PORT = 8778 # reporter -> bridge (spicy-bridge uses 8777)
+HEARTBEAT_LOST = 6  # s without news from the reporter before it is put back
+REINJECT_EVERY = 15 # s between attempts to put it back
+POKE_ENABLED = os.environ.get("LINER_BRIDGE_POKE") == "1"
+POKE_AFTER = 1.5    # s MPRIS may lack title/artist/cover before the page re-publishes them
+POKE_EVERY = 5      # s between re-publishes
+
+
+def log(*a):
+    print("[liner-bridge]", *a, file=sys.stderr, flush=True)
+
+
+def notify(msg):
+    try:
+        subprocess.Popen(["notify-send", "-a", "Liner bridge", "Liner bridge", msg],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except Exception:
+        pass
+
+
+def find_liner():
+    env = os.environ.get("LINER_APPIMAGE")
+    if env:
+        return env
+    cands = sorted(glob.glob(os.path.expanduser("~/Applications/Liner-*.AppImage")),
+                   key=lambda p: [int(x) if x.isdigit() else x for x in re.split(r"(\d+)", p)])
+    if cands:
+        return cands[-1]
+    for p in ("/opt/Liner/liner", "/usr/bin/liner"):
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def liner_running():
+    r = subprocess.run(["pgrep", "-f", r"(\.mount_Liner|/opt/Liner)[^ ]*/liner( |$)"],
+                       capture_output=True, text=True)
+    return [p for p in r.stdout.split() if p.strip() and int(p) != os.getpid()]
+
+
+def _fd_open(fd):
+    try:
+        os.fstat(fd)
+        return True
+    except OSError:
+        return False
+
+
+def _liner_log():
+    # Liner's own stderr is noisy; keep it only when debugging
+    if not os.environ.get("LINER_BRIDGE_DEBUG"):
+        return subprocess.DEVNULL
+    os.makedirs(OUT_DIR, exist_ok=True)
+    return open(os.path.join(OUT_DIR, "liner.log"), "w")
+
+
+def bridge_running():
+    r = subprocess.run(["pgrep", "-f", r"python3? .*liner-bridge"], capture_output=True, text=True)
+    return any(int(p) != os.getpid() for p in r.stdout.split())
+
+
+_write_lock = threading.Lock()
+
+
+def write_json(path, obj):
+    # the receiver is threaded: one writer at a time, and a tmp name per call
+    with _write_lock:
+        tmp = "%s.%d.tmp" % (path, threading.get_ident())
+        with open(tmp, "w") as f:
+            json.dump(obj, f, ensure_ascii=False)
+        os.replace(tmp, path)
+
+
+class CDP:
+    """Chrome DevTools Protocol over --remote-debugging-pipe (fd 3 in, fd 4 out)."""
+
+    def __init__(self, to_browser, from_browser):
+        self.w = to_browser
+        self.r = from_browser
+        self.buf = b""
+        self.next_id = 0
+
+    def call(self, method, params=None, session=None, timeout=10):
+        self.next_id += 1
+        mid = self.next_id
+        msg = {"id": mid, "method": method, "params": params or {}}
+        if session:
+            msg["sessionId"] = session
+        os.write(self.w, json.dumps(msg).encode() + b"\0")
+        end = time.time() + timeout
+        while time.time() < end:
+            for m in self._read():
+                if m.get("id") == mid:
+                    if "error" in m:
+                        raise RuntimeError(m["error"].get("message", "cdp error"))
+                    return m.get("result", {})
+        raise TimeoutError(method)
+
+    def _read(self):
+        while b"\0" not in self.buf:
+            chunk = os.read(self.r, 1 << 16)
+            if not chunk:
+                raise EOFError("Liner closed")
+            self.buf += chunk
+        out = []
+        while b"\0" in self.buf:
+            raw, self.buf = self.buf.split(b"\0", 1)
+            try:
+                out.append(json.loads(raw))
+            except ValueError:
+                pass
+        return out
+
+
+class Receiver(BaseHTTPRequestHandler):
+    """POSTs from the reporter running inside Liner (see startReporter in page.js)."""
+    bridge = None
+
+    def do_POST(self):
+        try:
+            data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+            reply = self.bridge.on_post(self.path, data) or {}
+        except Exception as e:
+            log("bad post:", e)
+            reply = {}
+        body = json.dumps(reply).encode()
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    do_OPTIONS = do_POST
+
+    def log_message(self, *a):
+        pass
+
+
+class Bridge:
+    """Puts a small reporter inside Liner's page, then gets out of the way.
+
+    While a DevTools session stays attached to the page, Chromium stops sending the
+    song title/artist to MPRIS (Serpantinum then shows "Nothing is playing", no colors,
+    no lyrics). So the bridge only attaches to start the reporter and detaches right
+    away; from then on the page itself pushes the real <audio> position and the lyrics
+    to the local receiver, like glass-lyrics does from inside Spotify. If Liner reloads
+    its UI (it updates itself), the heartbeat stops and the reporter is put back.
+    """
+
+    def __init__(self, cdp, port, player):
+        self.cdp = cdp
+        self.port = port
+        self.player = player        # MPRIS name: chromium.instance<pid of Liner>
+        self.bad_since = 0.0
+        self.last_poke = 0.0
+        self.mirror = None          # MPRIS mirror (mirror.py), set by main()
+        self.session = None
+        self.ctx = None
+        self.last_hello = 0.0
+        self.next_inject = 0.0
+        self.key = None
+
+    def on_post(self, path, data):
+        if path.startswith("/hello"):
+            self.last_hello = time.time()
+            if self.mirror:
+                GLib.idle_add(self.mirror.update_state, data)
+            key = data.get("key") or ""
+            return {"poke": self.want_poke(key)}
+        elif path.startswith("/progress"):
+            self.last_hello = time.time()
+            if self.mirror:
+                GLib.idle_add(self.mirror.update_progress, float(data.get("progress", 0)),
+                              bool(data.get("playing")), float(data.get("stamp", time.time())),
+                              float(data.get("rate") or 1))
+            write_json(PROGRESS, {"key": data.get("key", ""), "player": "liner",
+                                  "progress": float(data.get("progress", 0)),
+                                  "playing": bool(data.get("playing")),
+                                  "rate": float(data.get("rate") or 1),
+                                  "stamp": float(data.get("stamp", time.time()))})
+            if data.get("key") != self.key:
+                self.key = data.get("key")
+                log("now playing:", self.key)
+        elif path.startswith("/lyrics") and data.get("lyrics"):
+            write_json(CURRENT, {"key": data.get("key", ""), "player": "liner",
+                                 "provider": data.get("provider", ""), "sync": data.get("syncLevel", ""),
+                                 "stamp": time.time(), "lyrics": data["lyrics"]})
+            nsyl = sum(1 for ln in data["lyrics"] for w in ln.get("words", []) if w.get("syl"))
+            log("lyrics:", data.get("key"), "|", data.get("provider"), data.get("syncLevel"),
+                "(" + data.get("choice", "") + ")", len(data["lyrics"]), "lines,", nsyl,
+                "split words | cached:", ", ".join(data.get("providers") or []))
+
+    def mpris_ok(self):
+        """(has title+artist+cover, status) of Liner's MPRIS player, None if not there."""
+        try:
+            r = subprocess.run(["playerctl", "-p", self.player, "metadata", "--format",
+                                "{{xesam:title}}\t{{xesam:artist}}\t{{mpris:artUrl}}"],
+                               capture_output=True, text=True, timeout=3)
+            st = subprocess.run(["playerctl", "-p", self.player, "status"],
+                                capture_output=True, text=True, timeout=3).stdout.strip()
+        except Exception:
+            return None
+        if st not in ("Playing", "Paused"):
+            return None
+        parts = (r.stdout.rstrip("\n").split("\t") + ["", "", ""])[:3]
+        return all(p.strip() for p in parts)
+
+    def want_poke(self, key):
+        """True when the page has a song but MPRIS lacks its title/artist/cover for a moment."""
+        now = time.time()
+        # Off unless LINER_BRIDGE_POKE=1: in tests (2026-10-18) re-publishing the same
+        # metadata did not bring the title back (still missing after 20 s) and the cover
+        # flickered at the same moments.
+        if not POKE_ENABLED or not key:
+            self.bad_since = 0.0
+            return False
+        ok = self.mpris_ok()
+        if ok is None or ok:
+            self.bad_since = 0.0
+            return False
+        if not self.bad_since:
+            self.bad_since = now
+            return False
+        if now - self.bad_since >= POKE_AFTER and now - self.last_poke >= POKE_EVERY:
+            self.last_poke = now
+            log("MPRIS missing title/cover for %.0f s -> poke (%s)" % (now - self.bad_since, key))
+            return True
+        return False
+
+    def visit(self, fn):
+        """Attach to Liner's window, run fn(), always detach."""
+        targets = self.cdp.call("Target.getTargets").get("targetInfos", [])
+        pages = [t for t in targets if t.get("type") == "page"
+                 and not t.get("url", "").startswith("devtools://")]
+        # the main window loads the UI bundle; the overlay is a second page
+        pages.sort(key=lambda t: ("overlay" in t.get("url", ""), t.get("url", "")))
+        if not pages:
+            return None
+        tid = pages[0]["targetId"]
+        self.session = self.cdp.call("Target.attachToTarget",
+                                     {"targetId": tid, "flatten": True})["sessionId"]
+        try:
+            self.ctx = self.cdp.call("Page.createIsolatedWorld",
+                                     {"frameId": tid, "worldName": "astrax-liner-bridge"},
+                                     session=self.session)["executionContextId"]
+            page_js = next((open(p).read() for p in PAGE_JS if os.path.exists(p)), "")
+            self.eval(page_js)
+            return fn()
+        finally:
+            try:
+                self.cdp.call("Target.detachFromTarget", {"sessionId": self.session})
+            except EOFError:
+                raise
+            except Exception:
+                pass
+            self.session = self.ctx = None
+
+    def eval(self, expr, wait=False):
+        r = self.cdp.call("Runtime.evaluate",
+                          {"expression": expr, "contextId": self.ctx, "returnByValue": True,
+                           "awaitPromise": wait}, session=self.session)
+        if "exceptionDetails" in r:
+            raise RuntimeError(r["exceptionDetails"].get("text", "js exception"))
+        return r.get("result", {}).get("value")
+
+    def tick(self):
+        now = time.time()
+        if now - self.last_hello < HEARTBEAT_LOST or now < self.next_inject:
+            return
+        # a failed or lost reporter gets put back, but not more often than this
+        self.next_inject = now + REINJECT_EVERY
+        try:
+            r = self.visit(lambda: self.eval("__astraxLiner.startReporter(%d)" % self.port))
+            log("reporter:", r)
+        except EOFError:
+            raise
+        except Exception as e:
+            log("reporter start failed:", e)
+
+
+def main():
+    page_js = next((open(p).read() for p in PAGE_JS if os.path.exists(p)), None)
+    if not page_js:
+        log("page.bundle.js not found"); return 1
+    app = find_liner()
+    if not app:
+        notify("Liner is not installed (put Liner-*.AppImage in ~/Applications).")
+        return 1
+    if liner_running():
+        # a second launch only focuses the open window (and passes liner:// links)
+        subprocess.Popen([app, "--no-sandbox", *sys.argv[1:]], stdin=subprocess.DEVNULL,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if not bridge_running():
+            notify("Liner was opened without the lyrics bridge. Close it and open it again "
+                   "for synced lyrics in the bar.")
+        return 0
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+    # browser reads commands on fd 3 and writes replies on fd 4
+    cmd_r, cmd_w = os.pipe()
+    rep_r, rep_w = os.pipe()
+    hi_in = fcntl.fcntl(cmd_r, fcntl.F_DUPFD, 100)
+    hi_out = fcntl.fcntl(rep_w, fcntl.F_DUPFD, 100)
+
+    def child_fds():
+        os.dup2(hi_in, 3)
+        os.dup2(hi_out, 4)
+
+    # The AppImage runtime closes inherited fds before starting the app, so mount it
+    # ourselves and start its AppRun directly; the mount lives until Liner exits.
+    mount = None
+    entry = app
+    if app.endswith(".AppImage"):
+        mount = subprocess.Popen([app, "--appimage-mount"], stdout=subprocess.PIPE,
+                                 stdin=subprocess.DEVNULL, text=True, start_new_session=True)
+        mnt = (mount.stdout.readline() or "").strip()
+        if not mnt or not os.path.exists(os.path.join(mnt, "AppRun")):
+            log("could not mount", app)
+            mount.terminate()
+            return 1
+        entry = os.path.join(mnt, "AppRun")
+    args = [entry, "--no-sandbox", "--remote-debugging-pipe", *sys.argv[1:]]
+    # 3 and 4 must be in pass_fds too: subprocess closes every other fd after preexec_fn
+    # (in the parent they are just whatever fds are open there, which is why they are
+    # duplicated from the high copies in the child)
+    os.set_inheritable(hi_in, True)
+    os.set_inheritable(hi_out, True)
+    keep = [fd for fd in (3, 4) if _fd_open(fd)]
+    proc = subprocess.Popen(args, preexec_fn=child_fds, pass_fds=(hi_in, hi_out, *keep),
+                            stdin=subprocess.DEVNULL, stderr=_liner_log())
+    for fd in (cmd_r, rep_w, hi_in, hi_out):
+        os.close(fd)
+    def cleanup():
+        # the AppImage runtime forks a FUSE helper: end the whole group
+        if mount and mount.poll() is None:
+            try:
+                os.killpg(mount.pid, signal.SIGTERM)
+            except OSError:
+                pass
+
+    def on_term(*_):
+        # only ask Liner to quit; the main loop sees it exit and cleans up
+        proc.terminate()
+
+    signal.signal(signal.SIGTERM, on_term)
+
+    cdp = CDP(cmd_w, rep_r)
+    try:
+        cdp.call("Browser.getVersion", timeout=30)
+    except Exception as e:
+        log("no DevTools pipe from Liner:", e)
+        proc.wait()
+        cleanup()
+        return 0
+    server = None
+    for port in (RECEIVER_PORT, 0):
+        try:
+            server = ThreadingHTTPServer(("127.0.0.1", port), Receiver)
+            break
+        except OSError:
+            continue
+    # AppRun execs the binary, so Liner's browser process keeps proc.pid
+    bridge = Bridge(cdp, server.server_address[1], "chromium.instance%d" % proc.pid)
+    try:
+        import mirror as mirror_mod
+        from gi.repository import GLib as _GLib
+        globals()["GLib"] = _GLib
+        bridge.mirror = mirror_mod.Mirror(log=log)
+        threading.Thread(target=mirror_mod.run_loop, daemon=True).start()
+        log("MPRIS mirror up: org.mpris.MediaPlayer2.astrax_liner")
+    except Exception as e:
+        bridge.mirror = None
+        log("MPRIS mirror not started:", e)
+    Receiver.bridge = bridge
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        log("ready, receiver on 127.0.0.1:%d" % bridge.port)
+        while proc.poll() is None:
+            bridge.tick()
+            time.sleep(POLL)
+    except EOFError:
+        pass
+    except Exception as e:
+        log("stopped:", e)
+        proc.wait()
+    proc.wait()
+    cleanup()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

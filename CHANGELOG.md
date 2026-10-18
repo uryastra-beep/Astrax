@@ -1,5 +1,41 @@
 # Changelog
 
+## 1.10.0
+
+- **Liner support (optional, unofficial, not affiliated with Liner).** `liner-bridge` opens
+  [Liner](https://tryliner.fun) with a private DevTools pipe (no network port), injects one reporter
+  script (kept only in memory) and detaches. The reporter sends the real audio position and the
+  lyrics Liner already downloaded to `127.0.0.1:8778`, and `liner-bridge` writes them where the bar
+  lyrics module reads them. Liner's syllable timing is shown syllable by syllable ("Cu", "Cuan",
+  "Cuando"). Nothing of Liner is modified or redistributed. See `docs/liner.md`.
+- **MPRIS mirror "Liner"** (`org.mpris.MediaPlayer2.astrax_liner`): Chromium sometimes drops
+  Liner's title, artist or cover from MPRIS. The mirror always has them and forwards play, pause,
+  next, previous and seek to Chromium's own player.
+- **Lyrics.qml / LyricsFace.qml**: each bridge is read only for its own player (a song that played
+  earlier on Spotify no longer wins over Liner's data); background vocals are built word by word
+  and only when they have per-word timing; syllable boundaries drive the redraw timing.
+- **Star ratings and best lyrics**: click the bar lyrics module to rate the sync 1-5 (a small star
+  shows for a minute after a song ends). `astrax-lyrics-rating` keeps the ratings in
+  `~/.config/astrax/lyrics-ratings.json` and the best lyrics in `~/.local/share/astrax/best-lyrics/`.
+  Lyrics with 4-5 stars are used on any player. The best lyrics keep the highest score any player
+  gave them, only lyrics with more stars replace them, and the same song is recognised even if the
+  artist is spelled differently or the duration differs by up to 3 s.
+- **Installer**: new optional "Liner" step (off with `--non-interactive`, `ASTRAX_LINER=1` turns it
+  on); `scripts/liner/install-liner.sh` installs `playerctl python-dbus python-gobject fuse2`,
+  downloads Liner's official AppImage (sha512 checked) and creates a menu entry that starts it
+  through `liner-bridge`. `liner-bridge` and `astrax-lyrics-rating` are linked into `~/.local/bin`.
+- `astrax-help` and `astrax-doctor` know the new commands; `patches/serpantinum-Lyrics.qml-eligible.patch`
+  is regenerated against the pinned Serpantinum 2.2.12.
+- Tests: `tests/test-liner.sh` (ratings in an isolated HOME; the mirror on a private session bus
+  with a fake Chromium in another process), added to CI.
+- The mirror always reports `CanGoNext/CanGoPrevious/CanPlay/CanPause/CanSeek` as true: Quickshell reads them once, so announcing "can't" while Stopped left the music widget's buttons dead.
+- Tested with Liner 0.1.35. Newer Liner versions (0.1.40 exists) may need adjustments. The installer always downloads the latest from `latest-linux.yml`.
+- Known limits: Liner updates itself, and if it changes where it stores lyrics the bridge stops
+  reading them without a warning; while a DevTools session is attached Chromium does not publish
+  the title to MPRIS, so the bridge attaches only to inject and lets go.
+
+**Current Serpantinum version: 2.2.12.**
+
 ## 1.9.0
 
 Quality-of-life tools; none of them touches Serpantinum's code or the shaders.

@@ -101,6 +101,16 @@ else
     ok "Spicetify not installed (Glass Lyrics is optional)"
 fi
 
+sec "Liner (optional)"
+if ls "$HOME"/Applications/Liner-*.AppImage >/dev/null 2>&1 || [ -n "${LINER_APPIMAGE:-}" ]; then
+    ok "Liner AppImage found"
+    command -v liner-bridge >/dev/null && ok "liner-bridge" || warn "liner-bridge is not in PATH" "re-run ./install.sh"
+    python3 -c "import dbus, gi" 2>/dev/null && ok "python-dbus and python-gobject" || warn "python-dbus / python-gobject missing (the Liner mirror needs them)" "sudo pacman -S python-dbus python-gobject"
+    command -v playerctl >/dev/null && ok "playerctl" || warn "playerctl is missing" "sudo pacman -S playerctl"
+else
+    ok "Liner not installed (optional, see docs/liner.md)"
+fi
+
 sec "Backups"
 n="$(ls "$HOME"/astrax-backup-*.tar.gz "$HOME"/astrax-backups/*.tar.gz 2>/dev/null | wc -l)"
 [ "$n" -gt 0 ] && ok "$n backup(s) available (astrax-restore --list)" || warn "no backups found" "srp-update makes one before it touches anything"

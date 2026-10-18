@@ -72,6 +72,7 @@ Item {
         minimumPixelSize: barWindow ? barWindow.s(8) : 8
         elide: Text.ElideRight
         text: root.lineText !== "" ? root.lineText : "♫"
+        visible: !root.rating && root.resultText === ""
         font.family: ThemeBackend.fontFamily
         font.weight: Font.Black
         font.pixelSize: barWindow ? barWindow.s(root.isCompact ? 14 : 15) : (root.isCompact ? 14 : 15)
@@ -88,7 +89,7 @@ Item {
         anchors.bottom: parent.bottom
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignTop
-        visible: root.hasBg
+        visible: root.hasBg && !root.rating && root.resultText === ""
         fontSizeMode: Text.HorizontalFit
         minimumPixelSize: barWindow ? barWindow.s(7) : 7
         elide: Text.ElideRight
@@ -96,6 +97,89 @@ Item {
         font.family: ThemeBackend.fontFamily
         font.weight: Font.Bold
         font.pixelSize: barWindow ? barWindow.s(10) : 10
+        color: ThemeBackend.peach
+    }
+
+    // ---- rate how well the lyrics synced ----
+    // Click the module: five stars for the song on screen, or for the one that just
+    // ended (a small ★ shows for a minute after a song ends). The rating goes to
+    // astrax-lyrics-rating, which keeps the best-scored lyrics for every player to use.
+    property bool rating: false
+    property var ratingTarget: null
+    property int hoverStar: 0
+    property string resultText: ""
+    readonly property bool hasPending: Lyrics.pendingRate !== null && !rating && resultText === ""
+
+    function openRating() {
+        let t = Lyrics.pendingRate || Lyrics.currentSnapshot();
+        if (!t) return;
+        ratingTarget = t;
+        hoverStar = 0;
+        rating = true;
+        ratingTimer.restart();
+    }
+    Timer { id: ratingTimer; interval: 8000; onTriggered: root.rating = false }
+    Timer { id: resultTimer; interval: 1600; onTriggered: root.resultText = "" }
+    Connections {
+        target: Lyrics
+        function onRated(saved, stars) {
+            root.resultText = saved ? ("★ " + stars + "  saved") : ("★ " + stars);
+            resultTimer.restart();
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        enabled: !root.rating && root.resultText === ""
+        cursorShape: (root.hasPending || Lyrics.hasLyrics) ? Qt.PointingHandCursor : Qt.ArrowCursor
+        onClicked: root.openRating()
+    }
+
+    Text {
+        visible: root.hasPending
+        anchors.right: parent.right
+        anchors.rightMargin: barWindow ? barWindow.s(4) : 4
+        anchors.verticalCenter: parent.verticalCenter
+        text: "★"
+        font.pixelSize: barWindow ? barWindow.s(11) : 11
+        color: ThemeBackend.peach
+    }
+
+    Row {
+        id: starsRow
+        visible: root.rating
+        anchors.centerIn: parent
+        spacing: barWindow ? barWindow.s(2) : 2
+        Repeater {
+            model: 5
+            Text {
+                required property int index
+                text: "★"
+                font.pixelSize: barWindow ? barWindow.s(20) : 20
+                color: index < root.hoverStar ? ThemeBackend.peach : Qt.rgba(1, 1, 1, 0.28)
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -2
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onEntered: { root.hoverStar = index + 1; ratingTimer.restart(); }
+                    onClicked: {
+                        Lyrics.rate(index + 1, root.ratingTarget);
+                        root.rating = false;
+                    }
+                }
+            }
+        }
+        onVisibleChanged: if (!visible) root.hoverStar = 0
+    }
+
+    Text {
+        visible: root.resultText !== ""
+        anchors.centerIn: parent
+        text: root.resultText
+        font.family: ThemeBackend.fontFamily
+        font.weight: Font.Bold
+        font.pixelSize: barWindow ? barWindow.s(13) : 13
         color: ThemeBackend.peach
     }
 }

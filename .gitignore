@@ -11,3 +11,4 @@ _pre-*
 __pycache__/
 *.pyc
 .DS_Store
+renderer.log

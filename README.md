@@ -184,6 +184,22 @@ or ends. Read the `_doc` field in that file to add your own.
   | `widgets5` | p2-only mini desktop: terminal, unimatrix, lavat |
   | `widgets6` | unimatrix + lavat + btop with a fixed layout per monitor |
 
+### Liner lyrics (optional, unofficial)
+
+[Liner](https://tryliner.fun) is a desktop music app with word- and syllable-synced lyrics.
+`liner-bridge` opens it and passes those lyrics to the bar lyrics module (word by word, and
+syllable by syllable for Liner), and adds a "Liner" MPRIS player so its title and cover always
+show up. The installer asks about it (off by default); `bash scripts/liner/install-liner.sh`
+sets it up any time. Open Liner through `liner-bridge` (the menu entry does) or it shares nothing.
+
+This is **unofficial and not affiliated with Liner**. Astrax does not modify or redistribute
+Liner (its official AppImage is downloaded from Liner's own releases and checksum-checked); it only
+reads lyrics that Liner's own client already downloaded, through a local DevTools pipe, and the
+injected script lives only in memory. Tested with Liner 0.1.35; newer versions may need adjustments. Details, limits and what can break: [docs/liner.md](docs/liner.md).
+
+Click the lyrics module in the bar to rate how well the lyrics synced (1-5 stars). Lyrics rated
+4-5 stars are saved and used for that song on any player.
+
 ### Video wallpaper with sound
 
 Serpantinum's wallpaper engine is extended with:
@@ -374,6 +390,7 @@ The full list lives in `~/.config/hypr/config/binds-serpantinum.lua` and `hyprla
 - [Caelestia](https://github.com/caelestia-dots/shell), the fallback shell, clipboard and emoji picker
 - [Spicy Lyrics](https://github.com/Spikerko/spicy-lyrics) by Spikerko, the base of Glass Lyrics (AGPL-3.0)
 - cava shaders by rezky_nightky and the cava project; Material You SDDM theme by Darkkal44 (MIT)
+- [@braccato/parsers](https://github.com/better-lyrics/braccato) (MIT) parses the lyric formats in `liner-bridge`; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 - [hypr-dynamic-cursors](https://github.com/virtcode/hypr-dynamic-cursors), [infinite-desktop-v2](https://github.com/lipeazul/infinite-desktop-v2), [sptlrx](https://github.com/raitonoberu/sptlrx), [lavat](https://github.com/AngelJumbo/lavat)
 
 ## License

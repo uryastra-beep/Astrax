@@ -14,6 +14,8 @@ Maintenance::srp-update::update Serpantinum safely (backs up first)
 Maintenance::astrax-restore::undo a bad update: restores the latest backup (--list to see them)
 Setup::astrax-tour::the welcome shortcuts, again (--force)
 Setup::astrax-monitors::pick which outputs are p1 and p2 (no hand-editing variables.lua)
+Music::liner-bridge::open Liner (unofficial) so its word/syllable lyrics reach the bar; see docs/liner.md
+Music::astrax-lyrics-rating::star ratings for lyrics sync (click the lyrics module); 4-5 stars become the best lyrics
 Look::mode::switch the special song modes
 Look::cursor-style::reactive cursor style: normal | astrax | highcontrast
 Look::cursor-plugin::check or rebuild the cursor plugin after a Hyprland update

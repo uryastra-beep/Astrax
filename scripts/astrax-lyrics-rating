@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""astrax-lyrics-rating: star ratings for how well the lyrics synced, per player, and a
+shared "best lyrics" copy that every player then uses.
+
+  astrax-lyrics-rating rate PLAYER STARS ARTIST TITLE DURATION_S ORIGIN CACHE_KEY
+      Save the rating (1-5) the user gave while PLAYER was playing the song. ORIGIN says
+      where the lyrics being shown came from (spotify, liner, web, youtube, or
+      best:<origin> when they were already the saved best). CACHE_KEY is the exact
+      "Artist - Title" key Serpantinum cached those lyrics under. The lyrics become the
+      song's best when they beat the stars of the current best.
+  astrax-lyrics-rating lookup ARTIST TITLE DURATION_S
+      Print {"origin","stars","lyrics"} for the song's best lyrics when they have
+      MIN_STARS or more, nothing otherwise.
+
+Files:
+  ~/.config/astrax/lyrics-ratings.json              every rating, per song and player
+  ~/.local/share/astrax/best-lyrics/<id>.json       the best lyrics for each song
+"""
+import hashlib, json, os, re, sys, time, unicodedata
+
+CONF = os.path.expanduser("~/.config/astrax/lyrics-ratings.json")
+BEST_DIR = os.path.expanduser("~/.local/share/astrax/best-lyrics")
+CACHE_DIR = os.path.join(os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "serpantinum", "lyrics")
+MIN_STARS = 4        # best lyrics are used from this many stars up
+DURATION_SLACK = 3   # s: radio edit vs album version are different songs
+
+
+def _plain(s):
+    s = unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "", s)
+
+
+def norm_title(t):
+    t = re.sub(r"[\(\[]\s*(feat|ft|with)\b[^\)\]]*[\)\]]", "", str(t or ""), flags=re.I)
+    return _plain(t)
+
+
+def artists(a):
+    out = set()
+    for part in re.split(r",|&|;|\bfeat\.?\b|\bft\.?\b|\bx\b|\band\b", str(a or ""), flags=re.I):
+        p = _plain(part)
+        if p:
+            out.add(p)
+    return out
+
+
+def same_artist(a, b):
+    sa, sb = artists(a), artists(b)
+    if not sa or not sb:
+        return True
+    # "unh0ly" vs "saraunh0ly": a name contained in the other counts
+    return any(x in y or y in x for x in sa for y in sb)
+
+
+def best_stars(song):
+    """Stars of the saved lyrics: the highest any player gave them. The player that scored
+    them best decides; a lower score from another player (its position sync, its latency)
+    never pulls them down."""
+    best = song.get("best")
+    if not best:
+        return 0
+    return max([r.get("stars", 0) for r in song.get("ratings", {}).values() if r.get("origin") == best.get("origin")] or [best.get("stars", 0)])
+
+
+def load():
+    try:
+        with open(CONF) as f:
+            d = json.load(f)
+        if isinstance(d.get("songs"), list):
+            for song in d["songs"]:     # also repairs files written by older versions
+                if song.get("best"):
+                    song["best"]["stars"] = best_stars(song)
+            return d
+    except Exception:
+        pass
+    return {"songs": []}
+
+
+def save(d):
+    os.makedirs(os.path.dirname(CONF), exist_ok=True)
+    tmp = CONF + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, CONF)
+
+
+def find(d, artist, title, dur, create=False):
+    nt = norm_title(title)
+    for s in d["songs"]:
+        if s["normTitle"] != nt or not same_artist(s.get("artist"), artist):
+            continue
+        sd = s.get("duration") or 0
+        if dur and sd and abs(sd - dur) > DURATION_SLACK:
+            continue
+        return s
+    if not create:
+        return None
+    s = {"id": hashlib.sha1(("%s|%s|%d" % (nt, _plain(artist), time.time())).encode()).hexdigest()[:12],
+         "normTitle": nt, "title": title, "artist": artist, "duration": dur or 0, "ratings": {}}
+    d["songs"].append(s)
+    return s
+
+
+def best_path(song):
+    return os.path.join(BEST_DIR, song["id"] + ".json")
+
+
+def read_cache(cache_key):
+    h = hashlib.md5(cache_key.encode()).hexdigest()
+    with open(os.path.join(CACHE_DIR, h + ".json")) as f:
+        lyr = json.load(f)
+    if not isinstance(lyr, list) or not lyr:
+        raise ValueError("empty lyrics cache")
+    return lyr
+
+
+def cmd_lookup(artist, title, dur):
+    song = find(load(), artist, title, float(dur or 0))
+    best = song and song.get("best")
+    if not best or best.get("stars", 0) < MIN_STARS:
+        return
+    try:
+        with open(best_path(song)) as f:
+            lyr = json.load(f)
+    except Exception:
+        return
+    print(json.dumps({"origin": best["origin"], "stars": best["stars"], "lyrics": lyr}, ensure_ascii=False))
+
+
+def cmd_rate(player, stars, artist, title, dur, origin, cache_key):
+    stars = int(stars)
+    if not 1 <= stars <= 5:
+        raise SystemExit("stars must be 1-5")
+    dur = float(dur or 0)
+    d = load()
+    song = find(d, artist, title, dur, create=True)
+    if dur and not song.get("duration"):
+        song["duration"] = dur
+    from_best = origin.startswith("best:")
+    src = origin[5:] if from_best else origin
+    song["ratings"][player] = {"stars": stars, "origin": src, "usedBest": from_best, "ts": int(time.time())}
+    best = song.get("best")
+    saved = False
+    if from_best:
+        # the saved lyrics were rated on another player: their stars stay the highest score
+        # they got (recomputed from the ratings), so only lyrics that score higher replace them
+        if best:
+            best["stars"] = best_stars(song)
+            best["ts"] = int(time.time())
+    elif best and best.get("origin") == src:
+        best["stars"] = best_stars(song)
+        if stars >= best["stars"]:      # same source, rated at least as high: refresh the saved copy
+            lyr = read_cache(cache_key)
+            os.makedirs(BEST_DIR, exist_ok=True)
+            tmp = best_path(song) + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(lyr, f, ensure_ascii=False)
+            os.replace(tmp, best_path(song))
+            best.update({"player": player, "ts": int(time.time()), "lines": len(lyr),
+                         "wordSynced": any(l.get("words") for l in lyr)})
+            saved = True
+    elif not best or stars > best.get("stars", 0):
+        lyr = read_cache(cache_key)
+        os.makedirs(BEST_DIR, exist_ok=True)
+        tmp = best_path(song) + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(lyr, f, ensure_ascii=False)
+        os.replace(tmp, best_path(song))
+        song["best"] = {"origin": src, "player": player, "stars": stars, "ts": int(time.time()),
+                        "lines": len(lyr), "wordSynced": any(l.get("words") for l in lyr)}
+        saved = True
+    save(d)
+    print(json.dumps({"saved": saved, "best": song.get("best")}, ensure_ascii=False))
+
+
+def main(argv):
+    if len(argv) >= 5 and argv[1] == "lookup":
+        cmd_lookup(argv[2], argv[3], argv[4])
+    elif len(argv) == 9 and argv[1] == "rate":
+        cmd_rate(*argv[2:])
+    else:
+        print(__doc__)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

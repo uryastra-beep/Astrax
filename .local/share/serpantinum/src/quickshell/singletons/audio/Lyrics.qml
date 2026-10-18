@@ -81,6 +81,7 @@ Item {
             return "";
         }
     }
+    readonly property bool isLinerPlayer: !!player && /liner/i.test(String(player.identity || player.desktopEntry || ""))
     readonly property string currentTrackKey: isMediaActive ? (trackArtist.trim() + " - " + trackTitle.trim()) : ""
 
     property var localCache: ({})
@@ -106,6 +107,106 @@ Item {
     // Word-by-word lyrics from Spicy Lyrics (optional spicy-bridge service). If they
     // arrive, they win over NetEase/lrclib for that song.
     property string bridgeKey: ""
+
+    // ---- star ratings + shared best lyrics (astrax-lyrics-rating) ----
+    // lyricsOrigin: where the lyrics on screen came from (spotify, liner, web, youtube,
+    // or best:<origin> when they are the saved best ones). bestKey is set when the
+    // song has saved best lyrics: they win over whatever this player brings.
+    property string lyricsOrigin: "web"
+    property string bridgeOriginHint: "spotify"
+    property string bestKey: ""
+    property string bestOrigin: ""
+    // last song that ended (you can still rate it for a minute) and the song on screen
+    property var pendingRate: null
+    property var lastSong: null
+    signal rated(bool saved, int stars)
+
+    function playerId() {
+        let who = root.player ? String(root.player.identity || root.player.desktopEntry || "") : "";
+        if (/spotify/i.test(who)) return "spotify";
+        if (/liner/i.test(who)) return "liner";
+        return who !== "" ? who.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "player";
+    }
+
+    function currentSnapshot() {
+        if (!root.hasLyrics || root.currentTrackKey === "") return null;
+        return { key: root.currentTrackKey, artist: root.trackArtist, title: root.trackTitle,
+                 dur: root.getPlayerDurationSec(), origin: root.lyricsOrigin, player: root.playerId() };
+    }
+
+    function rate(stars, snap) {
+        if (!snap || rateProc.running) return;
+        rateProc.pendingStars = stars;
+        rateProc.target = snap;
+        rateProc.command = ["bash", "-c", 'exec "$HOME/.local/bin/astrax-lyrics-rating" "$@"', "--",
+                            "rate", snap.player, String(stars), snap.artist, snap.title,
+                            String(Math.round(snap.dur || 0)), snap.origin, snap.key];
+        rateProc.running = true;
+    }
+
+    Process {
+        id: rateProc
+        property int pendingStars: 0
+        property var target: null
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let saved = false;
+                try { saved = JSON.parse(this.text.trim()).saved === true; } catch (e) {}
+                if (root.pendingRate && rateProc.target && root.pendingRate.key === rateProc.target.key) root.pendingRate = null;
+                root.rated(saved, rateProc.pendingStars);
+            }
+        }
+    }
+
+    Timer {
+        id: pendingTimer
+        interval: 60000
+        onTriggered: root.pendingRate = null
+    }
+
+    // remember the song on screen, so it can be rated after it ends
+    Timer {
+        interval: 1000
+        repeat: true
+        running: root.subscribers > 0 && root.hasLyrics
+        onTriggered: {
+            let prev = root.lastSong;
+            let maxPos = (prev && prev.key === root.currentTrackKey) ? Math.max(prev.maxPos, root.currentPosition) : root.currentPosition;
+            let s = root.currentSnapshot();
+            if (!s) return;
+            s.maxPos = maxPos;
+            root.lastSong = s;
+        }
+    }
+
+    function lookupBest(key) {
+        bestLookupProc.running = false;
+        bestLookupProc.key = key;
+        bestLookupProc.command = ["bash", "-c", 'exec "$HOME/.local/bin/astrax-lyrics-rating" "$@"', "--",
+                                  "lookup", root.trackArtist, root.trackTitle,
+                                  String(Math.round(root.getPlayerDurationSec()))];
+        bestLookupProc.running = true;
+    }
+
+    Process {
+        id: bestLookupProc
+        property string key: ""
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let t = this.text.trim();
+                if (t === "" || bestLookupProc.key !== root.currentTrackKey) return;
+                try {
+                    let o = JSON.parse(t);
+                    if (!Array.isArray(o.lyrics) || o.lyrics.length === 0) return;
+                    root.bestKey = bestLookupProc.key;
+                    root.bestOrigin = String(o.origin || "");
+                    root.applyLyrics(o.lyrics, bestLookupProc.key, false, false, true);
+                } catch (e) {}
+            }
+        }
+    }
 
     readonly property int currentIndex: {
         if (!hasLyrics || lyrics.length === 0) return -1;
@@ -314,6 +415,16 @@ Item {
         // line keep the last word.
         let playing = !root.player || root.player.isPlaying;
         if (playing && pos > ws[ws.length - 1].endTime + 0.5) return "♫";
+        // Liner (via liner-bridge) sends each word's syllables: the word builds up
+        // as they are sung, "Cu" -> "Cuan" -> "Cuando"
+        let syl = ws[idx].syl;
+        if (root.isLinerPlayer && syl && syl.length > 1) {
+            let shown = syl[0].text;
+            for (let k = 1; k < syl.length; k++) {
+                if (pos >= syl[k].time) shown += syl[k].text; else break;
+            }
+            if (shown.trim() !== "") return shown.trim();
+        }
         let t = ws[idx].text.trim();
         return t !== "" ? t : "♫";
     }
@@ -366,6 +477,35 @@ Item {
     // Background vocals (the "(lyrics)" behind): they come in line.bg with their own
     // start/end and often overlap the next line, so they're searched
     // around the current line and kept until they finish playing.
+    // A background vocal that comes with per-word timing builds up as it is sung:
+    // "and", "and i", "and i wanna"... (the word being sung grows syllable by syllable for
+    // Liner). Without word timing it is shown whole: no estimation for these.
+    function bgWordText(b, pos) {
+        let ws = b.words;
+        if (!ws || ws.length === 0) return b.text;
+        let idx = 0;
+        for (let i = 0; i < ws.length; i++) {
+            if (pos >= ws[i].time) idx = i; else break;
+        }
+        let parts = [];
+        for (let i = 0; i < idx; i++) {
+            let t = String(ws[i].text || "").trim();
+            if (t !== "") parts.push(t);
+        }
+        let w = ws[idx];
+        let cur = String(w.text || "").trim();
+        let syl = w.syl;
+        if (root.isLinerPlayer && syl && syl.length > 1) {
+            let shown = syl[0].text;
+            for (let k = 1; k < syl.length; k++) {
+                if (pos >= syl[k].time) shown += syl[k].text; else break;
+            }
+            if (shown.trim() !== "") cur = shown.trim();
+        }
+        if (cur !== "") parts.push(cur);
+        return parts.length > 0 ? parts.join(" ") : b.text;
+    }
+
     readonly property string activeBgText: {
         let L = root.lyrics;
         if (!L || L.length === 0) return "";
@@ -377,7 +517,7 @@ Item {
             if (!bgs) continue;
             for (let k = 0; k < bgs.length; k++) {
                 let b = bgs[k];
-                if (pos >= b.time - 0.05 && pos <= b.endTime + 0.35 && (b.text || "") !== "") parts.push(b.text);
+                if (pos >= b.time - 0.05 && pos <= b.endTime + 0.35 && (b.text || "") !== "") parts.push(root.bgWordText(b, pos));
             }
         }
         return parts.join(" ");
@@ -389,6 +529,23 @@ Item {
     // here the real - MPRIS offset is computed, smoothed, and added to the
     // position. Without fresh data (no bridge, etc.) it goes back to 0.
     property real syncOffset: 0
+
+    // The bridges write one JSON object per file: spicy-bridge (Spotify, no key,
+    // matched by uri) and liner-bridge (Liner, keyed "Artist - Title"). Returns the
+    // sample for the current song: a keyed one that matches wins, else the unkeyed one.
+    function pickBridgeSample(text) {
+        let unkeyed = null;
+        for (const raw of String(text || "").split("\n")) {
+            const line = raw.trim();
+            if (line === "") continue;
+            let obj = null;
+            try { obj = JSON.parse(line); } catch (e) { continue; }
+            if (!obj) continue;
+            if (obj.player === "liner") { if (root.isLinerPlayer && obj.key === root.currentTrackKey) return obj; }
+            else if (!root.isLinerPlayer && !unkeyed) unkeyed = obj;
+        }
+        return unkeyed;
+    }
 
     function applyProgressSample(obj) {
         if (!root.player || !obj) { syncOffset = 0; return; }
@@ -415,13 +572,13 @@ Item {
 
     Process {
         id: progressReadProcess
-        command: ["bash", "-c", 'cat "$HOME/.cache/spicy-bridge/progress.json" 2>/dev/null']
+        command: ["bash", "-c", 'cat "$HOME/.cache/spicy-bridge/progress.json" 2>/dev/null; echo; cat "$HOME/.cache/liner-bridge/progress.json" 2>/dev/null']
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
-                let content = this.text.trim();
-                if (content === "") { root.syncOffset = 0; return; }
-                try { root.applyProgressSample(JSON.parse(content)); } catch (e) {}
+                let obj = root.pickBridgeSample(this.text);
+                if (!obj) { root.syncOffset = 0; return; }
+                root.applyProgressSample(obj);
             }
         }
     }
@@ -443,6 +600,10 @@ Item {
                     let w = words[i];
                     let end = (w.endTime !== undefined && w.endTime > w.time) ? w.endTime : (i < words.length - 1 ? words[i + 1].time : (w.time + 0.8));
                     if (w.time > p && w.time < best) best = w.time;
+                    // Liner words come split in syllables: each start is a boundary too
+                    if (w.syl) for (let k = 0; k < w.syl.length; k++) {
+                        if (w.syl[k].time > p && w.syl[k].time < best) best = w.syl[k].time;
+                    }
                     if (end > p && end < best) best = end;
                 }
             }
@@ -540,7 +701,14 @@ Item {
         }
     }
 
-    onCurrentTrackKeyChanged: triggerSearch()
+    onCurrentTrackKeyChanged: {
+        let ls = root.lastSong;
+        if (ls && ls.key !== root.currentTrackKey && ls.dur > 0 && ls.maxPos >= ls.dur * 0.5) {
+            root.pendingRate = ls;
+            pendingTimer.restart();
+        }
+        triggerSearch();
+    }
     onPlayerChanged: triggerSearch()
 
     function triggerSearch() {
@@ -566,6 +734,10 @@ Item {
         lastFetchedKey = currentTrackKey;
         activeFetchKey = currentTrackKey;
         bridgeKey = "";
+        bestKey = "";
+        bestOrigin = "";
+        lyricsOrigin = "web";
+        lookupBest(currentTrackKey);
         activeSession = null;
         searchTimeoutTimer.stop();
         lyrics = [];
@@ -869,9 +1041,11 @@ Item {
         return result;
     }
 
-    function applyLyrics(parsedList, key, shouldSaveToDisk, fromBridge) {
+    function applyLyrics(parsedList, key, shouldSaveToDisk, fromBridge, fromBest) {
         if (key !== root.activeFetchKey) return;
+        if (root.bestKey === key && fromBest !== true) return;
         if (root.bridgeKey === key && fromBridge !== true) return;
+        root.lyricsOrigin = fromBest === true ? ("best:" + root.bestOrigin) : (fromBridge === true ? root.bridgeOriginHint : "web");
         searchTimeoutTimer.stop();
         root.lyrics = normalizeBackground(parsedList);
         root.hasLyrics = !!parsedList && parsedList.length > 0;
@@ -920,7 +1094,7 @@ Item {
 
     function startYtLyrics(session, hadLine) {
         // Spicy with word-by-word is already the best; if Spicy only has lines, YouTube can improve it
-        if ((root.bridgeKey === session.key && hasWordTiming(root.lyrics)) || root.subscribers <= 0) return;
+        if ((root.bridgeKey === session.key && hasWordTiming(root.lyrics)) || root.bestKey === session.key || root.subscribers <= 0) return;
         ytProc.running = false;
         ytProc.key = session.key;
         ytProc.hadLine = hadLine;
@@ -939,6 +1113,7 @@ Item {
         if (root.bridgeKey === key && hasWordTiming(root.lyrics)) return;
         if (list.length >= 3 && (hasWords || !hadLine)) {
             if (hasWords) root.ytWordsKey = key;
+            root.bridgeOriginHint = "youtube";
             applyLyrics(list, key, true, true);
         } else if (!hadLine) {
             root.loading = false;
@@ -1334,19 +1509,24 @@ Item {
 
     Process {
         id: bridgeReadProcess
-        command: ["bash", "-c", 'cat "$HOME/.cache/spicy-bridge/current.json" 2>/dev/null']
+        command: ["bash", "-c", 'cat "$HOME/.cache/spicy-bridge/current.json" 2>/dev/null; echo; cat "$HOME/.cache/liner-bridge/current.json" 2>/dev/null']
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
-                let content = this.text.trim();
-                if (content === "") return;
+                let key = root.currentTrackKey;
+                let obj = null;
+                for (const raw of this.text.split("\n")) {
+                    // spicy-bridge (Spotify) and liner-bridge keep their own files; an old one from the
+                    // other player must not win just because the same song once played there
+                    try { let o = JSON.parse(raw); if (o && o.key === key && ((o.player === "liner") === root.isLinerPlayer)) { obj = o; break; } } catch (e) {}
+                }
+                if (!obj) return;
                 try {
-                    let obj = JSON.parse(content);
-                    let key = root.currentTrackKey;
                     if (!obj || obj.key !== key || key !== root.activeFetchKey) return;
                     if (!Array.isArray(obj.lyrics) || obj.lyrics.length === 0) return;
                     if (root.ytWordsKey === key && !root.hasWordTiming(obj.lyrics)) { root.bridgeKey = key; return; }
                     root.bridgeKey = key;
+                    root.bridgeOriginHint = (obj.player === "liner") ? "liner" : "spotify";
                     root.applyLyrics(obj.lyrics, key, true, true);
                 } catch(e) {}
             }
