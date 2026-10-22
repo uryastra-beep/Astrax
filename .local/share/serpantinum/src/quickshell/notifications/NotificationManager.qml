@@ -41,6 +41,49 @@ Item {
         }
     }
 
+    // Astrax Dynamic Island bridge: one JSON object per line appended to a file the
+    // island tails. Respects do-not-disturb (critical urgency still goes through).
+    function sendToIsland(payload) {
+        let isl = Config.getSetting("island", {});
+        if (isl && isl.enabled === false) return;
+        let n = Config.getSetting("notifications", { "dnd": false });
+        if (n && n.dnd && payload.urgency !== 2) return;
+        Quickshell.execDetached(["sh", "-c",
+            "printf '%s\\n' \"$1\" >> \"${XDG_RUNTIME_DIR:-/tmp}/astrax-island.events\"",
+            "_", JSON.stringify(payload)]);
+    }
+
+    // ---- Astrax Dynamic Island click-back (qs ipc call island ...) ----
+    function islandInvoke(uid, actionId) {
+        let n = root.liveNotifs[uid];
+        if (!n) return "gone";
+        root.markAsRead(uid);
+        let acts = n.actions || [];
+        let target = null;
+        for (let i = 0; i < acts.length; i++) {
+            if (actionId !== "" ? acts[i].identifier === actionId : acts[i].identifier === "default") target = acts[i];
+        }
+        if (!target && actionId === "" && acts.length > 0) target = acts[0];
+        if (target && typeof target.invoke === "function") {
+            target.invoke();
+        } else if (actionId === "") {
+            // no action offered: do what a real daemon's click does -- bring the app forward
+            let name = ((n.desktopEntry || n.appName || "") + "").replace(/[^A-Za-z0-9]/g, ".");
+            if (name !== "")
+                Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = \"class:(?i).*" + name + ".*\" })"]);
+        }
+        root.removePopup(uid);
+        root.dismissNotification(uid);
+        return "ok";
+    }
+
+    IpcHandler {
+        target: "island"
+        function activate(uid: int): string { return root.islandInvoke(uid, ""); }
+        function action(uid: int, id: string): string { return root.islandInvoke(uid, id); }
+        function dismiss(uid: int): string { root.removePopup(uid); root.dismissNotification(uid); return "ok"; }
+    }
+
     property var liveNotifs: ({})
     property int popupCounter: 0
     property bool isStartup: true
@@ -424,6 +467,20 @@ Item {
             };
 
             historyModel.insert(0, notifData);
+
+            // Astrax Dynamic Island: hand the notification to the island process
+            if (!root.isStartup) {
+                root.sendToIsland({
+                    "app":     resolved.displayName,
+                    "summary": summaryText,
+                    "body":    bodyText,
+                    "icon":    resolved.icon || notifData.iconPath,
+                    "image":   imageVal,
+                    "urgency": n.urgency,
+                    "uid":     currentUid,
+                    "actions": extractedActions
+                });
+            }
 
             if (!root.isStartup && !root.sysPanelOpen) {
                 let newPopup = {

@@ -1,0 +1,10 @@
+--- a/src/quickshell/guide/GuidePopup.qml
++++ b/src/quickshell/guide/GuidePopup.qml
+@@ -565,6 +565,7 @@
+         { id: "Dock", key: "dock", name: "Dock", icon: "󰮯", file: "DockTab.qml" },
+         { id: "On-Screen Display", key: "osd", name: "On-Screen Display", icon: "󰕾", file: "OnScreenDisplayTab.qml" },
+         { id: "Notifications", key: "notifications", name: "Notifications", icon: "󰂚", file: "notifications/NotificationsTab.qml" },
++        { id: "Dynamic Island", key: "island", name: "Dynamic Island", icon: "󰟀", file: "IslandTab.qml" },
+         { id: "Wellbeing", key: "wellbeing", name: "Wellbeing", icon: "󰄉", file: "wellbeing/DigitalWellbeingTab.qml" },        
+         { id: "Idle", key: "idle", name: "Idle", icon: "󰒲", file: "IdleTab.qml" },
+         { id: "About", key: "about", name: "About", icon: "󰋽", file: "AboutTab.qml" }

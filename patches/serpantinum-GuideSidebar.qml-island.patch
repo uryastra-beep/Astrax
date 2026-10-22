@@ -1,0 +1,34 @@
+--- a/src/quickshell/guide/GuideSidebar.qml
++++ b/src/quickshell/guide/GuideSidebar.qml
+@@ -8,6 +8,13 @@
+ Rectangle {
+     id: sidebar
+     required property var popup
++
++    // Astrax: tabs without a translation (Dynamic Island) show their plain name
++    function tabLabel(m) {
++        let k = "guide.tabs." + (m.key || m.id).toLowerCase();
++        let t = I18n.t(k);
++        return t === k ? (m.name || m.id) : t;
++    }
+     property alias searchInput: settingsSearchInput
+     property alias searchResults: searchResultsList
+     property alias tabsView: tabsFlickable
+@@ -354,7 +361,7 @@
+                                     }
+ 
+                                     Text {
+-                                        text: I18n.t("guide.tabs." + (tabDelegate.modelData.key || tabDelegate.modelData.id).toLowerCase(), tabDelegate.modelData.name || tabDelegate.modelData.id)
++                                        text: sidebar.tabLabel(tabDelegate.modelData)
+                                         font.family: ThemeBackend.fontFamily
+                                         font.weight: tabHeaderItem.isDirectActive ? Font.Bold : Font.Medium
+                                         font.pixelSize: popup.s(13)
+@@ -502,7 +509,7 @@
+                                                     }
+ 
+                                                     Text {
+-                                                        text: I18n.t("guide.tabs." + (subtabItem.modelData.key || subtabItem.modelData.id).toLowerCase(), subtabItem.modelData.name || subtabItem.modelData.id)
++                                                        text: sidebar.tabLabel(subtabItem.modelData)
+                                                         font.family: ThemeBackend.fontFamily
+                                                         font.weight: subtabItem.isSubActive ? Font.Bold : Font.Medium
+                                                         font.pixelSize: popup.s(12)

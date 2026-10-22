@@ -64,6 +64,8 @@ hl.on("hyprland.start", function ()
     -- workspace number OSD (bottom-right corner, fades out by
     -- itself). Same idempotent pattern as the launchers.
     hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-ws-osd/shell.qml" || qs -c astrax-ws-osd -d > /tmp/astrax-ws-osd.log 2>&1']])
+    -- Dynamic Island (top-center pill: music, volume). Idempotent.
+    hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-island/shell.qml" || qs -c astrax-island -d > /tmp/astrax-island.log 2>&1']])
     -- black power-off wave (physical button / power menu). idempotent.
     hl.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-power-wave/shell.qml" || qs -c astrax-power-wave -d > /tmp/astrax-power-wave.log 2>&1']])
     -- logind must not power off on its own when the physical button is pressed:

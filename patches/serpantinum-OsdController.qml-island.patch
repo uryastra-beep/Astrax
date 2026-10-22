@@ -1,0 +1,12 @@
+--- a/src/quickshell/singletons/widgetcontrols/OsdController.qml
++++ b/src/quickshell/singletons/widgetcontrols/OsdController.qml
+@@ -207,6 +207,9 @@
+     }
+ 
+     function show(k, v, scr) {
++        // Astrax Dynamic Island shows the OSD instead (Super+C > Dynamic Island)
++        let isl = (Config.rawSettings && Config.rawSettings["island"]) ? Config.rawSettings["island"] : {};
++        if (isl.enabled !== false && isl.replaceOsd !== false) return;
+         controller.kind = k || "volume";
+         if (controller.kind === "brightness" && v !== undefined) {
+             controller.briVal = parseInt(v) || 0;

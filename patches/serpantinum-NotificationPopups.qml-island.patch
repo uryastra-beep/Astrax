@@ -1,0 +1,70 @@
+--- a/src/quickshell/notifications/NotificationPopups.qml
++++ b/src/quickshell/notifications/NotificationPopups.qml
+@@ -8,10 +8,20 @@
+ import "../"
+ import "../reusables"
+ 
+-PanelWindow {
+-    id: popupWindow
++// Used to be a single PanelWindow (Quickshell assigns it to one monitor by
++// default) -- popups must show on both
++// screens, not only the one Quickshell picks. Variants + screens
++// instantiates one per connected monitor (reactive: if HDMI is
++// plugged/unplugged live, its instance is created/destroyed by itself).
++Variants {
++    model: Quickshell.screens
++
++    PanelWindow {
++        id: popupWindow
++        required property var modelData
++        screen: popupWindow.modelData
+ 
+-    readonly property real sf: Scaler.baseScale
++        readonly property real sf: Scaler.baseScale
+ 
+     function s(val) {
+         return Math.round(val * popupWindow.sf);
+@@ -25,7 +35,13 @@
+         return false;
+     }
+ 
+-    visible: (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
++    // Astrax Dynamic Island shows notifications instead (Super+C > Dynamic Island)
++    readonly property bool islandReplaces: {
++        let isl = (Config.rawSettings && Config.rawSettings["island"]) ? Config.rawSettings["island"] : {};
++        return isl.enabled !== false && isl.replacePopups !== false;
++    }
++
++    visible: !popupWindow.islandReplaces && (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
+ 
+     function storeNotif(uid, notif) {
+         NotificationManager.liveNotifs[uid] = notif;
+@@ -226,14 +242,18 @@
+                         }
+                     }
+ 
++                    // Default lowered from 5000 to 3000ms.
++                    // Before, critical urgency (model.urgency === 2) forced
++                    // 0 (never disappears by itself) without exception -- now it only
++                    // persists if the sender explicitly
++                    // asked for timeout 0; if it didn't specify anything (like
++                    // notify-send without "-t"), it also disappears after 3s.
+                     property int effectiveTimeout: {
+-                        if (model.urgency === 2) return 0;
+                         var n = delegateWrapper.realNotif;
+-                        if (!n) return 5000;
+-                        var t = typeof n.expireTimeout === "number" ? n.expireTimeout : (typeof n.timeout === "number" ? n.timeout : -1);
++                        var t = n ? (typeof n.expireTimeout === "number" ? n.expireTimeout : (typeof n.timeout === "number" ? n.timeout : -1)) : -1;
+                         if (t === 0) return 0;
+                         if (t > 0) return t;
+-                        return 5000;
++                        return 3000;
+                     }
+ 
+                     Connections {
+@@ -283,4 +303,5 @@
+             popupWindow.storeNotif(uid, notif);
+         }
+     }
++    }
+ }

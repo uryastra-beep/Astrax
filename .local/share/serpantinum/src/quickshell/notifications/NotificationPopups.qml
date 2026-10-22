@@ -35,7 +35,13 @@ Variants {
         return false;
     }
 
-    visible: (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
+    // Astrax Dynamic Island shows notifications instead (Super+C > Dynamic Island)
+    readonly property bool islandReplaces: {
+        let isl = (Config.rawSettings && Config.rawSettings["island"]) ? Config.rawSettings["island"] : {};
+        return isl.enabled !== false && isl.replacePopups !== false;
+    }
+
+    visible: !popupWindow.islandReplaces && (!popupWindow.dndEnabled || popupWindow.hasCriticalPopup) && !NotificationManager.sysPanelOpen && NotificationManager.activePopupsModel.count > 0
 
     function storeNotif(uid, notif) {
         NotificationManager.liveNotifs[uid] = notif;

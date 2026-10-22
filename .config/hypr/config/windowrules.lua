@@ -431,3 +431,12 @@ hl.layer_rule({
     blur         = true,
     ignore_alpha = 0.01,
 })
+
+-- GLASS for the Dynamic Island (astrax-island): blurs what is behind the
+-- translucent notification / music cards. The idle pill is opaque black.
+hl.layer_rule({
+    name         = "astrax-island-glass",
+    match        = { namespace = "^(astrax-island)$" },
+    blur         = true,
+    ignore_alpha = 0.05,
+})

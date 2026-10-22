@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.11.0
+
+- **Dynamic Island (`astrax-island`).** A black pill at the top of the screen that shows
+  notifications, volume / microphone / brightness, Caps and Num Lock, airplane mode, charging and
+  low battery, Bluetooth, USB and music (compact or expanded). It replaces Serpantinum's
+  notification popups and OSD. Clicking a notification runs its default action (screenshot and
+  recording notifications open the folder), right-click dismisses it, and action buttons show under
+  the text.
+- **Liquid Glass (optional, off by default)**: blur behind the pill plus a refraction shader on the
+  edge; one screen capture, taken only while glass is on.
+- **Settings in `SUPER+C` > Dynamic Island**: a switch per kind of notice, X/Y sliders, screen
+  selector, glass / opacity / refraction, bounce, margin, duration, follow monitor, hide when idle.
+- New Serpantinum overrides: `GuidePopup.qml` (registers the tab), `GuideSidebar.qml` (falls back
+  to the tab name when there is no translation), `OsdController.qml` (does nothing when the island
+  replaces the OSD), `IslandTab.qml` (new); `NotificationManager.qml` and `NotificationPopups.qml`
+  send events to the island. `patches/serpantinum-*-island.patch` re-apply them against the pinned
+  Serpantinum 2.2.12.
+- Not tested live yet: real Bluetooth and USB events, plugging the charger, the bubble effect, the
+  expanded music view, and bringing the app to the front for a notification without actions.
+
+**Current Serpantinum version: 2.2.12.**
+
 ## 1.10.0
 
 - **Liner support (optional, unofficial, not affiliated with Liner).** `liner-bridge` opens

@@ -304,7 +304,32 @@ different shapes per type, is future work.
 - `astrax-app-switcher`: `ALT+Tab` or the `Menu` key; a grid of live window previews for the
   focused screen.
 - `astrax-ws-osd`: workspace number on screen when switching.
+- `astrax-island`: the Dynamic Island, see [below](#dynamic-island).
 - `SUPER+R` pins a window's size and place; `SUPER+D` toggles floating ↔ tiled for the workspace.
+
+### Dynamic Island
+
+`astrax-island` is a black pill at the top of the screen (position configurable) that replaces
+Serpantinum's notification popups and its volume/brightness OSD. It shows:
+
+- notifications: click one to run its default action (screenshot and recording notifications open
+  the folder), right-click dismisses it, action buttons sit under the text
+- volume, microphone and brightness changes, Caps Lock and Num Lock, airplane mode
+- charging, plugged/unplugged and low battery, Bluetooth and USB devices
+- the current song, compact or expanded
+
+Optional Liquid Glass (off by default): the pill blurs what is behind it and refracts the edge
+(a shader plus a single screen capture, taken only while glass is on).
+
+Configure it in `SUPER+C` > Dynamic Island: a switch per kind of notice, X/Y position sliders, a
+screen selector, glass / opacity / refraction, bounce, margin, duration, follow the monitor and hide
+when idle. Settings live in the `island` key of Serpantinum's `settings.json`. It starts at login
+(`autostart.lua`); to run it by hand: `qs -c astrax-island -d`.
+
+It needs Astrax's overrides of Serpantinum's `NotificationManager.qml`, `NotificationPopups.qml`,
+`OsdController.qml`, `GuidePopup.qml` and `GuideSidebar.qml` (plus the new `IslandTab.qml`);
+`patches/serpantinum-*-island.patch` re-apply them after a Serpantinum update. Turning the island
+off in its tab gives Serpantinum's own popups back.
 
 ### Other commands
 
