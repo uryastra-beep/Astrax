@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.12.0
+
+Dynamic Island update.
+
+- **App icons**: notifications and the list show each app's real icon (from its `.desktop` entry);
+  without one, a generated squircle with a gradient and the app's initial.
+- **File activity**: downloads with live progress (`.crdownload` / `.part`), and files added,
+  modified, renamed or deleted, with bursts grouped ("12 items"). Watches Downloads, Documents and
+  Desktop (Pictures, Videos and Music optional; missing folders are skipped). SQLite sidecars
+  (`-wal`, `-shm`, `-journal`), `.lock` / `.lck` and anything that lives under 2 s are ignored.
+- **Clipboard**: copy, cut and paste of text, images (thumbnail) and files. Copies that a password
+  manager marks as secret are not announced.
+- **Paste notice**: two non-consuming binds (`Ctrl+V`, `Ctrl+Shift+V`, in
+  `config/binds-island.lua`) only tell the island; the key reaches the app as before.
+- **Activity list**: triple-click the island, or `qs -c astrax-island ipc call island toggleList`.
+  Notifications, files, clipboard and devices by time; click outside to close.
+- Clicking a notification runs its default action or brings the app to the front; action buttons;
+  Serpantinum's `island` IPC (activate / action / dismiss / list / clear), in the updated
+  `NotificationManager.qml` and its regenerated patch.
+- **Settings** (`SUPER+C` > Dynamic Island): switches for Files and Clipboard, watched folders, X/Y
+  sliders, a dropdown position selector, refraction.
+- The island's child processes run with `setpriv --pdeathsig TERM`, so restarting it leaves no
+  orphans.
+- Installer: adds `inotify-tools` (the others were already there) and makes `clip-event.sh`
+  executable; `assert-install.sh` checks both.
+- Not tested live: a real Chrome / Firefox download with progress, the paste notice with a real
+  keyboard, and real Bluetooth / USB / charger events.
+
+**Current Serpantinum version: 2.2.12.**
+
 ## 1.11.0
 
 - **Dynamic Island (`astrax-island`).** A black pill at the top of the screen that shows

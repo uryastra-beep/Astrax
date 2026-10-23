@@ -60,7 +60,7 @@ Item {
     property int lastBri: -1
     Process {
         running: true
-        command: ["bash", src.serpDir + "/../scripts/brightness.sh", "watch"]
+        command: ["setpriv", "--pdeathsig", "TERM", "bash", src.serpDir + "/../scripts/brightness.sh", "watch"]
         stdout: SplitParser { onRead: briDebounce.restart() }
     }
     Timer { id: briDebounce; interval: 40; onTriggered: { briGet.running = false; briGet.running = true; } }
@@ -84,7 +84,7 @@ Item {
     // ------------------------------------------------------ caps / num lock
     Process {
         running: true
-        command: ["bash", src.serpDir + "/watchers/kb_locks.sh", "watch"]
+        command: ["setpriv", "--pdeathsig", "TERM", "bash", src.serpDir + "/watchers/kb_locks.sh", "watch"]
         stdout: SplitParser {
             onRead: data => {
                 const p = data.trim().split(/\s+/);
@@ -177,7 +177,7 @@ Item {
     property var usbProps: ({})
     Process {
         running: true
-        command: ["udevadm", "monitor", "--udev", "--subsystem-match=usb", "--property"]
+        command: ["setpriv", "--pdeathsig", "TERM", "udevadm", "monitor", "--udev", "--subsystem-match=usb", "--property"]
         stdout: SplitParser {
             onRead: data => {
                 const line = data.trim();
@@ -207,7 +207,7 @@ Item {
     Process { running: true; command: ["sh", "-c", ": >> \"$1\"", "_", src.eventFile] }
     Process {
         running: true
-        command: ["tail", "-n0", "-F", src.eventFile]
+        command: ["setpriv", "--pdeathsig", "TERM", "tail", "-n0", "-F", src.eventFile]
         stdout: SplitParser {
             onRead: data => {
                 if (!src.on("showNotifications")) return;

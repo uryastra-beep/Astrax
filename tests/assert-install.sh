@@ -71,6 +71,8 @@ check "liner-bridge is executable" test -x "$HOME/scripts/liner/liner-bridge"
 check "liner-bridge page script installed" test -f "$HOME/scripts/liner/page.bundle.js"
 check "astrax-lyrics-rating linked" [ -x "$HOME/.local/bin/astrax-lyrics-rating" ]
 check "Dynamic Island installed with its compiled shader" test -s "$HOME/.config/quickshell/astrax-island/glass.frag.qsb"
+check "island clipboard helper is executable" test -x "$HOME/.config/quickshell/astrax-island/clip-event.sh"
+check "island deps present (inotifywait, wl-paste, jq, setpriv)" bash -c "command -v inotifywait wl-paste jq setpriv >/dev/null"
 check "Dynamic Island settings tab installed" test -f "$HOME/.local/share/serpantinum/src/quickshell/guide/IslandTab.qml"
 check "astrax-update version" [ "$(bash scripts/astrax-update.sh version)" = "$(tr -d '[:space:]' < VERSION)" ]
 check "About page shows Astrax's version" grep -q astraxUpdate "$HOME/.local/share/serpantinum/src/quickshell/guide/AboutTab.qml"

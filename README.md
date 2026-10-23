@@ -317,6 +317,19 @@ Serpantinum's notification popups and its volume/brightness OSD. It shows:
 - volume, microphone and brightness changes, Caps Lock and Num Lock, airplane mode
 - charging, plugged/unplugged and low battery, Bluetooth and USB devices
 - the current song, compact or expanded
+- file activity: downloads with live progress (`.crdownload` / `.part`) and files added, changed,
+  renamed or deleted, with bursts grouped ("12 items"). It watches Downloads, Documents and Desktop
+  (Pictures, Videos and Music are optional; folders that don't exist are skipped) and ignores
+  SQLite sidecars (`-wal`, `-shm`, `-journal`), lock files and anything that lives under 2 s
+- the clipboard: copying, cutting and pasting text, images (with a thumbnail) and files. Copies a
+  password manager marks as secret are never announced. Pasting is announced by two non-consuming
+  binds (`Ctrl+V`, `Ctrl+Shift+V`); the key still reaches the app as before
+- each app's real icon in notifications (from its `.desktop` entry; otherwise a generated squircle
+  with the app's initial)
+
+Triple-click the island (or `qs -c astrax-island ipc call island toggleList`) for the activity
+list: notifications, files, clipboard and devices in one list, newest first. It closes when you
+click outside (while it is open a transparent layer covers the screen and takes that click).
 
 Optional Liquid Glass (off by default): the pill blurs what is behind it and refracts the edge
 (a shader plus a single screen capture, taken only while glass is on).
@@ -326,7 +339,7 @@ screen selector, glass / opacity / refraction, bounce, margin, duration, follow 
 when idle. Settings live in the `island` key of Serpantinum's `settings.json`. It starts at login
 (`autostart.lua`); to run it by hand: `qs -c astrax-island -d`.
 
-It needs Astrax's overrides of Serpantinum's `NotificationManager.qml`, `NotificationPopups.qml`,
+It needs `inotify-tools`, `wl-clipboard`, `jq` and `util-linux` (the installer adds them). It needs Astrax's overrides of Serpantinum's `NotificationManager.qml`, `NotificationPopups.qml`,
 `OsdController.qml`, `GuidePopup.qml` and `GuideSidebar.qml` (plus the new `IslandTab.qml`);
 `patches/serpantinum-*-island.patch` re-apply them after a Serpantinum update. Turning the island
 off in its tab gives Serpantinum's own popups back.

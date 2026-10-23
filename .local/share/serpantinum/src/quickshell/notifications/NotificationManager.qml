@@ -56,7 +56,7 @@ Item {
     // ---- Astrax Dynamic Island click-back (qs ipc call island ...) ----
     function islandInvoke(uid, actionId) {
         let n = root.liveNotifs[uid];
-        if (!n) return "gone";
+        if (!n) { root.dismissNotification(uid); return "gone"; }
         root.markAsRead(uid);
         let acts = n.actions || [];
         let target = null;
@@ -82,6 +82,19 @@ Item {
         function activate(uid: int): string { return root.islandInvoke(uid, ""); }
         function action(uid: int, id: string): string { return root.islandInvoke(uid, id); }
         function dismiss(uid: int): string { root.removePopup(uid); root.dismissNotification(uid); return "ok"; }
+        function clear(): string { root.clearNotifications(); return "ok"; }
+        function list(): string {
+            let out = [];
+            for (let i = 0; i < historyModel.count && out.length < 30; i++) {
+                let d = historyModel.get(i);
+                if (!d) continue;
+                let r = root.resolveApp(root.liveNotifs[d.uid] || d.notif || d);
+                out.push({ "uid": d.uid, "app": r.displayName, "summary": d.summary, "body": d.body,
+                           "icon": r.icon || d.iconPath || "", "entry": r.desktopEntry ? r.desktopEntry.id : "", "image": d.image || "", "ts": d.timestamp,
+                           "read": d.read, "urgency": d.urgency });
+            }
+            return JSON.stringify(out);
+        }
     }
 
     property var liveNotifs: ({})
@@ -475,6 +488,7 @@ Item {
                     "summary": summaryText,
                     "body":    bodyText,
                     "icon":    resolved.icon || notifData.iconPath,
+                    "entry":   resolved.desktopEntry ? resolved.desktopEntry.id : "",
                     "image":   imageVal,
                     "urgency": n.urgency,
                     "uid":     currentUid,

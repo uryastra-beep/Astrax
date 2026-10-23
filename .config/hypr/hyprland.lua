@@ -34,6 +34,7 @@ if active_shell() == "serpantinum" then
 else
     require("config.binds")
 end
+require("config.binds-island")
 require("config.misc")
 require("config.monitors")
 require("config.windowrules")

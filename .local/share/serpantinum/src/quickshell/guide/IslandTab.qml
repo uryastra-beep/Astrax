@@ -46,7 +46,15 @@ Item {
         "showAirplane": true,
         "showCharging": true,
         "showBluetooth": true,
-        "showUsb": true
+        "showUsb": true,
+        "showFiles": true,
+        "showClipboard": true,
+        "fileDirDownloads": true,
+        "fileDirDocuments": true,
+        "fileDirDesktop": true,
+        "fileDirPictures": false,
+        "fileDirVideos": false,
+        "fileDirMusic": false
     })
 
     property var settings: {
@@ -474,7 +482,15 @@ Item {
                         { key: "showAirplane", icon: "󰀝", title: "Airplane mode", desc: "Wi-Fi and Bluetooth radios off / on" },
                         { key: "showCharging", icon: "󰂄", title: "Charging", desc: "Plug in, unplug, full and low battery" },
                         { key: "showBluetooth", icon: "󰂯", title: "Bluetooth", desc: "Devices connecting and disconnecting" },
-                        { key: "showUsb", icon: "󱇰", title: "USB", desc: "Devices plugged in or removed" }
+                        { key: "showUsb", icon: "󱇰", title: "USB", desc: "Devices plugged in or removed" },
+                        { key: "showClipboard", icon: "󰆏", title: "Clipboard", desc: "Copying, cutting and pasting text, images and files (paste is announced by Ctrl+V)" },
+                        { key: "showFiles", icon: "󰈔", title: "Files", desc: "Downloads, and files added, modified, renamed or deleted in the folders below" },
+                        { key: "fileDirDownloads", icon: "󰉍", title: "Watch Downloads", desc: "Includes live download progress" },
+                        { key: "fileDirDocuments", icon: "󰈙", title: "Watch Documents", desc: "~/Documents" },
+                        { key: "fileDirDesktop", icon: "󰟀", title: "Watch Desktop", desc: "~/Desktop" },
+                        { key: "fileDirPictures", icon: "󰋩", title: "Watch Pictures", desc: "~/Pictures (screenshots are skipped, Serpantinum announces those)" },
+                        { key: "fileDirVideos", icon: "󰈫", title: "Watch Videos", desc: "~/Videos" },
+                        { key: "fileDirMusic", icon: "󰎆", title: "Watch Music", desc: "~/Music" }
                     ]
                     delegate: SettingsRow {
                         required property var modelData

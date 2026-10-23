@@ -1,0 +1,3 @@
+# non-consuming binds that only notify the Dynamic Island (the key still reaches the app)
+CTRL+V
+CTRL+SHIFT+V
