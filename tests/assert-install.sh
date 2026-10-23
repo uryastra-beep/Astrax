@@ -46,7 +46,7 @@ while read -r name target; do
     link="$HOME/.local/bin/$name"
     check "$name -> scripts/$target" [ "$(readlink "$link")" = "$HOME/scripts/$target" ]
     check "$name is executable" [ -x "$link" ]
-done < <(grep -oE '\[[A-Za-z0-9_-]+\]=[A-Za-z0-9_.-]+' install.sh | sed -E 's/^\[([^]]+)\]=(.*)$/\1 \2/')
+done < <(grep -oE '\[[A-Za-z0-9_-]+\]=[A-Za-z0-9_./-]+' install.sh | sed -E 's/^\[([^]]+)\]=(.*)$/\1 \2/')
 
 echo "== WORT (lava wallpaper)"
 wall_dir="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("wallpaperDir",""))' "$HOME/.config/serpantinum/settings.json")"
