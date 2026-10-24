@@ -80,6 +80,8 @@ ShellRoot {
                 readonly property string safeMonitorName: (modelData.name || "default").replace(/[^a-zA-Z0-9_-]/g, "_")
 
                 property bool open: false
+                property bool islandEnabled: false
+                onIslandEnabledChanged: if (islandEnabled) win.open = false
                 property string query: ""
                 property int selectedIndex: 0
 
@@ -112,9 +114,18 @@ ShellRoot {
 
                 IpcHandler {
                     target: "appswitcher-" + win.safeMonitorName
-                    function toggle(): void { win.open = !win.open; }
-                    function show(): void { win.open = true; }
-                    function hide(): void { win.open = false; }
+                    function toggle(): void {
+                        if (win.islandEnabled) win.routeIsland("toggleSwitcher", true);
+                        else win.open = !win.open;
+                    }
+                    function show(): void {
+                        if (win.islandEnabled) win.routeIsland("openSwitcher", true);
+                        else win.open = true;
+                    }
+                    function hide(): void {
+                        win.open = false;
+                        if (win.islandEnabled) win.routeIsland("closeSwitcher", false);
+                    }
                     function isOpen(): bool { return win.open; }
                 }
 
@@ -124,6 +135,19 @@ ShellRoot {
                         query = "";
                         keyHandler.forceActiveFocus();
                         grabTimer.restart();
+                    }
+                }
+                function routeIsland(method, fallbackOpen) {
+                    win.open = false;
+                    islandRequest.fallbackOpen = fallbackOpen;
+                    islandRequest.command = ["qs", "-c", "astrax-island", "ipc", "call", "island", method];
+                    if (!islandRequest.running) islandRequest.running = true;
+                }
+                Process {
+                    id: islandRequest
+                    property bool fallbackOpen: false
+                    onExited: (exitCode, exitStatus) => {
+                        if (exitCode !== 0 && fallbackOpen) win.open = true;
                     }
                 }
 
@@ -220,6 +244,7 @@ ShellRoot {
                             // a static preset was never applied,
                             // matugen colors always stayed.
                             const s = JSON.parse(text());
+                            win.islandEnabled = !s.island || s.island.enabled !== false;
                             const t = s.theme || {};
                             if (t.fontFamily) theme.fontFamily = t.fontFamily;
                             if (t.borderRadius !== undefined) theme.borderRadius = t.borderRadius;

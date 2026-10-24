@@ -73,8 +73,11 @@ reap_taskbar_bg() {
     ( for _ in 1 2 3 4 5 6 7 8; do stop_taskbar; sleep 1; done ) > /dev/null 2>&1 &
 }
 
-apply_on()  { set_blur "$BLUR_ON";        stop_taskbar; }
-apply_off() { set_blur "$(blur_default)"; start_taskbar; }
+# Liquid Glass (island / Dock) is off while opti is on: tell the blur script after each switch
+refresh_glass() { hyprctl repl "if astraxIslandBlurRefresh then astraxIslandBlurRefresh() end" >/dev/null 2>&1 || true; }
+
+apply_on()  { echo on > "$STATE_FILE"; set_blur "$BLUR_ON"; stop_taskbar; refresh_glass; }
+apply_off() { echo off > "$STATE_FILE"; set_blur "$(blur_default)"; start_taskbar; refresh_glass; }
 
 status() {
     local st gm tb

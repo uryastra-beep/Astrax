@@ -210,6 +210,8 @@ Item {
     }
 
     function handle(flags, path) {
+        // BrAIn persists its state frequently; these writes are not user file activity.
+        if (/^brain\.sqlite3(?:-(?:wal|shm|journal))?$/i.test(base(path))) return;
         const isDir = flags.indexOf("ISDIR") >= 0;
         if (flags.indexOf("CREATE") >= 0) {
             if (!isDir && isTemp(path)) { dlStart(path); return; }

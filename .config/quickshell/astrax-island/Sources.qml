@@ -201,6 +201,24 @@ Item {
         }
     }
 
+    function isAlarm(n) {
+        // Match the sending app or explicit system hints, never words in a chat.
+        const source = [n.sourceApp, n.app, n.entry].map(x => String(x || "").toLowerCase().trim());
+        const clockApp = source.some(x => /^(?:org\.gnome\.clocks|org\.kde\.kclock|com\.apple\.mobiletimer(?:d)?|mobiletimer(?:d)?|gnome clocks|clocks?|reloj(?:es)?|kclock|alarmas?|alarms?)$/.test(x));
+        const icon = String(n.icon || "").toLowerCase();
+        const sound = String(n.soundName || "").toLowerCase();
+        const category = String(n.category || "").toLowerCase();
+        return clockApp || category === "alarm" || category === "alarm-clock"
+            || /^(?:alarm-clock-elapsed|alarm-clock|alarm-timer-elapsed)$/.test(sound)
+            || /^(?:alarm-clock|alarm-symbolic)$/.test(icon);
+    }
+    function emitAlarm(n) {
+        src.event({ kind: "alarm", layout: "file", state: "alarm", coalesce: "alarm",
+                    name: n.summary || "Alarm", sub: n.body || ((n.app || "Clock") + " · Ringing"),
+                    glyph: "󰀠", uid: n.uid, actions: n.actions || [],
+                    duration: (src.cfg.notifSeconds || 5) * 1000 });
+    }
+
     // -------------------------------------------- notifications (from srp)
     // Serpantinum owns the org.freedesktop.Notifications server (so its history
     // panel keeps working) and appends one JSON object per line to eventFile.
@@ -215,6 +233,7 @@ Item {
                 try { n = JSON.parse(data); } catch (e) { return; }
                 // scripts can push any event shape directly: {"layout":"status","glyph":"...","title":"..."}
                 if (n.layout) { n.duration = n.duration || 2500; src.event(n); return; }
+                if (src.isAlarm(n)) { src.emitAlarm(n); return; }
                 src.event({ kind: "notif", layout: "notif", app: n.app || "", title: n.summary || "", detail: n.body || "",
                             icon: n.icon || "", image: n.image || "", uid: n.uid, actions: n.actions || [], urgent: n.urgency === 2,
                             duration: (src.cfg.notifSeconds || 5) * 1000 });

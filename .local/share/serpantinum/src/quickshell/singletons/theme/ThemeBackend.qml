@@ -25,6 +25,21 @@ Item {
     readonly property bool glassActive: blurBackground && elementOpacity < 0.999
     readonly property bool liquidGlass: blurBackground && blurStyle === "liquid"
 
+    // Tells island-blur.lua (Hyprland) when Serpantinum's liquid glass is on, so the compositor blur
+    // it samples is enabled. No-op if the Lua side isn't loaded.
+    onLiquidGlassChanged: srpGlassSync.restart()
+    Timer {
+        id: srpGlassSync
+        interval: 80
+        onTriggered: {
+            if (srpGlassProcess.running) { restart(); return; }
+            srpGlassProcess.command = ["hyprctl", "eval",
+                "if astraxSrpGlassMode then astraxSrpGlassMode(" + (root.liquidGlass ? "true" : "false") + ") end"];
+            srpGlassProcess.running = true;
+        }
+    }
+    Process { id: srpGlassProcess }
+
     property color base: "#1e1e2e"
     property color mantle: "#181825"
     property color crust: "#11111b"
@@ -708,5 +723,6 @@ Item {
         root._readInProgress = true;
         root.updateColors();
         root.updateActiveFontLoader();
+        srpGlassSync.restart();
     }
 }

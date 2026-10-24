@@ -86,7 +86,7 @@ case "$g" in
 esac
 
 sec "Commands"
-for c in srp-update astrax-update astrax-restore cursor-style astrax-help astrax-safe astrax-monitors astrax-tour; do
+for c in srp-update astrax-update astrax-restore cursor-style astrax-help astrax-safe astrax-monitors astrax-tour astrax-icons astrax-iphone; do
     command -v "$c" >/dev/null && ok "$c" || warn "$c is not in PATH" "re-run ./install.sh and make sure ~/.local/bin is in PATH"
 done
 

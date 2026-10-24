@@ -2,7 +2,7 @@
 # sharp-transparent on|off|toggle|status|reapply
 #
 # WHAT "on" DOES: sharp corners (rounding 0) and transparency WITHOUT blur behind
-# (blur.enabled = false). The transparency itself (active/inactive_opacity)
+# (blur.enabled = false; the Dynamic Island keeps its Liquid Glass blur unless opti is on). The transparency itself (active/inactive_opacity)
 # already comes from decorations.lua and isn't touched -- only the blur is turned off so
 # you see "through" instead of a backdrop blur.
 #
@@ -27,20 +27,20 @@ rounding_default() {
 }
 
 apply_on() {
-    hyprctl repl "hl.config({ decoration = { rounding = 0, blur = { enabled = false } } })" >/dev/null 2>&1
+    hyprctl repl 'hl.config({ decoration = { rounding = 0 } }); if astraxIslandBlurMode then astraxIslandBlurMode(true) else hl.config({ decoration = { blur = { enabled = false } } }) end' >/dev/null 2>&1
 }
 
 apply_off() {
     local r
     r="$(rounding_default)"; [ -n "$r" ] || r=10
-    hyprctl repl "hl.config({ decoration = { rounding = $r, blur = { enabled = true } } })" >/dev/null 2>&1
+    hyprctl repl "hl.config({ decoration = { rounding = $r, blur = { enabled = true } } }); if astraxIslandBlurMode then astraxIslandBlurMode(false) end" >/dev/null 2>&1
 }
 
 case "${1:-status}" in
     on)
         apply_on
         echo on > "$STATE_FILE"
-        echo "sharp-transparent ON  -- rounding 0, blur off"
+        echo "sharp-transparent ON  -- rounding 0, blur off (except the Dynamic Island glass)"
         ;;
     off)
         apply_off

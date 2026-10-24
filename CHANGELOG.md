@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.13.0
+
+Big Dynamic Island update, plus an independent macOS-style Dock.
+
+- **Super and Alt+Tab in the island**: app launcher (five per row) and window switcher (four per
+  row) with Liquid Glass selectors; `astrax-launcher` and `astrax-app-switcher` route to the island
+  when it is on and keep their own panels when it is off.
+- **Overview** (double right click): clock, batteries, Wi-Fi / Bluetooth, local screen-time
+  estimate, system and storage, files shortcut; widgets can be toggled and reordered.
+- **Files Shelf** (triple right click): eight groups of four files, copy or drag a whole group.
+- **Notification stack**: new notifications on top of the older ones, three visible at a time.
+- **Lyrics in the island** (`IslandLyrics.qml`): optional; needs the helper of `astrax-iphone`,
+  and shows nothing without it.
+- **New Liquid Glass shader** (`glass-soft-blur`); the old `glass.frag` is removed. The compositor
+  side is `config/island-blur.lua` (the island's backdrop blur, Serpantinum's liquid-glass blur,
+  and sharp-transparent mode keeping the island's blur). **Liquid Glass is unavailable while `opti`
+  is on**: the island and the Dock ignore their glass setting, the Super+C switches are greyed out,
+  and the blur script leaves passes and size to opti; `opti` tells it when it switches. It comes
+  back by itself when opti is turned off. `tests/test-glass.sh` covers it.
+- **Gestures**: one click = media (0.5 s wait), triple left = history, double right = Overview,
+  triple right = Files Shelf, a click outside compacts without blocking apps (`binds-island.lua`).
+- **App icons** in the launcher / switcher with an optional Apple-style pack. The pack is NOT in
+  the repository: `astrax-icons install` downloads it to `~/.local/share/astrax/icons/`;
+  without it the normal icons are used.
+- **macOS-style Dock** (`astrax-mac-dock`): independent from Serpantinum's Dock, its own
+  `macDock` settings, user service installed but disabled until it is turned on in
+  `SUPER+C` > macOS Dock. New `MacDockTab.qml`; `DockTab.qml` links to it.
+- **Overrides and patches** for the Serpantinum 2.2.12 pin: `NotificationManager`,
+  `NotificationPopups`, `GuidePopup`, `GuideSidebar`, `DockTab`, `OsdController` (patches in
+  `patches/`); `IslandTab.qml` and `MacDockTab.qml` are new files.
+- **Installer**: copies the island and the Dock, installs the Dock service (not enabled), adds
+  `inotify-tools`, makes the helper scripts executable, and mentions the two optional commands.
+  `assert-install.sh` checks all of it, including that no Apple artwork or iPhone bridge was shipped.
+- Not tested live by the author for this release: Bluetooth and USB events, a real charger, and the
+  expanded music view.
+
+**Current Serpantinum version: 2.2.12.**
+
 ## 1.12.0
 
 Dynamic Island update.

@@ -13,6 +13,8 @@ ShellRoot {
     id: root
 
     property bool open: false
+    property bool islandEnabled: false
+    onIslandEnabledChanged: if (islandEnabled) root.open = false
     property string query: ""
     property int selectedIndex: 0
 
@@ -202,6 +204,7 @@ ShellRoot {
                 // found anything, so a static preset was never
                 // applied, matugen colors always stayed.
                 const s = JSON.parse(text());
+                root.islandEnabled = !s.island || s.island.enabled !== false;
                 const t = s.theme || {};
                 if (t.fontFamily) theme.fontFamily = t.fontFamily;
                 if (t.borderRadius !== undefined) theme.borderRadius = t.borderRadius;
@@ -261,10 +264,44 @@ ShellRoot {
 
     IpcHandler {
         target: "launcher"
-        function toggle(): void { root.open = !root.open; }
-        function show(): void { root.open = true; }
-        function hide(): void { root.open = false; }
+        function toggle(): void {
+            if (root.islandEnabled) root.routeIsland("toggleApps", true);
+            else root.open = !root.open;
+        }
+        function show(): void {
+            if (root.islandEnabled) root.routeIsland("openApps", true);
+            else root.open = true;
+        }
+        function hide(): void {
+            root.open = false;
+            if (root.islandEnabled) root.routeIsland("closeApps", false);
+        }
+        function launchId(appId: string): void {
+            const entry = DesktopEntries.byId(appId);
+            if (entry) root.launch(entry);
+        }
+        function pinId(appId: string): void {
+            if (!DesktopEntries.byId(appId)) return;
+            const values = root.pinned.slice();
+            const index = values.indexOf(appId);
+            if (index >= 0) values.splice(index, 1); else values.unshift(appId);
+            root.pinned = values;
+            pinnedFile.setText(JSON.stringify(values));
+            root.refreshDisplay();
+        }
         function isOpen(): bool { return root.open; }
+    }
+
+    function routeIsland(method, fallbackOpen) {
+        root.open = false;
+        islandRequest.fallbackOpen = fallbackOpen;
+        islandRequest.command = ["qs", "-c", "astrax-island", "ipc", "call", "island", method];
+        if (!islandRequest.running) islandRequest.running = true;
+    }
+    Process {
+        id: islandRequest
+        property bool fallbackOpen: false
+        onExited: (exitCode, exitStatus) => { if (exitCode !== 0 && fallbackOpen) root.open = true; }
     }
 
     PanelWindow {

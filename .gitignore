@@ -12,3 +12,10 @@ __pycache__/
 *.pyc
 .DS_Store
 renderer.log
+
+# optional downloads that must never be committed (installed by astrax-icons / astrax-iphone)
+apple-icons/
+**/apple-icons/
+iphone-notifications/
+ancs-linux
+*.AppImage

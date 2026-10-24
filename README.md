@@ -331,7 +331,25 @@ Triple-click the island (or `qs -c astrax-island ipc call island toggleList`) fo
 list: notifications, files, clipboard and devices in one list, newest first. It closes when you
 click outside (while it is open a transparent layer covers the screen and takes that click).
 
-Optional Liquid Glass (off by default): the pill blurs what is behind it and refracts the edge
+Gestures on the island: one click opens the media panel (after a 0.5 s wait so a triple click can
+be told apart; closing is instant), triple left click = notification history, double right click =
+Overview, triple right click = Files Shelf. Clicking outside compacts it without blocking the apps
+behind it, and right-click on a notification dismisses it. New notifications stack on top of the
+older ones (three visible at a time).
+
+- **Super and Alt+Tab inside the island**: the app launcher (five apps per row, `WASD` / arrows,
+  `Shift` / `Enter` to open, `Ctrl+L` to search, `Ctrl+F` to pin) and the window switcher (up to four
+  windows per row) open in the island. With the island off, the original `astrax-launcher` and
+  `astrax-app-switcher` panels are used.
+- **Overview**: clock, device batteries, Wi-Fi / Bluetooth, an on-this-PC screen-time estimate
+  (idle after 60 s, seven days kept locally), system and storage, and a files shortcut. Widgets can
+  be turned on, off and reordered in `SUPER+C` > Dynamic Island.
+- **Files Shelf**: keep up to eight groups of four files, drag or copy a whole group out again.
+- **Lyrics in the island**: word-by-word lyrics under the media panel, read from the lyrics Astrax
+  already has. They need the optional helper from `astrax-iphone install`; without it the island
+  just shows no lyrics.
+
+Optional Liquid Glass (off by default; not available while `opti` is on, it comes back when you turn opti off): the pill blurs what is behind it and refracts the edge
 (a shader plus a single screen capture, taken only while glass is on).
 
 Configure it in `SUPER+C` > Dynamic Island: a switch per kind of notice, X/Y position sliders, a
@@ -343,6 +361,28 @@ It needs `inotify-tools`, `wl-clipboard`, `jq` and `util-linux` (the installer a
 `OsdController.qml`, `GuidePopup.qml` and `GuideSidebar.qml` (plus the new `IslandTab.qml`);
 `patches/serpantinum-*-island.patch` re-apply them after a Serpantinum update. Turning the island
 off in its tab gives Serpantinum's own popups back.
+
+### macOS-style Dock (optional)
+
+A separate Dock, independent of Serpantinum's: `~/.config/quickshell/astrax-mac-dock/`, run as the
+user service `astrax-mac-dock.service`. Turn it on in `SUPER+C` > macOS Dock (that switch also
+enables the service and turns Serpantinum's own Dock off; turning it off restores it). Magnification,
+bounce on launch, dots for running apps, Shift+click for a new instance, right-click to keep / remove
+or close windows, auto-hide, one Dock per screen, optional Liquid Glass. Its settings live in the
+`macDock` key of `settings.json`.
+
+### Optional downloads: Apple-style icons and the iPhone bridge
+
+Two things are not in this repository on purpose; each is one command:
+
+```bash
+astrax-icons install      # Apple-style app icons for Super / Alt+Tab / the Dock (astrax-icons remove)
+astrax-iphone install     # iPhone notifications + Bluetooth audio bridge (astrax-iphone remove)
+```
+
+The icon artwork belongs to Apple and the apps' developers and is not covered by Astrax's license
+(see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). Without the icon pack Astrax uses the normal
+system icons; without the bridge the island still works, it just has no iPhone data or island lyrics.
 
 ### Other commands
 

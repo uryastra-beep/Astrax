@@ -8,11 +8,11 @@ import Quickshell.Hyprland
 import "../"
 import "../reusables"
 
-// Used to be a single PanelWindow (Quickshell assigns it to one monitor by
-// default) -- popups must show on both
-// screens, not only the one Quickshell picks. Variants + screens
-// instantiates one per connected monitor (reactive: if HDMI is
-// plugged/unplugged live, its instance is created/destroyed by itself).
+// Antes 1 sola PanelWindow (Quickshell la asigna a un solo monitor por
+// default) -- pedido explicito: los popups tienen que verse en las 2
+// pantallas, no solo en la que Quickshell elige. Variants + screens
+// instancia una por cada monitor conectado (reactivo: si se
+// conecta/desconecta HDMI en vivo, se crea/destruye su instancia sola).
 Variants {
     model: Quickshell.screens
 
@@ -242,12 +242,12 @@ Variants {
                         }
                     }
 
-                    // Default lowered from 5000 to 3000ms.
-                    // Before, critical urgency (model.urgency === 2) forced
-                    // 0 (never disappears by itself) without exception -- now it only
-                    // persists if the sender explicitly
-                    // asked for timeout 0; if it didn't specify anything (like
-                    // notify-send without "-t"), it also disappears after 3s.
+                    // Default bajado de 5000 a 3000ms (pedido explicito).
+                    // Antes urgencia critical (model.urgency === 2) forzaba
+                    // 0 (nunca desaparece sola) sin excepcion -- ahora solo
+                    // persiste si el que mando la notificacion pidio
+                    // explicitamente timeout 0; si no especifico nada (como
+                    // notify-send sin "-t"), tambien desaparece a los 3s.
                     property int effectiveTimeout: {
                         var n = delegateWrapper.realNotif;
                         var t = n ? (typeof n.expireTimeout === "number" ? n.expireTimeout : (typeof n.timeout === "number" ? n.timeout : -1)) : -1;

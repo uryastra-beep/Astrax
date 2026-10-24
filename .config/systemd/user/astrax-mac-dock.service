@@ -1,0 +1,13 @@
+[Unit]
+Description=Astrax custom macOS-style Dock
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/qs -n -c astrax-mac-dock
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

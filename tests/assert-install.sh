@@ -73,6 +73,10 @@ check "astrax-lyrics-rating linked" [ -x "$HOME/.local/bin/astrax-lyrics-rating"
 check "Dynamic Island installed with its compiled shader" test -s "$HOME/.config/quickshell/astrax-island/glass.frag.qsb"
 check "island clipboard helper is executable" test -x "$HOME/.config/quickshell/astrax-island/clip-event.sh"
 check "island deps present (inotifywait, wl-paste, jq, setpriv)" bash -c "command -v inotifywait wl-paste jq setpriv >/dev/null"
+check "island helpers are executable" test -x "$HOME/.config/quickshell/astrax-island/shelf-store.py" -a -x "$HOME/.config/quickshell/astrax-island/overview-stats.py"
+check "macOS Dock config and service installed" test -s "$HOME/.config/quickshell/astrax-mac-dock/shell.qml" -a -s "$HOME/.config/systemd/user/astrax-mac-dock.service"
+check "macOS Dock service stays disabled until the user turns it on" bash -c '! systemctl --user is-enabled astrax-mac-dock.service >/dev/null 2>&1'
+check "no Apple artwork or iPhone bridge shipped" bash -c '[ ! -e "$HOME/.config/quickshell/astrax-island/apple-icons" ] && [ ! -e "$HOME/.local/lib/iphone-notifications" ]'
 check "Dynamic Island settings tab installed" test -f "$HOME/.local/share/serpantinum/src/quickshell/guide/IslandTab.qml"
 check "astrax-update version" [ "$(bash scripts/astrax-update.sh version)" = "$(tr -d '[:space:]' < VERSION)" ]
 check "About page shows Astrax's version" grep -q astraxUpdate "$HOME/.local/share/serpantinum/src/quickshell/guide/AboutTab.qml"

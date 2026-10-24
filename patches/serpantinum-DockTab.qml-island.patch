@@ -1,0 +1,40 @@
+--- a/src/quickshell/guide/DockTab.qml
++++ b/src/quickshell/guide/DockTab.qml
+@@ -75,6 +75,21 @@
+     property bool currentShowRunningApps: dockSettings && dockSettings.showRunningApps !== undefined ? Boolean(dockSettings.showRunningApps) : false
+     property string currentRunningScope: (dockSettings && dockSettings.runningScope) ? dockSettings.runningScope : "auto"
+ 
++    readonly property var macDockSettings: Config.rawSettings.macDock || ({})
++    function updateMacDock(key, value) {
++        const next = JSON.parse(JSON.stringify(Config.getSetting("macDock", {}) || {}));
++        if (key === "enabled") {
++            const original = JSON.parse(JSON.stringify(Config.getSetting("dock", {}) || {}));
++            if (value) {
++                next.restoreDockEnabled = original.enabled !== false;
++                original.enabled = false;
++            } else original.enabled = next.restoreDockEnabled !== false;
++            Config.setSetting("dock", original);
++        }
++        next[key] = value;
++        Config.setSetting("macDock", next);
++    }
++
+     function syncSettings() {
+         let s = (typeof Config !== "undefined" && typeof Config.getSetting === "function")
+             ? Config.getSetting("dock", dockTabRoot.defaultDockSettings)
+@@ -188,7 +203,15 @@
+             spacing: rootObj.s(6)
+ 
+             SettingsRow {
++                rootObj: dockTabRoot.rootObj
++                icon: "󰀻"; title: "macOS Dock · Astrax Custom"
++                description: "Custom Dock controls now have their own macOS Dock tab"
++                Button { Layout.alignment: Qt.AlignRight; text: "Open macOS Dock"; onClicked: dockTabRoot.rootObj.gotoTab("macdock", "") }
++            }
++
++            SettingsRow {
+                 settingId: "dock_enabled"
++                enabled: dockTabRoot.macDockSettings.enabled !== true
+                 rootObj: dockTabRoot.rootObj
+                 icon: "󰅀"
+                 title: I18n.t("guide.dock.enabled.title", "Enable dock")

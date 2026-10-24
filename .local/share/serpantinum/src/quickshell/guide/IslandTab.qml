@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import "../"
 import "../reusables"
 import "../reusables/guide"
@@ -11,6 +12,16 @@ import "../reusables/guide"
 // so every change shows up live.
 Item {
     id: islandTabRoot
+
+    // Liquid Glass is unavailable while `opti` is on (the shells ignore the setting meanwhile)
+    property bool optiOn: false
+    FileView {
+        path: Quickshell.env("HOME") + "/.local/state/opti"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: islandTabRoot.optiOn = text().trim() === "on"
+        onLoadFailed: islandTabRoot.optiOn = false
+    }
     required property var rootObj
     required property int tabIndex
 
@@ -24,6 +35,8 @@ Item {
     Behavior on opacity { NumberAnimation { duration: 250 } }
 
     readonly property var defaults: ({
+        "overviewWidgets": ["clock", "batteries", "connections", "screenTime", "system", "files"],
+        "trackScreenTime": true,
         "enabled": true,
         "replacePopups": true,
         "replaceOsd": true,
@@ -35,9 +48,11 @@ Item {
         "posX": 50,
         "posY": 0,
         "followFocus": true,
+        "showOnAllScreens": false,
         "hideWhenIdle": false,
         "notifSeconds": 5,
         "showMusic": true,
+        "showLyrics": true,
         "showNotifications": true,
         "showVolume": true,
         "showMic": true,
@@ -100,6 +115,30 @@ Item {
         current[key] = v;
         Config.setSetting("island", current);
         islandTabRoot.settings = current;
+    }
+
+    readonly property var widgetCatalog: [
+        {key: "clock", title: "Clock & date"}, {key: "batteries", title: "Device batteries"},
+        {key: "connections", title: "Wi-Fi & Bluetooth"}, {key: "screenTime", title: "Screen Time"},
+        {key: "system", title: "System & storage"}, {key: "files", title: "Files shortcut"}
+    ]
+    readonly property var overviewOrder: Array.isArray(settings.overviewWidgets) ? settings.overviewWidgets : defaults.overviewWidgets
+    readonly property var widgetRows: {
+        const ordered = [];
+        for (const key of overviewOrder) { const row = widgetCatalog.find(w => w.key === key); if (row && !ordered.includes(row)) ordered.push(row); }
+        for (const row of widgetCatalog) if (!ordered.includes(row)) ordered.push(row);
+        return ordered;
+    }
+    function toggleWidget(key, enabled) {
+        const order = overviewOrder.filter(k => k !== key);
+        if (enabled) order.push(key);
+        update("overviewWidgets", order);
+    }
+    function moveWidget(key, delta) {
+        const order = overviewOrder.slice(); const i = order.indexOf(key); const j = i+delta;
+        if (i < 0 || j < 0 || j >= order.length) return;
+        const temp = order[i]; order[i] = order[j]; order[j] = temp;
+        update("overviewWidgets", order);
     }
 
     Flickable {
@@ -398,9 +437,11 @@ Item {
                     rootObj: islandTabRoot.rootObj
                     icon: "󰧞"
                     title: "Liquid Glass"
-                    description: "Translucent blurred material instead of solid black (off = like the real island)"
+                    description: islandTabRoot.optiOn ? "Unavailable while opti is on (run: opti off)" : "Translucent blurred material instead of solid black (off = like the real island)"
                     Toggle {
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        enabled: !islandTabRoot.optiOn
+                        opacity: islandTabRoot.optiOn ? 0.45 : 1
                         checked: Boolean(islandTabRoot.val("glass"))
                         accentColor: ThemeBackend.mauve
                         baseColor: ThemeBackend.surface1
@@ -447,7 +488,7 @@ Item {
                 }
                 Repeater {
                     model: [
-                        { key: "followFocus", icon: "󰍹", title: "Follow focused monitor", desc: "Move the island to whichever screen you are using" },
+                        { key: "showOnAllScreens", icon: "󰍹", title: "Show on all screens", desc: "Show the island on every connected screen; off = focused screen only" },
                         { key: "hideWhenIdle", icon: "󰈉", title: "Hide when idle", desc: "Only show the island when something happens" }
                     ]
                     delegate: SettingsRow {
@@ -469,11 +510,59 @@ Item {
                 }
             }
 
+            SettingsBlob {
+                SettingsRow {
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰕮"; title: "Overview widgets"
+                    description: "Double right-click panel · choose widgets and arrange them top to bottom"
+                }
+                Repeater {
+                    model: islandTabRoot.widgetRows
+                    delegate: SettingsRow {
+                        required property var modelData
+                        rootObj: islandTabRoot.rootObj
+                        icon: "󰕮"; title: modelData.title
+                        description: islandTabRoot.overviewOrder.indexOf(modelData.key) >= 0 ? "Position " + (islandTabRoot.overviewOrder.indexOf(modelData.key)+1) : "Not in the panel · enable to add"
+                        RowLayout {
+                            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                            spacing: 8
+                            Button { text: "↑"; enabled: islandTabRoot.overviewOrder.indexOf(modelData.key) > 0; onClicked: islandTabRoot.moveWidget(modelData.key, -1) }
+                            Button { text: "↓"; enabled: islandTabRoot.overviewOrder.indexOf(modelData.key) >= 0 && islandTabRoot.overviewOrder.indexOf(modelData.key) < islandTabRoot.overviewOrder.length-1; onClicked: islandTabRoot.moveWidget(modelData.key, 1) }
+                            Toggle {
+                                checked: islandTabRoot.overviewOrder.indexOf(modelData.key) >= 0
+                                accentColor: ThemeBackend.mauve; baseColor: ThemeBackend.surface1
+                                handleColor: ThemeBackend.crust; handleOffColor: ThemeBackend.text
+                                onToggled: function(c) { islandTabRoot.toggleWidget(modelData.key, c); }
+                            }
+                        }
+                    }
+                }
+                SettingsRow {
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰥔"; title: "Track PC Screen Time"
+                    description: "Local estimate from now · pauses after 1 minute away · keeps 7 days; hiding the widget does not stop tracking"
+                    Toggle {
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        checked: islandTabRoot.val("trackScreenTime") !== false
+                        accentColor: ThemeBackend.mauve; baseColor: ThemeBackend.surface1
+                        handleColor: ThemeBackend.crust; handleOffColor: ThemeBackend.text
+                        onToggled: function(c) { islandTabRoot.update("trackScreenTime", c); }
+                    }
+                }
+                SettingsRow {
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰑓"; title: "Restore widget layout"
+                    description: "Restore the default order and show all six widgets"
+                    Button { Layout.alignment: Qt.AlignRight; text: "Reset"; onClicked: islandTabRoot.update("overviewWidgets", islandTabRoot.defaults.overviewWidgets.slice()) }
+                }
+            }
+
             // ---- what shows up ----
             SettingsBlob {
                 Repeater {
                     model: [
                         { key: "showMusic", icon: "󰎆", title: "Music", desc: "Now playing, with controls when expanded" },
+                        { key: "showLyrics", icon: "󰍬", title: "Word-by-word lyrics", desc: "Astrax lyrics for the music on this PC (and a connected phone) in the media panel" },
                         { key: "showNotifications", icon: "󰂚", title: "Notifications", desc: "Messages and alerts from apps" },
                         { key: "showVolume", icon: "󰕾", title: "Volume", desc: "Output volume and mute" },
                         { key: "showMic", icon: "󰍬", title: "Microphone", desc: "Mic volume and mute" },

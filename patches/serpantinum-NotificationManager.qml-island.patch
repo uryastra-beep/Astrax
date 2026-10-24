@@ -11,23 +11,23 @@
  Item {
      id: root
  
-+    // "Do not disturb" toggle via IPC (SUPER+N) -- same mechanism as the
-+    // dndBtn button of the native panel (NotificationBox.qml): reads/writes
-+    // Config "notifications".dnd. With dnd=true popups stay
-+    // invisible except for critical urgency (see NotificationPopups.qml) and
-+    // nothing makes a sound -- easy to mistake for "notifications don't show up".
-+    // Visible confirmation of the toggle (via notify-send, critical urgency
-+    // to bypass the DND that was just turned on -- see
-+    // NotificationPopups.qml, hasCriticalPopup bypasses the dnd filter).
-+    // Without this the toggle is invisible/silent, no feedback on its
-+    // new state.
++    // Toggle de "no molestar" via IPC (SUPER+N) -- mismo mecanismo que el
++    // boton dndBtn del panel nativo (NotificationBox.qml): lee/escribe
++    // Config "notifications".dnd. Con dnd=true los popups quedan
++    // invisibles salvo urgencia critica (ver NotificationPopups.qml) y no
++    // suena nada -- confundible con "las notificaciones no me salen".
++    // Confirmacion visible del toggle (via notify-send, urgencia critical
++    // para saltarse el propio DND que se acaba de prender -- ver
++    // NotificationPopups.qml, hasCriticalPopup se salta el filtro de dnd).
++    // Sin esto el toggle es invisible/silencioso, no da feedback de en que
++    // quedo.
 +    Process {
 +        id: dndFeedbackProc
 +        property string pendingSummary: ""
 +        command: ["notify-send", "-u", "critical", "-a", "Serpantinum", "-i", "notification-symbolic", dndFeedbackProc.pendingSummary]
 +    }
 +    function notifyDndState(enabled) {
-+        dndFeedbackProc.pendingSummary = enabled ? "Do not disturb on" : "Do not disturb off";
++        dndFeedbackProc.pendingSummary = enabled ? "No molestar activado" : "No molestar desactivado";
 +        dndFeedbackProc.running = true;
 +    }
 +
@@ -103,7 +103,7 @@
      property var liveNotifs: ({})
      property int popupCounter: 0
      property bool isStartup: true
-@@ -390,6 +481,21 @@
+@@ -390,6 +481,24 @@
  
              historyModel.insert(0, notifData);
  
@@ -115,6 +115,9 @@
 +                    "body":    bodyText,
 +                    "icon":    resolved.icon || notifData.iconPath,
 +                    "entry":   resolved.desktopEntry ? resolved.desktopEntry.id : "",
++                    "sourceApp": n.appName || "",
++                    "category": String((n.hints || {})["category"] || ""),
++                    "soundName": String((n.hints || {})["sound-name"] || ""),
 +                    "image":   imageVal,
 +                    "urgency": n.urgency,
 +                    "uid":     currentUid,
