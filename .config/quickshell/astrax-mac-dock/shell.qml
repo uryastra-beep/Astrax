@@ -43,6 +43,45 @@ ShellRoot {
         if (result.length && running.length) result.push({id:"separator",separator:true});
         return result.concat(running);
     }
+    // The icons live in a stable list (not the `apps` array, which rebuilds every delegate on each change),
+    // so an app that appears slides open a gap and grows in, and one that goes away shrinks and closes it.
+    // Rows of apps that went away stay (leaving) until their delegate has finished shrinking.
+    ListModel { id: tileModel }
+    readonly property var appsById: { const m = {}; for (const a of apps) m[a.id] = a; return m; }
+    property bool tilesReady: false   // rows added after start-up animate in; the first fill does not
+    property int leavingCount: 0
+    Timer { interval: 1500; running: true; onTriggered: dock.tilesReady = true }
+    onAppsChanged: syncTiles()
+    function syncTiles() {
+        const want = apps.map(a => a.id);
+        let leaving = 0;
+        for (let i = 0; i < tileModel.count; i++) {
+            const row = tileModel.get(i), keep = want.indexOf(row.tid) >= 0;
+            if (!keep && !row.leaving) tileModel.setProperty(i, "leaving", true);
+            else if (keep && row.leaving) tileModel.setProperty(i, "leaving", false);
+            if (!keep) leaving++;
+        }
+        leavingCount = leaving;
+        let pos = 0;
+        for (const id of want) {
+            while (pos < tileModel.count && tileModel.get(pos).leaving) pos++;   // leaving rows stay where they are
+            let at = -1;
+            for (let i = pos; i < tileModel.count; i++) if (tileModel.get(i).tid === id) { at = i; break; }
+            if (at < 0) tileModel.insert(pos, { tid: id, leaving: false, fresh: tilesReady });
+            else if (at !== pos) tileModel.move(at, pos, 1);
+            pos++;
+        }
+    }
+    function reapTile(tid) {
+        for (let i = 0; i < tileModel.count; i++) {
+            const row = tileModel.get(i);
+            if (row.tid === tid && row.leaving) { tileModel.remove(i); break; }
+        }
+        let leaving = 0;
+        for (let i = 0; i < tileModel.count; i++) if (tileModel.get(i).leaving) leaving++;
+        leavingCount = leaving;
+    }
+
     FileView {
         path: Quickshell.env("HOME") + "/.config/serpantinum/settings.json"
         watchChanges: true
@@ -75,7 +114,10 @@ ShellRoot {
         id: blurSetup
         command: ["hyprctl","eval","dofile("+JSON.stringify(Quickshell.shellPath("blur.lua"))+")"]
     }
-    Component.onCompleted: if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")) blurSetup.running = true
+    Component.onCompleted: {
+        syncTiles();
+        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")) blurSetup.running = true;
+    }
     Connections {
         target: Hyprland
         function onRawEvent(event) { if (event.name === "configreloaded" && !blurSetup.running) blurSetup.running = true; }
@@ -213,19 +255,34 @@ ShellRoot {
                     anchors.horizontalCenter: parent.horizontalCenter
                     height: win.maxIcon+18
                     Repeater {
-                        model: dock.apps
+                        model: tileModel
                         delegate: Item {
                             id: appTile
-                            required property var modelData
+                            required property string tid
+                            required property bool leaving
+                            required property bool fresh
                             required property int index
+                            // the app behind this row; a row that is leaving keeps the last one it had
+                            readonly property var current: dock.appsById[tid]
+                            property var lastKnown: ({ id: tid, separator: tid === "separator", windows: [] })
+                            onCurrentChanged: if (current) lastKnown = current
+                            readonly property var modelData: current || lastKnown
                             readonly property bool divider: modelData.separator === true
                             readonly property real distance: Math.abs(index+0.5-win.hoverPosition)
                             readonly property real lift: !divider && !win.menuOpen ? win.magnification*Math.exp(-distance*distance/1.5) : 0
                             property real iconSize: win.baseIcon*(1+lift)
                             property real bounce: 0
-                            width: divider ? 17 : iconSize+12
+                            // 0 = not there, 1 = fully in the Dock: drives the gap, the size and the fade
+                            property bool entered: !fresh
+                            property real presence: leaving || !entered ? 0 : 1
+                            Behavior on presence {
+                                NumberAnimation { duration: appTile.leaving ? 230 : 320; easing.type: appTile.leaving ? Easing.InOutCubic : Easing.OutCubic }
+                            }
+                            Component.onCompleted: entered = true
+                            onPresenceChanged: if (leaving && presence <= 0.002) Qt.callLater(dock.reapTile, tid)
+                            opacity: Math.min(1, presence * 1.6)
+                            width: (divider ? 17 : iconSize+12) * presence
                             height: row.height
-                            Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                             Behavior on iconSize { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                             Rectangle { visible: appTile.divider; width: 1; height: win.baseIcon*.7; color: "#40ffffff"; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: 9 }
                             AppIcon {
@@ -234,7 +291,11 @@ ShellRoot {
                                 app: appTile.modelData.name || ""; entry: appTile.modelData.id || ""; icon: appTile.modelData.icon || ""
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.bottom: parent.bottom; anchors.bottomMargin: 12
-                                transform: Translate { y: -appTile.bounce }
+                                transform: [
+                                    Translate { y: -appTile.bounce },
+                                    // grows from (and shrinks to) the bottom centre of its slot
+                                    Scale { origin.x: appTile.iconSize/2; origin.y: appTile.iconSize; xScale: appTile.presence; yScale: appTile.presence }
+                                ]
                                 scale: tileMouse.pressed ? .93 : 1
                                 Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
                             }
@@ -245,7 +306,7 @@ ShellRoot {
                             }
                             MouseArea {
                                 id: tileMouse
-                                anchors.fill: parent; enabled: !appTile.divider
+                                anchors.fill: parent; enabled: !appTile.divider && !appTile.leaving
                                 hoverEnabled: true; acceptedButtons: Qt.LeftButton | Qt.RightButton
                                 cursorShape: Qt.PointingHandCursor
                                 onEntered: { win.hoverPosition = appTile.index+.5; win.revealed = true; hideDelay.stop(); }

@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.13.1
+
+- **macOS Dock**: smooth animation when apps are added or removed. A new app opens its gap from the
+  centre and its icon grows up from the bottom with a fade (320 ms); an app that closes or is
+  unpinned shrinks down with a fade and the gap closes (230 ms). The glass background widens with
+  it. Icons already there at startup, and any that appear in the first 1.5 s, are not animated.
+  The Dock now uses a stable list model instead of recreating every icon on each change.
+
 ## 1.13.0
 
 Big Dynamic Island update, plus an independent macOS-style Dock.
