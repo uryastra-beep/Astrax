@@ -23,6 +23,7 @@ Item {
 
     property int lyricsLines: 1
     property string lyricsAlignment: "left"
+    property bool showNoLyrics: true
 
     function getThemePrimaryColor() {
         if (typeof ThemeBackend !== "undefined") {
@@ -129,7 +130,7 @@ Item {
         width: parent.width - root.sideMargin * 2
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
-        visible: !(Lyrics.isMediaActive && Lyrics.hasLyrics)
+        visible: !(Lyrics.isMediaActive && Lyrics.hasLyrics) && (root.showNoLyrics || !Lyrics.isMediaActive || Lyrics.loading)
         style: Text.Outline
         styleColor: "#000000"
         text: {

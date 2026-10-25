@@ -1,13 +1,13 @@
 --- a/src/quickshell/guide/GuidePopup.qml
 +++ b/src/quickshell/guide/GuidePopup.qml
-@@ -563,8 +563,10 @@
+@@ -590,8 +590,10 @@
          },
-         { id: "Launcher", key: "launcher", name: "Launcher", icon: "󰵆", file: "LauncherTab.qml" },
          { id: "Dock", key: "dock", name: "Dock", icon: "󰮯", file: "DockTab.qml" },
+         { id: "Launcher", key: "launcher", name: "Launcher", icon: "󰵆", file: "LauncherTab.qml" },
 +        { id: "macOS Dock", key: "macdock", name: "macOS Dock", icon: "󰀻", file: "MacDockTab.qml" },
          { id: "On-Screen Display", key: "osd", name: "On-Screen Display", icon: "󰕾", file: "OnScreenDisplayTab.qml" },
          { id: "Notifications", key: "notifications", name: "Notifications", icon: "󰂚", file: "notifications/NotificationsTab.qml" },
 +        { id: "Dynamic Island", key: "island", name: "Dynamic Island", icon: "󰟀", file: "IslandTab.qml" },
-         { id: "Wellbeing", key: "wellbeing", name: "Wellbeing", icon: "󰄉", file: "wellbeing/DigitalWellbeingTab.qml" },        
+         { id: "Screenshot", key: "screenshot", name: "Screenshot", icon: "󰹑", file: "screenshot/ScreenshotTab.qml" },
+         { id: "Wellbeing", key: "wellbeing", name: "Wellbeing", icon: "󰄉", separatorBefore: true, file: "wellbeing/DigitalWellbeingTab.qml" },
          { id: "Idle", key: "idle", name: "Idle", icon: "󰒲", file: "IdleTab.qml" },
-         { id: "About", key: "about", name: "About", icon: "󰋽", file: "AboutTab.qml" }

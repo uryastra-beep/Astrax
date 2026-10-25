@@ -1,7 +1,17 @@
 # Changelog
 
-## 1.13.1
+## 1.14.0
 
+- **Serpantinum 2.3.0.** The installer is now pinned to commit `ec45c01` (the `v2.3.0` tag plus 23
+  later commits of its master), and every Astrax override of a Serpantinum file was merged onto it:
+  clean 3-way merges for most, hand-resolved for `GuidePopup`, `GuideSidebar`, `GeneralTab`,
+  `Lyrics.qml` (keeps the blocklist, ratings, Liner and the new stale-cache fix), `Lock.qml` (keeps
+  the secure-lock marker), `Bar.qml` (per-screen autohide), `MusicFaceLyricsSimple` and
+  `WidgetRegistry` (keeps Lyrics / Unimatrix / Lavat next to the new Notes widget). The matugen
+  config overrides are gone: 2.3.0 no longer overwrites your fastfetch config. All
+  `patches/serpantinum-*.patch` were regenerated against the new pin.
+  The Super+C tabs (Dynamic Island, macOS Dock) work in the in-shell settings panel, which 2.3.0 still
+  opens by default.
 - **macOS Dock**: smooth animation when apps are added or removed. A new app opens its gap from the
   centre and its icon grows up from the bottom with a fade (320 ms); an app that closes or is
   unpinned shrinks down with a fade and the gap closes (230 ms). The glass background widens with

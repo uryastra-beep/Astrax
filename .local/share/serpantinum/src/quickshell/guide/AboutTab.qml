@@ -7,19 +7,8 @@ import Quickshell.Io
 import "../"
 import "../reusables"
 
-Item {
+GuideTab {
     id: aboutTabRoot
-    required property var rootObj
-    required property int tabIndex
-
-    anchors.fill: parent
-    visible: rootObj.currentTab === tabIndex
-    opacity: visible ? 1.0 : 0.0
-    property real slideY: visible ? 0 : rootObj.s(10)
-
-    Behavior on slideY { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
-    transform: Translate { y: slideY }
-    Behavior on opacity { NumberAnimation { duration: 250 } }
 
     property real updateTransitionProgress: Updater.updateAvailable ? 1.0 : 0.0
     Behavior on updateTransitionProgress {
@@ -117,40 +106,23 @@ Item {
                             width: rootObj.s(160)
                             height: width
 
-                            Item {
-                                id: aboutLogoMask
+                            Image {
+                                id: aboutLogo
                                 anchors.fill: parent
+                                source: "file://" + (typeof Caching !== "undefined" && Caching.serpantinumDir ? Caching.serpantinumDir : (rootObj && rootObj.appPaths ? rootObj.appPaths.serpantinumDir : "")) + "/assets/logo.svg"
+                                sourceSize: Qt.size(512, 512)
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                                antialiasing: true
                                 visible: false
-                                layer.enabled: true
-
-                                Image {
-                                    anchors.fill: parent
-                                    source: "file://" + (typeof Caching !== "undefined" && Caching.serpantinumDir ? Caching.serpantinumDir : (rootObj && rootObj.appPaths ? rootObj.appPaths.serpantinumDir : "")) + "/assets/logo.svg"
-                                    sourceSize: Qt.size(512, 512)
-                                    fillMode: Image.PreserveAspectFit
-                                    smooth: true
-                                    antialiasing: true
-                                }
-                            }
-
-                            Item {
-                                id: aboutLogoColor
-                                anchors.fill: parent
-                                visible: false
-                                layer.enabled: true
-                                layer.smooth: true
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: ThemeBackend.mauve
-                                }
                             }
 
                             MultiEffect {
                                 anchors.fill: parent
-                                source: aboutLogoColor
-                                maskEnabled: true
-                                maskSource: aboutLogoMask
+                                source: aboutLogo
+                                brightness: 1.0
+                                colorization: 1.0
+                                colorizationColor: ThemeBackend.mauve
                                 autoPaddingEnabled: false
                             }
                         }
@@ -251,7 +223,7 @@ Item {
                             onTriggered: {
                                 let cmd = "if command -v kitty >/dev/null 2>&1; then kitty --hold bash -c 'eval \"$(curl -fsSL https://raw.githubusercontent.com/ilyamiro/serpantinum/master/install/install.sh)\"'; else ${TERM:-xterm} -hold -e bash -c 'eval \"$(curl -fsSL https://raw.githubusercontent.com/ilyamiro/serpantinum/master/install/install.sh)\"'; fi";
                                 Quickshell.execDetached(["bash", "-c", cmd]);
-                                Quickshell.execDetached(["bash", rootObj.appPaths.serpantinumDir + "/scripts/qs_manager.sh", "close"]);
+                                rootObj.dismissHost();
                             }
                         }
                     }

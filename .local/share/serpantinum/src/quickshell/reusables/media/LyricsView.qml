@@ -118,7 +118,7 @@ Item {
         if (p && p.canSeek) {
             p.position = t;
             if (typeof Lyrics !== "undefined") {
-                Lyrics.currentPosition = t;
+                Lyrics.noteSeek(t);
             }
             if (typeof MprisController !== "undefined") {
                 MprisController.livePosition = t;

@@ -1,9 +1,9 @@
 --- a/src/quickshell/guide/GuideSidebar.qml
 +++ b/src/quickshell/guide/GuideSidebar.qml
-@@ -8,6 +8,13 @@
+@@ -7,6 +7,13 @@
+ 
  Rectangle {
      id: sidebar
-     required property var popup
 +
 +    // Astrax: tabs without a translation (Dynamic Island) show their plain name
 +    function tabLabel(m) {
@@ -11,24 +11,24 @@
 +        let t = I18n.t(k);
 +        return t === k ? (m.name || m.id) : t;
 +    }
-     property alias searchInput: settingsSearchInput
-     property alias searchResults: searchResultsList
+     required property var popup
      property alias tabsView: tabsFlickable
-@@ -354,7 +361,7 @@
-                                     }
+     property alias tabsItems: tabsRepeater
+@@ -223,7 +230,7 @@
  
-                                     Text {
--                                        text: I18n.t("guide.tabs." + (tabDelegate.modelData.key || tabDelegate.modelData.id).toLowerCase(), tabDelegate.modelData.name || tabDelegate.modelData.id)
-+                                        text: sidebar.tabLabel(tabDelegate.modelData)
-                                         font.family: ThemeBackend.fontFamily
-                                         font.weight: tabHeaderItem.isDirectActive ? Font.Bold : Font.Medium
-                                         font.pixelSize: popup.s(13)
-@@ -502,7 +509,7 @@
-                                                     }
+                                 Text {
+                                     visible: !popup.compact
+-                                    text: I18n.t("guide.tabs." + (tabDelegate.modelData.key || tabDelegate.modelData.id).toLowerCase(), tabDelegate.modelData.name || tabDelegate.modelData.id)
++                                    text: sidebar.tabLabel(tabDelegate.modelData)
+                                     font.family: ThemeBackend.fontFamily
+                                     font.weight: header.active ? Font.Bold : Font.Medium
+                                     font.pixelSize: popup.s(13)
+@@ -373,7 +380,7 @@
  
-                                                     Text {
--                                                        text: I18n.t("guide.tabs." + (subtabItem.modelData.key || subtabItem.modelData.id).toLowerCase(), subtabItem.modelData.name || subtabItem.modelData.id)
-+                                                        text: sidebar.tabLabel(subtabItem.modelData)
-                                                         font.family: ThemeBackend.fontFamily
-                                                         font.weight: subtabItem.isSubActive ? Font.Bold : Font.Medium
-                                                         font.pixelSize: popup.s(12)
+                                                 Text {
+                                                     visible: !popup.compact
+-                                                    text: I18n.t("guide.tabs." + (sub.modelData.key || sub.modelData.id).toLowerCase(), sub.modelData.name || sub.modelData.id)
++                                                    text: sidebar.tabLabel(sub.modelData)
+                                                     font.family: ThemeBackend.fontFamily
+                                                     font.weight: sub.isCurrent ? Font.Bold : Font.Medium
+                                                     font.pixelSize: popup.s(12)

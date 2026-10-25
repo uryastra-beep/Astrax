@@ -10,7 +10,7 @@ whole shell theme take their colors from the album art, lyrics are on screen wor
 songs switch the desktop into their own hand-made theme.
 
 **Version:** 1.9.0 (see [CHANGELOG.md](CHANGELOG.md))  
-**Current Serpantinum version: 2.2.12** (the version Astrax is developed and tested on; the installer pins it)
+**Current Serpantinum version: 2.3.0** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
 
@@ -23,7 +23,7 @@ git clone https://github.com/uryastra-beep/Astrax.git && cd Astrax && ./install.
 The installer:
 
 - installs the packages (pacman + yay; it installs yay if it's missing),
-- installs Serpantinum **2.2.12** with its own installer, pinned to the commit Astrax was tested with,
+- installs Serpantinum **2.3.0** with its own installer, pinned to the commit Astrax was tested with,
 - **before changing anything**, backs up every file it will overwrite (dotfiles, the Serpantinum
   sources Astrax overrides and the command names in `~/.local/bin`) to
   `~/astrax-backup-<date>.tar.gz`. Restore it with `tar -xzf ~/astrax-backup-<date>.tar.gz -C ~`,
@@ -43,7 +43,7 @@ starts Caelestia instead.
 
 ### ⚠️ Updating Serpantinum can break Astrax
 
-Astrax is tested against **one pinned Serpantinum version (currently 2.2.12)** and replaces some of Serpantinum's own
+Astrax is tested against **one pinned Serpantinum version (currently 2.3.0)** and replaces some of Serpantinum's own
 source files (widget registry, widget faces, wallpaper engine, lock screen, bar modules). Updating
 Serpantinum (its own installer or `serpantinum update`) wipes and re-copies
 `~/.local/share/serpantinum`, so **those changes are lost** and the newer Serpantinum code may not

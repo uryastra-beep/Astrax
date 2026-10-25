@@ -485,7 +485,7 @@
                      if (end > p && end < best) best = end;
                  }
              }
-@@ -211,7 +641,7 @@
+@@ -243,7 +673,7 @@
                  if (typeof root.player.positionChanged === "function") {
                      root.player.positionChanged();
                  }
@@ -494,19 +494,20 @@
              } else {
                  root.applyPosition(MprisController.livePosition);
              }
-@@ -255,9 +685,9 @@
+@@ -285,10 +715,10 @@
          function onPositionChanged() {
              if (!root.player) return;
              if (root.player.isPlaying) {
--                root.applyPosition(root.player.position);
-+                root.applyPosition(root.player.position + root.syncOffset);
+-                if (!positionTimer.running) root.applyPosition(root.player.position);
++                if (!positionTimer.running) root.applyPosition(root.player.position + root.syncOffset);
              } else {
+                 root.pendingJumpPosition = -1;
 -                root.currentPosition = root.player.position;
 +                root.currentPosition = root.player.position + root.syncOffset;
              }
          }
          function onTrackTitleChanged() {
-@@ -271,11 +701,19 @@
+@@ -302,7 +732,14 @@
          }
      }
  
@@ -521,16 +522,19 @@
 +    }
      onPlayerChanged: triggerSearch()
  
+     property double lastAttemptAt: 0
+@@ -314,6 +751,7 @@
+ 
      function triggerSearch() {
          if (root.subscribers <= 0) return;
 +        if (ytProc.running && ytProc.key !== root.currentTrackKey) ytProc.running = false;
  
          if (!isMediaActive || currentTrackKey === "") {
              lastFetchedKey = "";
-@@ -295,6 +733,11 @@
- 
+@@ -336,6 +774,11 @@
          lastFetchedKey = currentTrackKey;
          activeFetchKey = currentTrackKey;
+         if (activeSession) activeSession.done = true;
 +        bridgeKey = "";
 +        bestKey = "";
 +        bestOrigin = "";
@@ -538,8 +542,8 @@
 +        lookupBest(currentTrackKey);
          activeSession = null;
          searchTimeoutTimer.stop();
-         lyrics = [];
-@@ -598,11 +1041,14 @@
+         cacheReadProcess.running = false;
+@@ -643,11 +1086,14 @@
          return result;
      }
  
@@ -557,7 +561,7 @@
          root.loading = false;
          if (root.hasLyrics) {
              let mem = getMemCache();
-@@ -618,13 +1064,69 @@
+@@ -663,13 +1109,69 @@
          if (session.netEaseDone && session.lrclibDone) {
              session.done = true;
              searchTimeoutTimer.stop();
@@ -628,7 +632,7 @@
          }
      }
  
-@@ -997,6 +1499,39 @@
+@@ -1048,6 +1550,39 @@
              }
          }
      }

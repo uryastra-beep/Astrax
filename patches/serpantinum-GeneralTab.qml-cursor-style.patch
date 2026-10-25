@@ -1,14 +1,14 @@
 --- a/src/quickshell/guide/general/GeneralTab.qml
 +++ b/src/quickshell/guide/general/GeneralTab.qml
-@@ -2,6 +2,7 @@
+@@ -1,6 +1,7 @@
+ import QtQuick
  import QtQuick.Layouts
- import QtQuick.Effects
  import Quickshell
 +import Quickshell.Io
+ import "../"
  import "../../"
  import "../../reusables"
- import "../../reusables/guide"
-@@ -78,6 +79,78 @@
+@@ -77,6 +78,78 @@
      property var weatherUnitCodes: ["metric", "imperial", "standard"]
      property var weatherUnitNames: ["Celsius", "Fahrenheit", "Kelvin"]
  
@@ -87,9 +87,9 @@
      Connections {
          target: Config
          function onSettingsLoaded() {
-@@ -623,6 +696,141 @@
-                 }
-             }
+@@ -160,6 +233,141 @@
+ 
+             GeneralLocationSection { id: locationSection; tab: generalTabRoot }
  
 +            SettingsBlob {
 +                SettingsRow {

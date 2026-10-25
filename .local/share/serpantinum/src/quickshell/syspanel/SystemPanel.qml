@@ -337,6 +337,7 @@ Item {
         id: bRoot
         property color contentTextColor: ThemeBackend.text
         property color iconColor: root.batColorFlat
+        property bool glass: false
 
         RowLayout {
             anchors.fill: parent
@@ -387,7 +388,7 @@ Item {
                     font.family: ThemeBackend.fontFamily
                     font.weight: Font.Bold
                     font.pixelSize: root.s(10)
-                    color: bRoot.contentTextColor === ThemeBackend.crust ? Qt.alpha(ThemeBackend.crust, 0.85) : (root.isCharging ? ThemeBackend.green : ThemeBackend.subtext0)
+                    color: bRoot.glass ? Qt.alpha(bRoot.contentTextColor, 0.75) : (bRoot.contentTextColor === ThemeBackend.crust ? Qt.alpha(ThemeBackend.crust, 0.85) : (root.isCharging ? ThemeBackend.green : ThemeBackend.subtext0))
                     text: timeString
                     Behavior on color {
                         enabled: root.visible
@@ -582,7 +583,7 @@ Item {
                     FluidWave {
                         id: waveCanvas
                         anchors.fill: parent
-                        visible: root.visible && !root.isDesktop && batteryBox.fillLevel > 0.001
+                        visible: !batteryGlass.active && root.visible && !root.isDesktop && batteryBox.fillLevel > 0.001
 
                         property real wavePhase: 0.0
                         NumberAnimation on wavePhase {
@@ -598,13 +599,25 @@ Item {
                         vertical: 0.0
                         color1: root.batColorFlat
                         color2: root.batColorFlat
-                        opacity: batteryGlass.active ? 0.6 : 1.0
+                    }
+
+                    LiquidFill {
+                        anchors.fill: parent
+                        visible: batteryGlass.active && root.visible && !root.isDesktop && batteryBox.fillLevel > 0.001
+                        radius: batteryBox.radius
+                        fillLevel: batteryBox.fillLevel
+                        waveAmp: waveCanvas.waveAmp
+                        phase: waveCanvas.wavePhase
+                        color1: Qt.alpha(Qt.lighter(root.batColorFlat, 1.1), 0.6)
+                        color2: Qt.alpha(root.batColorFlat, 0.6)
+                        bodyAlpha: 0.18
                     }
 
                     BatteryContent {
                         anchors.fill: parent
                         contentTextColor: ThemeBackend.text
                         iconColor: root.batColorFlat
+                        glass: batteryGlass.active
                         visible: !root.isDesktop
                     }
 
@@ -625,6 +638,7 @@ Item {
                             height: batteryBox.height
                             contentTextColor: batteryGlass.active ? ThemeBackend.text : ThemeBackend.crust
                             iconColor: batteryGlass.active ? ThemeBackend.text : ThemeBackend.crust
+                            glass: batteryGlass.active
                         }
                     }
 

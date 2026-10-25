@@ -30,7 +30,7 @@ RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: panel.boxRadius
-            clip: true
+            clip: !capsuleGlass.active
 
             property bool isHibernate: cmd === "hibernate"
             property bool isDisabled: isHibernate && !panel.canHibernate
@@ -119,7 +119,7 @@ RowLayout {
             FluidWave {
                 id: actionWaveCanvas
                 anchors.fill: parent
-                visible: panel.visible && actionCapsule.fillLevel > 0.001
+                visible: panel.visible && actionCapsule.fillLevel > 0.001 && !capsuleGlass.active
 
                 property real wavePhase: 0.0
                 NumberAnimation on wavePhase {
@@ -135,7 +135,24 @@ RowLayout {
                 vertical: 1.0
                 color1: (cmd === "poweroff" || cmd === "hibernate" ? ThemeBackend.red : ThemeBackend.blue)
                 color2: color1
-                opacity: capsuleGlass.active ? 0.6 : 1.0
+            }
+
+            LiquidFill {
+                anchors.centerIn: parent
+                width: parent.height
+                height: parent.width
+                rotation: -90
+                radius: actionCapsule.radius
+                fillLevel: actionCapsule.fillLevel
+                waveAmp: actionWaveCanvas.waveAmp
+                phase: actionWaveCanvas.wavePhase
+                color1: Qt.lighter(actionWaveCanvas.color1, 1.1)
+                color2: actionWaveCanvas.color1
+                bodyAlpha: 0.4
+                visible: capsuleGlass.active && actionCapsule.fillLevel > 0.001
+                property real lift: (actionCapsule.fillLevel > 0.001 && actionCapsule.fillLevel < 0.999) ? 1.0 : 0.0
+                Behavior on lift { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                scale: 1.0 + 0.07 * lift
             }
 
             Rectangle {

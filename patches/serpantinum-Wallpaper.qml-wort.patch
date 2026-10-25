@@ -1,9 +1,23 @@
 --- a/src/quickshell/singletons/theme/Wallpaper.qml
 +++ b/src/quickshell/singletons/theme/Wallpaper.qml
-@@ -28,8 +28,29 @@
-         return false;
+@@ -29,8 +29,43 @@
+         root.engines = map;
      }
  
++    // Which screens have a VIDEO wallpaper set right now (not a
++    // static image) -- updated by WallpaperEngine.qml for each
++    // instance (one per monitor). ThemeBackend uses it to react to the
++    // song color ONLY when at least one animated wallpaper is
++    // set (don't touch the theme if the background is static).
++    property var screenIsVideo: ({})
++    readonly property bool anyVideoActive: {
++        let keys = Object.keys(root.screenIsVideo);
++        for (let i = 0; i < keys.length; i++) {
++            if (root.screenIsVideo[keys[i]]) return true;
++        }
++        return false;
++    }
++
 +    // WORT: when Serpantinum starts and the saved wallpaper is lava-live, start the lava again
 +    Timer {
 +        id: lavaBootTimer

@@ -1,6 +1,6 @@
---- a/src/quickshell/guide/AboutTab.qml	2026-10-16 17:17:32.000000000 -0600
+--- a/src/quickshell/guide/AboutTab.qml
 +++ b/src/quickshell/guide/AboutTab.qml
-@@ -29,7 +29,33 @@
+@@ -18,7 +18,33 @@
          }
      }
  
@@ -34,7 +34,7 @@
          if (typeof SystemInfo !== "undefined") {
              SystemInfo.fetch();
          }
-@@ -152,6 +178,15 @@
+@@ -124,6 +150,15 @@
                                  color: ThemeBackend.subtext0
                                  Layout.alignment: Qt.AlignHCenter
                              }
@@ -50,7 +50,7 @@
                          }
                      }
                  }
-@@ -221,6 +256,70 @@
+@@ -193,6 +228,70 @@
                          }
                      }
                  }

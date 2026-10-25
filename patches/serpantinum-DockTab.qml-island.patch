@@ -1,6 +1,6 @@
 --- a/src/quickshell/guide/DockTab.qml
 +++ b/src/quickshell/guide/DockTab.qml
-@@ -75,6 +75,21 @@
+@@ -67,6 +67,21 @@
      property bool currentShowRunningApps: dockSettings && dockSettings.showRunningApps !== undefined ? Boolean(dockSettings.showRunningApps) : false
      property string currentRunningScope: (dockSettings && dockSettings.runningScope) ? dockSettings.runningScope : "auto"
  
@@ -22,7 +22,7 @@
      function syncSettings() {
          let s = (typeof Config !== "undefined" && typeof Config.getSetting === "function")
              ? Config.getSetting("dock", dockTabRoot.defaultDockSettings)
-@@ -188,7 +203,15 @@
+@@ -180,7 +195,15 @@
              spacing: rootObj.s(6)
  
              SettingsRow {
