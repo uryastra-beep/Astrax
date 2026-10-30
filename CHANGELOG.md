@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.15.1
+
+- **Reactive cursor builds on Hyprland 0.57.** The patched hypr-dynamic-cursors is ported to the new
+  render-context and window APIs (merged with upstream `2a8d0b7`). `plugins/dynamic-cursors/src` targets
+  0.57; the previous port stays in `src-hl056` for 0.56.x, and the Makefile picks one from the installed
+  Hyprland version. If the build fails anyway, `plugins.lua` keeps falling back to the stock hyprpm plugin.
+  Fixes the clean-Arch CI failure of `assert-install.sh` (plugin built / built against the installed headers).
+
 ## 1.15.0
 
 - **Dynamic Island: Notch mode.** New `shape` option in `SUPER+C` > Dynamic Island > Shape:

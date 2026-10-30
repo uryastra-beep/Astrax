@@ -10,7 +10,6 @@
 #include <hyprland/src/event/EventBus.hpp>
 #include <hyprland/src/debug/log/Logger.hpp>
 #include <hyprland/src/errorOverlay/Overlay.hpp>
-#include <hyprlang.hpp>
 #include <hyprutils/memory/UniquePtr.hpp>
 
 #include "../globals.hpp"
@@ -64,7 +63,6 @@ CConfigHandler::CConfigHandler() {
     // clang-format on
 
     // add shape rule handlers
-    HyprlandAPI::addConfigKeyword(PHANDLE, "shaperule", onShapeRuleKeyword, Hyprlang::SHandlerOptions{});
     HyprlandAPI::addLuaFunction(PHANDLE, "dynamic_cursors", "shape_rule", ::luaShapeRule);
 
     // clear shape rules on reload
@@ -77,7 +75,7 @@ CConfigHandler::CConfigHandler() {
             if (!error)
                 continue;
 
-            Log::logger->log(Log::ERR, "[dynamic-cursors] cached value reload failed: {}", error.value());
+            LOG(Log::ERR, "[dynamic-cursors] cached value reload failed: {}", error.value());
 
             if (!errors.empty())
                 errors += '\n';
@@ -93,7 +91,6 @@ CConfigHandler::CConfigHandler() {
     });
 
     // add magnify dispatcher
-    HyprlandAPI::addDispatcherV2(PHANDLE, NS("magnify"), ::dispatchMagnify);
     HyprlandAPI::addLuaFunction(PHANDLE, "dynamic_cursors", "dsp_magnify", ::luaMagnifyDispatcher);
 }
 
@@ -105,7 +102,7 @@ bool CConfigHandler::isEnabled() {
 void CConfigHandler::showError(const std::string& err) {
     // we also need to check for queuedDestroy if the config frehsly doesn't error anymore
     if (ErrorOverlay::overlay()->active() && !ErrorOverlay::overlay()->m_queuedDestroy) {
-        Log::logger->log(Log::ERR, "[dynamic-cursors] not overriding error overlay: {}", err);
+        LOG(Log::ERR, "[dynamic-cursors] not overriding error overlay: {}", err);
         return;
     }
 
@@ -182,33 +179,6 @@ SP<CVariantProp> CConfigHandler::prop(const char* name, const char* def, const c
     m_shapeRules->registerProp(prop);
 
     return prop;
-}
-
-SDispatchResult dispatchMagnify(std::string in) {
-    Hyprutils::String::CVarList args = in;
-
-    SDispatchResult result;
-
-    std::optional<int>   duration;
-    std::optional<float> size;
-
-    try {
-        auto it = args.begin();
-        if (it != args.end() && *it != "") {
-            duration = std::stoi(*it);
-
-            it++;
-            if (it != args.end())
-                size = std::stof(*it);
-        }
-    } catch (...) {
-        result.error = "invalid types for arguments";
-        Log::logger->log(Log::ERR, "[dynamic-cursors] dispatcher `magnify` received invalid args: {}", in);
-    }
-
-    g_pDynamicCursors->dispatchMagnify(duration, size);
-
-    return result;
 }
 
 int luaMagnifyDispatcher(lua_State* L) {

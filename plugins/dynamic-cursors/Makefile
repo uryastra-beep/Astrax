@@ -1,9 +1,14 @@
 PLUGIN_NAME=dynamic-cursors
 
-SOURCE_FILES := $(wildcard ./src/*.cpp ./src/*/*.cpp ./src/*/*/*.cpp)
-HEADER_FILES := $(wildcard ./src/*.hpp ./src/*/*.hpp ./src/*/*/*.hpp)
+# Hyprland 0.57 reworked the render and window APIs: src/ targets >= 0.57,
+# src-hl056/ is the previous port for 0.56.x. Override with SRC=... if needed.
+HL_VERSION := $(shell pkg-config --modversion hyprland 2>/dev/null)
+SRC ?= $(shell [ -n "$(HL_VERSION)" ] && [ "$$(printf '%s\n0.57.0\n' "$(HL_VERSION)" | sort -V | head -n1)" != 0.57.0 ] && echo src-hl056 || echo src)
 
-OBJECT_FILES := $(patsubst ./src/%.cpp, out/%.o, $(SOURCE_FILES))
+SOURCE_FILES := $(wildcard ./$(SRC)/*.cpp ./$(SRC)/*/*.cpp ./$(SRC)/*/*/*.cpp)
+HEADER_FILES := $(wildcard ./$(SRC)/*.hpp ./$(SRC)/*/*.hpp ./$(SRC)/*/*/*.hpp)
+
+OBJECT_FILES := $(patsubst ./$(SRC)/%.cpp, out/%.o, $(SOURCE_FILES))
 CXXFLAGS := -MMD -MP -Wall -fPIC -std=c++26 -g \
 	$(shell pkg-config --cflags hyprland pixman-1 libdrm | sed 's#-I\([^ ]*/hyprland\)\($$\| \)#-I\1 -I\1/src #g')
 
@@ -21,7 +26,7 @@ $(OUTPUT): $(OBJECT_FILES)
 	$(CXX) -shared $^ $(LDFLAGS) -o $@
 
 # Compile step (object file per .cpp)
-out/%.o: ./src/%.cpp
+out/%.o: ./$(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(EXTRA_CXXFLAGS) -c $< -o $@
 

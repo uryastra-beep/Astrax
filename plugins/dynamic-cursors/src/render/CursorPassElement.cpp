@@ -15,7 +15,7 @@ CCursorPassElement::CCursorPassElement(const CCursorPassElement::SRenderData& da
     ;
 }
 
-std::vector<UP<IPassElement>> CCursorPassElement::draw() {
+std::vector<UP<IPassElement>> CCursorPassElement::draw(Render::CRenderContext& ctx) {
     const bool effects = g_cursorStyle != 0; // "normal" style: classic cursor, no glow/trail/ring
     // HALO PATCH: the glow is drawn here (not baked in the cursor theme), tinted by cursor shape.
     // It is never stretched; the trail is made of older copies of it. Oldest (faintest) first, arrow on top.
@@ -141,7 +141,7 @@ std::vector<UP<IPassElement>> CCursorPassElement::draw() {
         CBox   gb = g.box;
         Mat3x3 gt = toTransform(gb, gb.rot, m_data.hotspot, 0, {1, 1});
         gb.rot    = 0;
-        drawCursor(gt, tex, gb, g_pHyprRenderer->m_renderData.damage, false, g.alpha);
+        drawCursor(ctx, gt, tex, gb, ctx.m_data.damage, false, g.alpha);
     }
     // COLOR FADE: when the shape (color) changes, the old glow stays and the new one fades in over it
     if (effects && m_data.haloMix < 1.F) {
@@ -149,7 +149,7 @@ std::vector<UP<IPassElement>> CCursorPassElement::draw() {
             CBox   hb = m_data.box;
             Mat3x3 ht = toTransform(hb, hb.rot, m_data.hotspot, m_data.haloStretchAngle, m_data.haloStretchMag);
             hb.rot    = 0;
-            drawCursor(ht, tex, hb, g_pHyprRenderer->m_renderData.damage, false, 1.F);
+            drawCursor(ctx, ht, tex, hb, ctx.m_data.damage, false, 1.F);
         }
     }
     if (effects)
@@ -157,7 +157,7 @@ std::vector<UP<IPassElement>> CCursorPassElement::draw() {
         CBox   hb = m_data.box;
         Mat3x3 ht = toTransform(hb, hb.rot, m_data.hotspot, m_data.haloStretchAngle, m_data.haloStretchMag);
         hb.rot    = 0;
-        drawCursor(ht, tex, hb, g_pHyprRenderer->m_renderData.damage, false, m_data.haloMix);
+        drawCursor(ctx, ht, tex, hb, ctx.m_data.damage, false, m_data.haloMix);
     }
 
     // CLICK ANIMATION: expanding ring of light around the glow center
@@ -170,34 +170,34 @@ std::vector<UP<IPassElement>> CCursorPassElement::draw() {
             rt.translate(c);
             rt.scale({m_data.rippleScale, m_data.rippleScale});
             rt.translate({-c.x, -c.y});
-            drawCursor(rt, tex, rb, g_pHyprRenderer->m_renderData.damage, false, m_data.rippleAlpha);
+            drawCursor(ctx, rt, tex, rb, ctx.m_data.damage, false, m_data.rippleAlpha);
         }
     }
 
     Mat3x3 transform = toTransform(m_data.box, m_data.box.rot, m_data.hotspot, m_data.stretchAngle, m_data.stretchMagnitude, m_data.pressScale);
     m_data.box.rot   = 0;
 
-    drawCursor(transform, m_data.tex, m_data.box, g_pHyprRenderer->m_renderData.damage, m_data.nearest);
+    drawCursor(ctx, transform, m_data.tex, m_data.box, ctx.m_data.damage, m_data.nearest);
 
     return {}; // no passes to be submitted later
 }
 
-bool CCursorPassElement::needsLiveBlur() {
+bool CCursorPassElement::needsLiveBlur(Render::CRenderContext& ctx) {
     return false; // TODO?
 }
 
-bool CCursorPassElement::needsPrecomputeBlur() {
+bool CCursorPassElement::needsPrecomputeBlur(Render::CRenderContext& ctx) {
     return false; // TODO?
 }
 
-std::optional<CBox> CCursorPassElement::boundingBox() {
-    return m_data.box.copy().scale(1.F / g_pHyprRenderer->m_renderData.pMonitor->m_scale).round();
+std::optional<CBox> CCursorPassElement::boundingBox(Render::CRenderContext& ctx) {
+    return m_data.box.copy().scale(1.F / ctx.m_data.pMonitor->m_scale).round();
 }
 
-CRegion CCursorPassElement::opaqueRegion() {
+CRegion CCursorPassElement::opaqueRegion(Render::CRenderContext& ctx) {
     return {}; // TODO:
 }
 
-void CCursorPassElement::discard() {
+void CCursorPassElement::discard(Render::CRenderContext& ctx) {
     ;
 }

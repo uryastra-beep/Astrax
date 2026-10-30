@@ -1,0 +1,59 @@
+#include "ModeStretch.hpp"
+#include "utils.hpp"
+#include "../config/ConfigManager.hpp"
+
+#include <hyprland/src/Compositor.hpp>
+#include <hyprland/src/render/Renderer.hpp>
+#include <numbers>
+
+EModeUpdate CModeStretch::strategy() {
+    return TICK;
+}
+
+SModeResult CModeStretch::update(Vector2D pos) {
+    auto function = CONFIG(stretchFunction);
+    auto limit    = CONFIG(stretchLimit);
+    auto window   = CONFIG(stretchWindow);
+
+    // create samples array
+    int max = std::max(1, (int)(g_pHyprRenderer->m_mostHzMonitor->m_refreshRate / 1000 * window)); // [window]ms worth of history, avoiding divide by 0
+    samples.resize(max, pos);
+    samples_index = std::min(samples_index, max - 1);
+
+    // capture current sample
+    samples[samples_index] = pos;
+    int current            = samples_index;
+    samples_index          = (samples_index + 1) % max; // increase for next sample
+    int first              = samples_index;
+
+    // calculate speed and tilt
+    Vector2D speed = (samples[current] - samples[first]) / window * 1000;
+    double   mag   = speed.size();
+
+    double angle = -std::atan(speed.x / speed.y) + std::numbers::pi;
+    if (speed.y > 0)
+        angle += std::numbers::pi;
+    if (mag == 0)
+        angle = 0;
+
+    double scale = activation(function, limit, mag);
+
+    auto result          = SModeResult();
+    result.stretch.angle = angle;
+    // we can't do more scaling than that because of how large our buffer around the cursor shape is
+    result.stretch.magnitude = Vector2D{1.0 - scale * 0.5, 1.0 + scale * 1.0};
+
+    return result;
+}
+
+void CModeStretch::warp(Vector2D old, Vector2D pos) {
+    auto delta = pos - old;
+
+    for (auto& sample : samples)
+        sample += delta;
+}
+
+void CModeStretch::reset() {
+    samples.clear();
+    samples_index = 0;
+}

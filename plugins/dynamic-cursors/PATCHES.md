@@ -34,6 +34,15 @@ Astrax's changes:
 **Limitation:** color is the only cue that tells the cursor types apart. Making the colors
 configurable, or adding different shapes per type, is future work.
 
+## Hyprland versions
+
+- `src/` is ported to Hyprland **0.57** (new `Render::CRenderContext` API, `window->metadata().appID()`,
+  Lua-only config, `LOG` macro). It merges upstream's `2a8d0b7` ("use new render contexts") with the
+  Astrax patches above.
+- `src-hl056/` is the previous port, for Hyprland **0.56.x**. Frozen: only fix it, don't add features.
+- The `Makefile` picks the directory from `pkg-config --modversion hyprland` (override: `make SRC=src`).
+  Keep both in sync when changing a patch.
+
 ## Build
 
 ```bash
