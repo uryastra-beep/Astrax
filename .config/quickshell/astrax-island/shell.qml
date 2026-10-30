@@ -28,6 +28,11 @@ ShellRoot {
         onLoadFailed: root.optiOn = false
     }
     readonly property bool glassCfg: cfg.glass === true && !optiOn
+    // shape: "island" (floating pill) or "notch" (hangs from the top edge, square top, rounded bottom).
+    // The notch keeps its own idle size; every mode that is bigger grows from it like the island does.
+    readonly property bool notch: cfg.shape === "notch"
+    readonly property real notchW: cfg.notchWidth !== undefined ? cfg.notchWidth : 200
+    readonly property real notchH: cfg.notchHeight !== undefined ? cfg.notchHeight : 34
     readonly property real glassAlpha: (cfg.glassOpacity !== undefined ? cfg.glassOpacity : 55) / 100
     readonly property real refraction: (cfg.glassRefraction !== undefined ? cfg.glassRefraction : 60) / 100
     readonly property real bounce: (cfg.bounce !== undefined ? cfg.bounce : 60) / 100
@@ -634,7 +639,7 @@ ShellRoot {
                 const halfW = pill.width / 2;
                 const halfH = pill.height / 2;
                 const x = (desktopX - win.screen.x - pill.x - halfW) / pill.bx + halfW;
-                const y = (desktopY - win.screen.y - pill.y - halfH) / pill.by + halfH;
+                const y = (desktopY - win.screen.y - pill.y - pill.scaleOriginY) / pill.by + pill.scaleOriginY;
                 const radius = Math.min(pill.radius, halfW, halfH);
                 const qx = Math.abs(x - halfW) - (halfW - radius);
                 const qy = Math.abs(y - halfH) - (halfH - radius);
@@ -665,6 +670,110 @@ ShellRoot {
             visible: false
         }
 
+        // notch backdrop: the body tint, the two concave shoulders and the glass lens are ONE shape that
+        // follows the pill (same geometry and bubble transform), so the shoulders get the same Liquid Glass.
+        Item {
+            id: notchBack
+            visible: root.notch && pill.width > 0
+            x: pill.x; y: pill.y; width: pill.width; height: pill.height
+            transform: Scale { origin.x: notchBack.width / 2; origin.y: pill.scaleOriginY; xScale: pill.bx; yScale: pill.by }
+            readonly property color tint: Qt.rgba(0.08, 0.08, 0.1, root.glassAlpha)
+            readonly property real wing: 12
+
+            Rectangle {
+                visible: pill.glassOn
+                width: parent.width; height: parent.height
+                radius: pill.radius
+                topLeftRadius: 0; topRightRadius: 0
+                color: notchBack.tint
+            }
+            // The shoulders: solid black while the notch is idle, the panel's glass tint while a Liquid Glass panel is
+            // open (the lens below draws the glass in them). Anti-aliased curves (CurveRenderer; the default renderer
+            // draws hard stair-stepped edges) and reach 2 px into the body, where the band is already solid black, so a
+            // fractional pill position can never leave a 1 px seam between body and shoulder.
+            // The arc is 0.6 px tighter than the glass lens's own edge, which covers the lens's soft fringe.
+            Shape {
+                preferredRendererType: Shape.CurveRenderer
+                x: -notchBack.wing; y: 0
+                width: notchBack.wing + 2; height: notchBack.wing
+                ShapePath {
+                    fillColor: pill.glassOn ? notchBack.tint : "#000000"
+                    strokeWidth: -1
+                    Behavior on fillColor { ColorAnimation { duration: 260 } }
+                    PathSvg { path: "M 0 0 L 14 0 L 14 12 L 11.4 12 A 11.4 11.4 0 0 0 0 0.6 Z" }
+                }
+            }
+            Shape {
+                preferredRendererType: Shape.CurveRenderer
+                x: notchBack.width - 2; y: 0
+                width: notchBack.wing + 2; height: notchBack.wing
+                ShapePath {
+                    fillColor: pill.glassOn ? notchBack.tint : "#000000"
+                    strokeWidth: -1
+                    Behavior on fillColor { ColorAnimation { duration: 260 } }
+                    PathSvg { path: "M 14 0 L 0 0 L 0 12 L 2.6 12 A 11.4 11.4 0 0 1 14 0.6 Z" }
+                }
+            }
+            ShaderEffect {
+                x: -notchBack.wing; y: 0
+                width: notchBack.width + notchBack.wing * 2; height: notchBack.height
+                visible: pill.glassOn && snap.hasContent && root.refraction > 0 && !root.notch   // the notch uses notchBack
+                property var src: backdropTexture
+                property real radius: pill.radius
+                property real strength: root.refraction
+                property real band: Math.min(pill.radius, 14 + root.refraction * 20)
+                property vector2d size: Qt.vector2d(width, height)
+                property vector2d origin: Qt.vector2d(pill.x - notchBack.wing, pill.y)
+                property vector2d screen: Qt.vector2d(win.width, win.height)
+                property vector2d stretch: Qt.vector2d(pill.bx, pill.by)
+                property real wing: notchBack.wing
+                fragmentShader: Qt.resolvedUrl("glass-notch3.frag.qsb")
+            }
+            // the glass pours out of the notch: solid black at the top (the notch itself, same height as the
+            // idle notch), fading into the glass below, so an open panel still reads as the notch growing down
+            Rectangle {
+                visible: pill.glassOn
+                width: parent.width; height: parent.height
+                radius: pill.radius
+                topLeftRadius: 0; topRightRadius: 0
+                readonly property real solid: Math.min(1, root.notchH / Math.max(1, height))
+                readonly property real fade: Math.min(1, (root.notchH + 46) / Math.max(1, height))
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#000000" }
+                    GradientStop { position: band.solid * 0.55; color: "#000000" }
+                    GradientStop { position: band.fade; color: "transparent" }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
+                id: band
+            }
+
+            // notch rim: one open line that runs up the outer edge of each shoulder (the same concave arc as the
+            // glass lens), down both sides and along the bottom, so the shoulders and the panel share one outline.
+            // It lives here, not in the pill, because the pill clips to its own box and the shoulders sit outside it.
+            Shape {
+                visible: root.notch
+                preferredRendererType: Shape.CurveRenderer
+                opacity: pill.glassOn ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 260 } }
+                ShapePath {
+                    id: rim
+                    readonly property real r: Math.max(1, Math.min(pill.radius, notchBack.width / 2, notchBack.height / 2))
+                    readonly property real w: notchBack.width
+                    readonly property real h: notchBack.height
+                    readonly property real k: notchBack.wing
+                    strokeColor: Qt.rgba(1, 1, 1, 0.26)
+                    strokeWidth: 1
+                    fillColor: "transparent"
+                    PathSvg {
+                        path: "M " + (-rim.k) + " -0.5 A " + (rim.k + 0.5) + " " + (rim.k + 0.5) + " 0 0 1 0.5 " + rim.k
+                            + " L 0.5 " + (rim.h - rim.r) + " A " + (rim.r - 0.5) + " " + (rim.r - 0.5) + " 0 0 0 " + rim.r + " " + (rim.h - 0.5)
+                            + " L " + (rim.w - rim.r) + " " + (rim.h - 0.5) + " A " + (rim.r - 0.5) + " " + (rim.r - 0.5) + " 0 0 0 " + (rim.w - 0.5) + " " + (rim.h - rim.r)
+                            + " L " + (rim.w - 0.5) + " " + rim.k + " A " + (rim.k + 0.5) + " " + (rim.k + 0.5) + " 0 0 1 " + (rim.w + rim.k) + " -0.5"
+                    }
+                }
+            }
+        }
+
         Rectangle {
             id: pill
             // The pill is pinned by its horizontal centre and its top edge, computed
@@ -673,7 +782,7 @@ ShellRoot {
             readonly property real refW: 540
             readonly property real refH: 150
             property real cx: root.edgeMargin + refW / 2 + root.posX * Math.max(0, parent.width - refW - 2 * root.edgeMargin)
-            property real topY: root.edgeMargin + root.posY * Math.max(0, parent.height - refH - 2 * root.edgeMargin)
+            property real topY: root.notch ? 0 : root.edgeMargin + root.posY * Math.max(0, parent.height - refH - 2 * root.edgeMargin)
             Behavior on cx { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             Behavior on topY { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
             x: (win.viewMode === "switcher" || win.viewMode === "apps") ? Math.max(root.edgeMargin, Math.min(cx - width / 2, parent.width - width - root.edgeMargin)) : cx - width / 2
@@ -687,12 +796,14 @@ ShellRoot {
             // real island); notifications and the music card grow downwards
             readonly property real targetW: ({ idle: 126, music: 250, hud: 300, status: 320, notif: 410, file: 340, musicExpanded: 430, list: 540, overview: 540, shelf: 540, apps: Math.min(win.width - 2 * root.edgeMargin, Math.max(300, 48 + (appsLoader.item ? appsLoader.item.columns : 5) * 88)), switcher: Math.min(win.width - 2 * root.edgeMargin, Math.max(300, 48 + (switcherLoader.item ? switcherLoader.item.columns : 4) * 220)) })[win.viewMode]
             readonly property real targetH: ({ idle: 34, music: 34, hud: 34, status: 34, notif: notifH, file: 46, musicExpanded: 136, list: listH, overview: 360, shelf: shelf.preferredHeight, apps: (appsLoader.item ? appsLoader.item.preferredHeight : 396), switcher: (switcherLoader.item ? switcherLoader.item.preferredHeight : 266) })[win.viewMode]
-            width: targetW
-            height: targetH
-            radius: height <= 48 ? height / 2 : 34
+            width: root.notch ? Math.max(targetW, root.notchW) : targetW
+            height: root.notch ? Math.max(targetH, root.notchH) : targetH
+            radius: root.notch ? Math.min(height / 2, height <= 48 ? 14 : 28) : (height <= 48 ? height / 2 : 34)
+            topLeftRadius: root.notch ? 0 : radius
+            topRightRadius: root.notch ? 0 : radius
             clip: true
 
-            color: glassOn ? Qt.rgba(0.08, 0.08, 0.1, root.glassAlpha) : "#000000"
+            color: glassOn ? (root.notch ? "transparent" : Qt.rgba(0.08, 0.08, 0.1, root.glassAlpha)) : "#000000"
             Behavior on color { ColorAnimation { duration: 260 } }
 
             // springs: a little overshoot on the way out, settles on its own
@@ -702,13 +813,16 @@ ShellRoot {
 
             // bubble: swells a little under the pointer, more while pressed, and
             // wobbles back on release (taller than wide, like a soap bubble)
+            // The notch pivots on its top edge instead of its centre, so while it springs (even below 1.0
+            // on release) it stays glued to the top of the screen.
+            readonly property real scaleOriginY: root.notch ? 0 : height / 2
             property real bx: touch.pressed ? 1.06 : touch.containsMouse ? 1.025 : 1.0
             property real by: touch.pressed ? 1.12 : touch.containsMouse ? 1.04 : 1.0
             Behavior on bx { SpringAnimation { spring: 6; damping: 0.18; epsilon: 0.001 } }
             Behavior on by { SpringAnimation { spring: 5; damping: 0.16; epsilon: 0.001 } }
             transform: Scale {
                 origin.x: pill.width / 2
-                origin.y: pill.height / 2
+                origin.y: pill.scaleOriginY
                 xScale: pill.bx
                 yScale: pill.by
             }
@@ -731,18 +845,24 @@ ShellRoot {
             // ---- liquid glass finish: top specular + rim light ----
             Rectangle {
                 anchors.fill: parent
+                anchors.topMargin: root.notch ? -8 : 0   // notch: the top rim sits outside the clip, it hangs from the screen edge
                 radius: pill.radius
+                topLeftRadius: pill.topLeftRadius
+                topRightRadius: pill.topRightRadius
                 opacity: pill.glassOn ? 1 : 0
                 Behavior on opacity { NumberAnimation { duration: 260 } }
                 gradient: Gradient {
-                    GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.20) }
+                    GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, root.notch ? 0.05 : 0.20) }   // notch: no top highlight step where the shoulders join
                     GradientStop { position: 0.42; color: Qt.rgba(1, 1, 1, 0.03) }
                     GradientStop { position: 1.0; color: Qt.rgba(1, 1, 1, 0.07) }
                 }
             }
             Rectangle {
+                visible: !root.notch
                 anchors.fill: parent
                 radius: pill.radius
+                topLeftRadius: pill.topLeftRadius
+                topRightRadius: pill.topRightRadius
                 color: "transparent"
                 border.width: 1
                 border.color: pill.glassOn ? Qt.rgba(1, 1, 1, 0.26) : "transparent"

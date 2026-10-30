@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.15.0
+
+- **Dynamic Island: Notch mode.** New `shape` option in `SUPER+C` > Dynamic Island > Shape:
+  `island` (default, nothing changes) or `notch`, with `notchWidth` (100-460, default 200) and
+  `notchHeight` (24-64, default 34). The notch hangs from the top edge of the screen, grows like the
+  island in every mode, and the hover / press bubble pivots on the top edge so it stays glued to the
+  screen. With Liquid Glass on, panels come out of the notch: a black strip that fades into the glass
+  and two concave 12 px shoulders that share the panel's shape, glass and rim. New shader
+  `glass-notch3.frag` (+ compiled `.qsb`; the name is versioned on purpose, Qt caches a
+  `ShaderEffect` by URL). `assert-install.sh` checks it.
+
 ## 1.14.0
 
 - **Serpantinum 2.3.0.** The installer is now pinned to commit `ec45c01` (the `v2.3.0` tag plus 23

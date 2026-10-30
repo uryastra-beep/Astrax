@@ -349,6 +349,12 @@ older ones (three visible at a time).
   already has. They need the optional helper from `astrax-iphone install`; without it the island
   just shows no lyrics.
 
+Shape: in `SUPER+C` > Dynamic Island > Shape you can switch the island to a **Notch**. It hangs from
+the top edge of the screen (square top, rounded bottom), grows like the island in every mode, and with
+Liquid Glass on the panels pour out of it: a black strip at the top that fades into the glass, with two
+concave 12 px shoulders at the sides that are one piece with the panel. Its idle width (100-460 px) and
+height (24-64 px) are sliders. The default stays the floating island.
+
 Optional Liquid Glass (off by default; not available while `opti` is on, it comes back when you turn opti off): the pill blurs what is behind it and refracts the edge
 (a shader plus a single screen capture, taken only while glass is on).
 

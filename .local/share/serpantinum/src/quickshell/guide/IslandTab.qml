@@ -47,6 +47,9 @@ Item {
         "topMargin": 4,
         "posX": 50,
         "posY": 0,
+        "shape": "island",
+        "notchWidth": 200,
+        "notchHeight": 34,
         "followFocus": true,
         "showOnAllScreens": false,
         "hideWhenIdle": false,
@@ -85,10 +88,26 @@ Item {
     property bool showBarBox: true
     property int posX: Number(settings.posX)
     property int posY: Number(settings.posY)
+    // notch size while a slider is being dragged (saved a moment later, like the position)
+    property int notchW: Number(settings.notchWidth)
+    property int notchH: Number(settings.notchHeight)
+    readonly property bool isNotch: settings.shape === "notch"
     onSettingsChanged: {
         if (!posDebounce.running) {
             posX = Number(settings.posX);
             posY = Number(settings.posY);
+        }
+        if (!notchDebounce.running) {
+            notchW = Number(settings.notchWidth);
+            notchH = Number(settings.notchHeight);
+        }
+    }
+    Timer {
+        id: notchDebounce
+        interval: 100
+        onTriggered: {
+            islandTabRoot.update("notchWidth", islandTabRoot.notchW);
+            islandTabRoot.update("notchHeight", islandTabRoot.notchH);
         }
     }
 
@@ -180,6 +199,87 @@ Item {
                 }
             }
 
+
+            // ---- shape: floating island or a notch that hangs from the top edge ----
+            SettingsBlob {
+                SettingsRow {
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰛮"
+                    title: "Shape"
+                    description: "Island floats like a pill; Notch hangs from the top edge of the screen"
+                    RowLayout {
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        spacing: rootObj.s(6)
+                        Repeater {
+                            model: [{ value: "island", label: "Island", icon: "󰟀" }, { value: "notch", label: "Notch", icon: "󰹑" }]
+                            delegate: ClickButton {
+                                required property var modelData
+                                readonly property bool picked: (islandTabRoot.isNotch ? "notch" : "island") === modelData.value
+                                implicitHeight: rootObj.s(32)
+                                horizontalPadding: rootObj.s(12)
+                                buttonText: modelData.label
+                                buttonIcon: modelData.icon
+                                iconFontSize: rootObj.s(13)
+                                textFontSize: rootObj.s(11)
+                                accentColor: picked ? ThemeBackend.mauve : ThemeBackend.surface0
+                                textColor: picked ? ThemeBackend.crust : ThemeBackend.text
+                                cornerRadius: ThemeBackend.borderRadius
+                                onClicked: islandTabRoot.update("shape", modelData.value)
+                            }
+                        }
+                    }
+                }
+                SettingsRow {
+                    visible: islandTabRoot.isNotch
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰁌"
+                    title: "Notch width"
+                    description: "How wide the notch is when idle"
+                    Draggable {
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        implicitWidth: islandTabRoot.rootObj.s(220)
+                        implicitHeight: islandTabRoot.rootObj.s(18)
+                        from: 100
+                        to: 460
+                        stepSize: 2
+                        defaultValue: 200
+                        showValueBubble: true
+                        valueFormatter: function(v) { return Math.round(v) + " px" }
+                        value: islandTabRoot.notchW
+                        backgroundColor: ThemeBackend.surface0
+                        accentColor: ThemeBackend.mauve
+                        handleColor: ThemeBackend.text
+                        handleBorderColor: ThemeBackend.mantle
+                        onMoved: function(val) { islandTabRoot.notchW = Math.round(val); notchDebounce.restart(); }
+                        onDragFinished: { notchDebounce.stop(); islandTabRoot.update("notchWidth", islandTabRoot.notchW); islandTabRoot.update("notchHeight", islandTabRoot.notchH); }
+                    }
+                }
+                SettingsRow {
+                    visible: islandTabRoot.isNotch
+                    rootObj: islandTabRoot.rootObj
+                    icon: "󰁞"
+                    title: "Notch height"
+                    description: "How tall the notch is when idle"
+                    Draggable {
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        implicitWidth: islandTabRoot.rootObj.s(220)
+                        implicitHeight: islandTabRoot.rootObj.s(18)
+                        from: 24
+                        to: 64
+                        stepSize: 1
+                        defaultValue: 34
+                        showValueBubble: true
+                        valueFormatter: function(v) { return Math.round(v) + " px" }
+                        value: islandTabRoot.notchH
+                        backgroundColor: ThemeBackend.surface0
+                        accentColor: ThemeBackend.mauve
+                        handleColor: ThemeBackend.text
+                        handleBorderColor: ThemeBackend.mantle
+                        onMoved: function(val) { islandTabRoot.notchH = Math.round(val); notchDebounce.restart(); }
+                        onDragFinished: { notchDebounce.stop(); islandTabRoot.update("notchWidth", islandTabRoot.notchW); islandTabRoot.update("notchHeight", islandTabRoot.notchH); }
+                    }
+                }
+            }
 
             // ---- position ----
             SettingsBlob {
