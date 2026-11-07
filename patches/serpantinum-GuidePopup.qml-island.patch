@@ -1,6 +1,6 @@
 --- a/src/quickshell/guide/GuidePopup.qml
 +++ b/src/quickshell/guide/GuidePopup.qml
-@@ -590,8 +590,10 @@
+@@ -533,8 +533,10 @@
          },
          { id: "Dock", key: "dock", name: "Dock", icon: "󰮯", file: "DockTab.qml" },
          { id: "Launcher", key: "launcher", name: "Launcher", icon: "󰵆", file: "LauncherTab.qml" },

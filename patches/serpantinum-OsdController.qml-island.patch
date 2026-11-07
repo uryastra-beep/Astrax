@@ -1,6 +1,6 @@
 --- a/src/quickshell/singletons/widgetcontrols/OsdController.qml
 +++ b/src/quickshell/singletons/widgetcontrols/OsdController.qml
-@@ -207,6 +207,9 @@
+@@ -178,6 +178,9 @@
      }
  
      function show(k, v, scr) {

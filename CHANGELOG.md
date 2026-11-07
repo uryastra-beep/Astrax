@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.16.0
+
+- **Serpantinum 2.4.2.** The installer is now pinned to the `v2.4.2` tag (commit `05d6470`). Every
+  Astrax override of a Serpantinum file was merged onto it with a 3-way merge (base: the old pin).
+  Hand-resolved: `GeneralTab` (keeps the cursor style block, drops the "Copy settings" row that
+  upstream removed), `Lock.qml` (keeps the secure-lock marker; the keyboard layout poller is gone
+  upstream), `Main.qml` (keeps `lyrics` and per-screen `autohide`), `Lyrics.qml` (keeps the Liner /
+  Spotify bridge reader), `SystemPanelPowerActions` (keeps the power wave), `WallpaperEngine` (keeps
+  the per-screen pause / audio rules on top of the new transition code), `WidgetRedactor` (keeps
+  dragging a widget partly off screen, plus the new snap box). The two Visualizer faces now use
+  upstream's (they already used the shared `Visualizer`, which keeps the song-mode gradients).
+  `scripts/wallpaper/matugen_reload.sh` is gone: 2.4.2 removed it. All `patches/serpantinum-*.patch`
+  were regenerated against the new pin.
+- **iPhone clock widget.** New Clock variants, **iPhone** and **iPhone (no date)**: tall stroke digits
+  in iPhone lock screen style, made of real Liquid Glass (a shader that refracts the screen behind
+  them, from a live `ScreencopyView` capture; some GPU), with an inner white vignette, a sub-pixel
+  white outline, 12h time with no leading zero, rounded tips and a per-digit 220 ms fade. The date
+  follows the system locale. New files: `ClockFaceIOS.qml`, `ClockFaceIOSNoDate.qml`,
+  `glass-glyph.frag` (+ `.qsb`). The variant entries are in `WidgetRegistry.qml`; a Serpantinum update
+  overwrites it, and `patches/serpantinum-WidgetRegistry.qml-ios-clock.patch` re-applies them.
+
 ## 1.15.1
 
 - **Reactive cursor builds on Hyprland 0.57.** The patched hypr-dynamic-cursors is ported to the new

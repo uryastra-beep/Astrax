@@ -44,7 +44,12 @@
       "bar_modules": "Modules",
       "bar_side_modules": "Side modules",
       "display_lockscreen": "Lock screen",
-      "screenshot": "Screenshot"
+      "screenshot": "Screenshot",
+      "theme_appearance": "Appearance",
+      "theme_apps": "App theming",
+      "theme_wallpapers": "Wallpapers",
+      "general_main": "General",
+      "general_presets": "Presets"
     },
     "launcher": {
       "position": {
@@ -219,10 +224,6 @@
         "title": "Quickactions",
         "desc": "Enable floating quickactions overlay"
       },
-      "separatewindow": {
-        "title": "Make settings a separate window",
-        "desc": "Open settings as a regular resizable app window instead of a panel inside the shell"
-      },
       "location": {
         "title": "Location",
         "desc": "Configure location for automatic sun schedule and weather",
@@ -251,6 +252,21 @@
       "screenshot_on_release": {
         "title": "Capture region on mouse release",
         "desc": "Take the screenshot as soon as you finish dragging, without clicking the shutter"
+      },
+      "presets": {
+        "save": {
+          "title": "Save current setup",
+          "desc": "Save all settings, widgets and wallpapers as a preset",
+          "button": "Save preset"
+        },
+        "empty": "No presets yet. Save your current setup to create one",
+        "confirm": {
+          "title": "Apply preset?",
+          "desc": "Are you sure you want to apply this preset without saving your own settings first? It will override your existing settings, and you won't be able to recover them.",
+          "dont_show": "Do not show me this again",
+          "apply": "Apply",
+          "cancel": "Cancel"
+        }
       }
     },
     "display": {
@@ -282,7 +298,11 @@
           "title": "Hide the bar in the redactor",
           "desc": "Automatically hide the bar when editing widgets in redactor mode"
         },
-        "hide_presets": "Hide Presets",
+        "show_distances": {
+          "title": "Show distances",
+          "desc": "Show the distances between widgets while moving or resizing them in the redactor"
+        },
+        "hide_presets": "Hide presets",
         "choose_preset": "Choose a preset",
         "presets": {
           "title": "Widget Presets"
@@ -389,6 +409,14 @@
           "title": "Hide empty workspaces",
           "desc": "Show only occupied workspaces and the active one"
         },
+        "per_monitor": {
+          "title": "Per-monitor numbering",
+          "desc": "Hyprland only. Number workspaces from 1 on each monitor and set how many workspaces each monitor owns",
+          "unavailable": "Available only on Hyprland"
+        },
+        "monitor_count": {
+          "desc": "Workspaces this monitor owns"
+        },
         "style": {
           "title": "Style",
           "desc": "Choose the visual style for workspace indicators"
@@ -422,6 +450,7 @@
         "desc": "Right-click an item to start grouping, right-click another to add it. Right-click a grouped item to remove it.",
         "reset": "Reset",
         "available": "Available",
+        "shown": "Shown",
         "left": "Left",
         "center": "Center",
         "right": "Right"
@@ -468,21 +497,13 @@
           "wave": "Wave",
           "circle": "Circle"
         },
-        "cpu": {
-          "title": "CPU usage",
-          "desc": "Display processor utilization ring"
-        },
-        "ram": {
-          "title": "Memory usage",
-          "desc": "Display memory (RAM) utilization ring"
-        },
-        "temp": {
-          "title": "Temperature",
-          "desc": "Display system temperature ring"
-        },
-        "disk": {
-          "title": "Disk usage",
-          "desc": "Display storage disk utilization ring"
+        "items": {
+          "title": "Stats",
+          "desc": "Drag stats to reorder them, or move them to available to hide them",
+          "cpu": "CPU",
+          "ram": "Memory",
+          "temp": "Temperature",
+          "disk": "Disk"
         }
       },
       "bat": {
@@ -604,6 +625,10 @@
           "title": "Show controls",
           "desc": "Display the previous, play and next buttons"
         },
+        "hide_when_idle": {
+          "title": "Hide when nothing is playing",
+          "desc": "Hide the widget from the bar while no media is active"
+        },
         "preview": {
           "title": "Song title",
           "author": "Song author"
@@ -614,13 +639,14 @@
         "desc": "Change how thick the bar is, modules scale to fit"
       },
       "menu": {
-        "show_settings": {
-          "title": "Show settings icon",
-          "desc": "Display the button that opens settings"
-        },
-        "show_launcher": {
-          "title": "Show launcher icon",
-          "desc": "Display the search button that opens the launcher"
+        "items": {
+          "title": "Buttons",
+          "desc": "Drag buttons to reorder them, or move them to available to hide them",
+          "settings": "Settings",
+          "launcher": "Launcher",
+          "night_light": "Night light",
+          "caffeine": "Caffeine",
+          "shuffle": "Shuffle wallpaper"
         },
         "style": {
           "title": "Style",
@@ -668,7 +694,95 @@
         "select_dir": "Select directory...",
         "select_wallpaper": "Select wallpaper",
         "no_wallpaper_selected": "No wallpaper selected",
-        "select": "Wallpaper"
+        "select": "Wallpaper",
+        "transition": {
+          "mode": {
+            "title": "Transition",
+            "random": "Random",
+            "custom": "Custom set",
+            "desc_random": "Use a random transition every time the wallpaper changes",
+            "desc_custom": "Pick randomly from the selected transitions. Click previews to add or remove them"
+          },
+          "fade": {
+            "name": "Fade",
+            "desc": "Cross-fade smoothly into the new wallpaper"
+          },
+          "wipe": {
+            "name": "Wipe",
+            "desc": "Split open from the middle of the screen"
+          },
+          "circle": {
+            "name": "Circle",
+            "desc": "Grow a circle outward until it covers the screen"
+          },
+          "swipe": {
+            "name": "Swipe",
+            "desc": "Sweep across the screen from an edge or a corner"
+          },
+          "orientation": {
+            "title": "Orientation",
+            "desc": "Axis the wipe opens along",
+            "random": "Random",
+            "horizontal": "Horizontal",
+            "vertical": "Vertical"
+          },
+          "origin": {
+            "title": "Origin",
+            "desc": "Where the circle starts. The desktop menu always starts it where you clicked",
+            "random": "Random",
+            "center": "Center"
+          },
+          "direction": {
+            "title": "Direction",
+            "desc": "Edge or corner the swipe starts from",
+            "random": "Random",
+            "left": "From left",
+            "right": "From right",
+            "top": "From top",
+            "bottom": "From bottom",
+            "top_left": "From top left",
+            "top_right": "From top right",
+            "bottom_left": "From bottom left",
+            "bottom_right": "From bottom right"
+          }
+        }
+      },
+      "apps": {
+        "loading": "Looking for installed apps...",
+        "status": {
+          "error": "Couldn't apply: {detail}"
+        },
+        "issue": {
+          "missing_config": "Config not found. Add this to {file}: {line}",
+          "system_config": "Your config is {file}. Add this to it: {line}",
+          "read_only": "{file} is read-only. Add this to it: {line}",
+          "manual": "Couldn't edit the config safely. Add this to {file}: {line}",
+          "no_theme": "Install the {line} theme so GTK 3 apps follow the palette too",
+          "env": "Set {line} in your session environment",
+          "requires": "Install {line} to theme Qt apps",
+          "failed": "Couldn't update the config: {line}"
+        },
+        "hint": {
+          "select_in_app": "Pick the Serpantinum theme in the app's settings",
+          "restart": "Restart open windows to see new colors",
+          "neovim": "Run :colorscheme serpantinum to use it",
+          "helix": "Run :config-reload in open editors to see new colors",
+          "fastfetch": "Run fastfetch -c serpantinum to use it",
+          "spicetify": "Run spicetify config current_theme Serpantinum, then spicetify apply",
+          "discord": "Enable Serpantinum in the client's theme settings",
+          "emacs": "Run M-x load-theme serpantinum to use it",
+          "steam": "Install Material-Theme with Millennium, then pick Matugen in its color settings",
+          "heroic": "Set Heroic's custom themes path to its themes folder, then pick serpantinum",
+          "telegram": "Load the theme file from Telegram's chat settings"
+        },
+        "list": {
+          "title": "Themed apps",
+          "desc": "Apps that follow the shell colors. Add more from the list"
+        },
+        "add": {
+          "title": "Add app"
+        },
+        "empty": "No apps are themed yet. Add one from the list"
       }
     },
     "file_picker": {
@@ -993,6 +1107,11 @@
         "failed": "Download failed. Check your connection.",
         "offline": "Can't reach the language list. Showing installed languages only.",
         "loading": "Loading languages..."
+      },
+      "directory": {
+        "title": "Screenshot directory",
+        "desc": "Folder where screenshots are saved",
+        "select_dir": "Select directory..."
       }
     }
   },
@@ -1128,6 +1247,9 @@
       },
       "setting": {
         "show_text": "Show text"
+      },
+      "category": {
+        "lockscreen": "Lock screen"
       }
     }
   },
@@ -1142,7 +1264,9 @@
     "equalizer": "Equalizer",
     "eq": {
       "apply": "Apply",
-      "saved": "Saved"
+      "saved": "Saved",
+      "dynamic": "Dynamic",
+      "dynamic_active": "Adapting to your sound"
     },
     "audio": {
       "title": "Audio",
@@ -1443,7 +1567,8 @@
       "generating_thumbnails": "Generating thumbnails...",
       "no_wallpapers_found": "No wallpapers found",
       "videos": "Videos",
-      "history": "Recently applied"
+      "history": "Recently applied",
+      "favorites": "Favorites"
     },
     "filters": {
       "all": "All",
@@ -1537,11 +1662,21 @@
     },
     "redactor": {
       "no_widgets_active": "No widgets active",
-      "click_to_add": "Click a widget icon in the bottom toolbar to add it",
+      "click_to_add": "Pick a category or search in the bottom toolbar to add a widget",
       "done": "Done",
       "widget_singular": "widget",
       "widgets_plural": "widgets",
-      "widgets_short": "w"
+      "widgets_short": "w",
+      "category": {
+        "time": "Time and text",
+        "media": "Media",
+        "system": "System",
+        "info": "Info",
+        "other": "Other"
+      },
+      "search": "Search widgets",
+      "results": "Results",
+      "no_results": "Nothing found"
     },
     "types": {
       "clock": "Clock",
@@ -1554,7 +1689,8 @@
       "battery": "Battery",
       "github": "Github",
       "time": "Time",
-      "notes": "Notes"
+      "notes": "Notes",
+      "text": "Text"
     },
     "variants": {
       "digital": "Digital",
@@ -1605,7 +1741,8 @@
       "usageStyle": "Style",
       "lineThickness": "Thickness",
       "visualizerStyle": "Visualizer style",
-      "showNoLyrics": "Show \"no lyrics\" text"
+      "showNoLyrics": "Show \"no lyrics\" text",
+      "textContent": "Text"
     },
     "align": {
       "left": "Left",
@@ -1618,6 +1755,9 @@
     },
     "notes": {
       "empty": "No notes yet"
+    },
+    "text": {
+      "placeholder": "Enter text"
     }
   },
   "cli": {
@@ -1625,7 +1765,7 @@
     "description": "A desktop shell for wayland compositors.",
     "commands": "Commands:",
     "script_commands": "Script commands:",
-    "launch_desc": "Launch standalone components (start, widgetredactor, lock-redactor)",
+    "launch_desc": "Launch standalone components (start)",
     "msg_desc": "Dispatch commands or workspace switches to the UI manager",
     "ipc_desc": "Forward IPC calls directly to the shell",
     "kill_desc": "Cleanly stop the running daemon",
@@ -1639,18 +1779,16 @@
     "daemon_restarted": "Serpantinum daemon restarted.",
     "starting_daemon": "Daemon not running. Starting serpantinumd in the background...",
     "error_missing_qml": "Error: missing target to launch.",
-    "launch_usage": "Usage: serpantinum launch <start|widgetredactor|lock-redactor> [args...]",
+    "launch_usage": "Usage: serpantinum launch <start> [args...]",
     "error_qml_not_found": "Error: could not resolve {NAME}.qml in {DIR}",
     "error_shell_qml_not_found": "Error: could not resolve path to shell.qml in {DIR}",
     "error_unknown_command": "Error: unknown command '{CMD}'.",
     "error_unknown_target": "Error: unknown target '{TARGET}'.",
     "launch_help": {
-      "usage": "Usage: serpantinum launch <start|widgetredactor|lock-redactor> [arguments...]",
+      "usage": "Usage: serpantinum launch <start> [arguments...]",
       "description": "Launch standalone components directly in runner mode.",
       "available_targets": "Available targets:",
-      "target_start": "Launch the start setup interface",
-      "target_widgetredactor": "Launch the desktop widget editor interface",
-      "target_lock_redactor": "Toggle, open or close the lock screen layout editor"
+      "target_start": "Launch the start setup interface"
     },
     "msg_help": {
       "usage": "Usage: serpantinum msg <command|workspace> [arguments...]",
@@ -1683,7 +1821,8 @@
       "hibernate": "Hibernate the system",
       "reboot": "Reboot the system",
       "poweroff": "Power off the system",
-      "redactor": "Open or toggle the desktop widget layout editor"
+      "redactor": "Open or toggle the desktop widget layout editor",
+      "lock_redactor": "Toggle, open or close the lock screen layout editor"
     },
     "usage_label": "Usage:",
     "config_desc": "Read and change settings (get, set, dump, path, edit)",
@@ -1695,10 +1834,11 @@
     "error_unknown_theme": "Error: unknown theme '{NAME}'.",
     "error_no_wallpapers": "Error: no wallpapers found in the wallpaper directory.",
     "error_file_not_found": "Error: file not found: {PATH}",
-    "info_desc": "Show the current state of a setting (dnd, caffeine, dock, theme, wallpaper, monitors, updates...)",
-    "set_desc": "Change a setting (dnd, caffeine, dock, sfx-mute, matugen, lang, theme, wallpaper)",
-    "trigger_desc": "Run a one-off action (idle, notifications-clear, firstlaunch, theme-reload, theme-generate)",
-    "settings_desc": "Open the settings window, optionally on a given tab"
+    "info_desc": "Show the current state of a setting (notifications, idle, dock, sfx, theme, lang, wallpaper, monitors, updates)",
+    "set_desc": "Change a setting (notifications, idle, dock, sfx, theme, lang, wallpaper)",
+    "trigger_desc": "Run a one-off action (idle, notifications, theme, firstlaunch)",
+    "settings_desc": "Open the settings window, optionally on a given tab",
+    "error_unknown_app": "Error: unknown app '{ID}'."
   },
   "daemon": {
     "already_running": "Daemon is already running. Exiting...",
@@ -1719,6 +1859,11 @@
       "status_running": "Serpantinum daemon is running (PID: {PID}).",
       "status_stopped": "Serpantinum daemon is not running.",
       "unknown_arg": "Unknown argument: {ARG}"
+    },
+    "app_name": "Serpantinum",
+    "easyeffects": {
+      "title": "EasyEffects is still enabled",
+      "body": "Serpantinum now has its own audio engine, and EasyEffects can interfere with it. If you only used EasyEffects for Serpantinum, stop it from starting at login."
     }
   },
   "installer": {
@@ -1797,6 +1942,7 @@
       "syncing": "Synchronizing and updating system packages (pacman -syyu)...",
       "enabling_copr": "Enabling COPR repository {repo}...",
       "enabling_terra": "Enabling the Terra repository...",
+      "enabling_repo": "Enabling repository {repo}...",
       "all_installed": "-> All packages are already installed! Skipping package download phase.",
       "missing_count": "-> Found {count} missing packages to install.",
       "installing_title": "Installing system packages and dependencies...",
@@ -1806,6 +1952,24 @@
       "quickshell_outdated": "Quickshell {version} is too old, {minimum} or newer is required. Upgrading...",
       "quickshell_still_old": "Quickshell is still older than {minimum}. Update it manually, otherwise settings will not open."
     },
+    "ski": {
+      "installing": "Installing the Ski file manager...",
+      "up_to_date": "-> Ski {version} is already installed.",
+      "installed": "Installed Ski {version}",
+      "install_failed": "Failed to install Ski",
+      "download_failed": "Could not download Ski, skipping. You can install it later from github.com/ilyamiro/Ski.",
+      "checksum_failed": "Ski download failed its checksum check, skipping.",
+      "unsupported_arch": "Prebuilt Ski packages exist only for x86_64, skipping."
+    },
+    "audio": {
+      "installing": "Installing the Serpantinum audio engine...",
+      "up_to_date": "-> Serpantinum audio engine {version} is already installed.",
+      "installed": "Installed the Serpantinum audio engine {version}",
+      "building": "No prebuilt audio engine for this system, building it from source...",
+      "install_failed": "Failed to install the Serpantinum audio engine. The equalizer will not work until it is installed from github.com/ilyamiro/serpantinum-audio.",
+      "download_failed": "Could not download the Serpantinum audio engine, skipping. You can install it later from github.com/ilyamiro/serpantinum-audio.",
+      "checksum_failed": "The audio engine download failed its checksum check, skipping."
+    },
     "deploy": {
       "configuring_sddm": "Configuring SDDM display manager...",
       "disabling_dm": "-> Disabling conflicting display manager: {dm}",
@@ -1814,6 +1978,24 @@
       "sddm_no_xorg": "Xorg not found, using {compositor} for SDDM.",
       "sddm_no_backend": "Neither Xorg nor a supported Wayland greeter compositor (kwin_wayland/weston) was found in /usr/local/bin, /usr/bin or /bin.",
       "sddm_skipped": "Skipping SDDM setup: no usable display server or greeter compositor found. The current display manager is left unchanged."
+    },
+    "gamma": {
+      "installing": "Installing the Serpantinum blue light filter...",
+      "up_to_date": "-> Serpantinum blue light filter {version} is already installed.",
+      "installed": "Installed the Serpantinum blue light filter {version}",
+      "install_failed": "Failed to install the Serpantinum blue light filter. It will not work until it is installed from github.com/ilyamiro/serpantinum-gamma.",
+      "download_failed": "Could not download the Serpantinum blue light filter, skipping. You can install it later from github.com/ilyamiro/serpantinum-gamma.",
+      "checksum_failed": "The blue light filter download failed its checksum check, skipping.",
+      "unsupported_arch": "Prebuilt blue light filter packages exist only for x86_64, skipping."
+    },
+    "core": {
+      "installing": "Installing the Serpantinum core services...",
+      "up_to_date": "-> Serpantinum core services {version} are already installed.",
+      "installed": "Installed the Serpantinum core services {version}",
+      "install_failed": "Failed to install the Serpantinum core services. System usage, keyboard lock indicators and the clipboard will not work until they are installed from github.com/ilyamiro/serpantinum-core.",
+      "download_failed": "Could not download the Serpantinum core services, skipping. You can install them later from github.com/ilyamiro/serpantinum-core.",
+      "checksum_failed": "The core services download failed its checksum check, skipping.",
+      "unsupported_arch": "Prebuilt core services packages exist only for x86_64, skipping."
     }
   },
   "translator": {

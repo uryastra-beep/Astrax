@@ -71,6 +71,7 @@ check "liner-bridge is executable" test -x "$HOME/scripts/liner/liner-bridge"
 check "liner-bridge page script installed" test -f "$HOME/scripts/liner/page.bundle.js"
 check "astrax-lyrics-rating linked" [ -x "$HOME/.local/bin/astrax-lyrics-rating" ]
 check "Dynamic Island installed with its compiled shaders" test -s "$HOME/.config/quickshell/astrax-island/glass-soft-blur.frag.qsb" -a -s "$HOME/.config/quickshell/astrax-island/glass-notch3.frag.qsb"
+check "iPhone clock faces installed with their compiled shader" test -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/ClockFaceIOS.qml" -a -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/glass-glyph.frag.qsb"
 check "island clipboard helper is executable" test -x "$HOME/.config/quickshell/astrax-island/clip-event.sh"
 check "island deps present (inotifywait, wl-paste, jq, setpriv)" bash -c "command -v inotifywait wl-paste jq setpriv >/dev/null"
 check "island helpers are executable" test -x "$HOME/.config/quickshell/astrax-island/shelf-store.py" -a -x "$HOME/.config/quickshell/astrax-island/overview-stats.py"

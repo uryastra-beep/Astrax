@@ -39,7 +39,7 @@
  
      function storeNotif(uid, notif) {
          NotificationManager.liveNotifs[uid] = notif;
-@@ -226,14 +242,18 @@
+@@ -225,14 +241,18 @@
                          }
                      }
  
@@ -62,7 +62,7 @@
                      }
  
                      Connections {
-@@ -283,4 +303,5 @@
+@@ -282,4 +302,5 @@
              popupWindow.storeNotif(uid, notif);
          }
      }

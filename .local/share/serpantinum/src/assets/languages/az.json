@@ -44,7 +44,12 @@
       "bar_modules": "Modullar",
       "bar_side_modules": "Yan modullar",
       "display_lockscreen": "Kilid ekranı",
-      "screenshot": "Ekran görüntüsü"
+      "screenshot": "Ekran görüntüsü",
+      "theme_appearance": "Görünüş",
+      "theme_apps": "Tətbiq mövzuları",
+      "theme_wallpapers": "Divar kağızları",
+      "general_main": "Ümumi",
+      "general_presets": "Hazır ayarlar"
     },
     "launcher": {
       "position": {
@@ -217,10 +222,6 @@
         "title": "Sürətli əməliyyatlar",
         "desc": "Üzən sürətli əməliyyatlar qatını aktivləşdir"
       },
-      "separatewindow": {
-        "title": "Ayarları ayrıca pəncərədə aç",
-        "desc": "Ayarları shell daxilindəki panel əvəzinə ölçüsü dəyişdirilə bilən adi tətbiq pəncərəsi kimi aç"
-      },
       "location": {
         "title": "Məkan",
         "desc": "Günəşin doğuş və batış vaxtlarını avtomatik hesablamaq və hava məlumatını göstərmək üçün məkanı təyin edin",
@@ -249,6 +250,21 @@
       "screenshot_on_release": {
         "title": "Siçan düyməsi buraxılanda sahənin şəklini çək",
         "desc": "Şəkil çəkmə düyməsinə klikləmədən, sahənin seçilməsi bitən kimi ekran şəklini çək"
+      },
+      "presets": {
+        "save": {
+          "title": "Cari quruluşu saxla",
+          "desc": "Bütün ayarları, vidcetləri və divar kağızlarını hazır ayar kimi saxla",
+          "button": "Hazır ayarı saxla"
+        },
+        "empty": "Hələ hazır ayar yoxdur. Yaratmaq üçün cari quruluşunuzu saxlayın",
+        "confirm": {
+          "title": "Hazır ayar tətbiq edilsin?",
+          "desc": "Öz ayarlarınızı əvvəlcə saxlamadan bu hazır ayarı tətbiq etmək istədiyinizə əminsiniz? Mövcud ayarlarınız əvəz olunacaq və onları bərpa edə bilməyəcəksiniz.",
+          "dont_show": "Bunu bir daha göstərmə",
+          "apply": "Tətbiq et",
+          "cancel": "Ləğv et"
+        }
       }
     },
     "display": {
@@ -279,6 +295,10 @@
         "hide_bar": {
           "title": "Düzəliş alətində zolağı gizlət",
           "desc": "Vidcetlərə düzəliş edərkən zolağı avtomatik gizlət"
+        },
+        "show_distances": {
+          "title": "Məsafələri göstər",
+          "desc": "Düzəliş alətində vidcetləri köçürərkən və ya ölçüsünü dəyişərkən onlar arasındakı məsafələri göstər"
         },
         "hide_presets": "Hazır şablonları gizlət",
         "choose_preset": "Şablon seçin",
@@ -417,6 +437,7 @@
         "desc": "Qruplaşdırmağa başlamaq üçün elementə sağ klikləyin, başqa elementi əlavə etmək üçün ona sağ klikləyin. Qruplaşdırılmış elementi çıxarmaq üçün ona sağ klikləyin.",
         "reset": "Sıfırla",
         "available": "Mövcud",
+        "shown": "Göstərilən",
         "left": "Sol",
         "center": "Mərkəz",
         "right": "Sağ"
@@ -463,21 +484,13 @@
           "wave": "Dalğa",
           "circle": "Dairə"
         },
-        "cpu": {
-          "title": "CPU istifadəsi",
-          "desc": "Prosessor istifadəsi halqasını göstər"
-        },
-        "ram": {
-          "title": "Yaddaş istifadəsi",
-          "desc": "Operativ yaddaş (RAM) halqasını göstər"
-        },
-        "temp": {
-          "title": "Temperatur",
-          "desc": "Sistem temperaturu halqasını göstər"
-        },
-        "disk": {
-          "title": "Disk istifadəsi",
-          "desc": "Yaddaş diski istifadəsi halqasını göstər"
+        "items": {
+          "title": "Göstəricilər",
+          "desc": "Göstəriciləri yenidən sıralamaq üçün sürükləyin və ya gizlətmək üçün mövcud olanlara köçürün",
+          "cpu": "CPU",
+          "ram": "Yaddaş",
+          "temp": "Temperatur",
+          "disk": "Disk"
         }
       },
       "bat": {
@@ -597,6 +610,10 @@
           "title": "İdarəetməni göstər",
           "desc": "Əvvəlki, oxut və növbəti düymələrini göstər"
         },
+        "hide_when_idle": {
+          "title": "Heç nə oxunmayanda gizlət",
+          "desc": "Aktiv media olmadıqda vidceti paneldən gizlət"
+        },
         "preview": {
           "title": "Mahnının adı",
           "author": "Song author"
@@ -607,13 +624,14 @@
         "desc": "Panelin qalınlığını dəyişin, modullar uyğunlaşacaq"
       },
       "menu": {
-        "show_settings": {
-          "title": "Ayarlar ikonunu göstər",
-          "desc": "Ayarları açan düyməni göstər"
-        },
-        "show_launcher": {
-          "title": "Başlatıcı ikonunu göstər",
-          "desc": "Başlatıcını açan axtarış düyməsini göstər"
+        "items": {
+          "title": "Düymələr",
+          "desc": "Düymələri yenidən sıralamaq üçün sürükləyin və ya gizlətmək üçün mövcud olanlara köçürün",
+          "settings": "Ayarlar",
+          "launcher": "Başladıcı",
+          "night_light": "Gecə işığı",
+          "caffeine": "Kofein",
+          "shuffle": "Təsadüfi divar kağızı"
         },
         "style": {
           "title": "Stil",
@@ -649,7 +667,58 @@
         "select_dir": "Qovluq seç...",
         "select_wallpaper": "Fon şəkli seç",
         "no_wallpaper_selected": "Fon şəkli seçilməyib",
-        "select": "Divar kağızı"
+        "select": "Divar kağızı",
+        "transition": {
+          "mode": {
+            "title": "Keçid",
+            "random": "Təsadüfi",
+            "custom": "Xüsusi seçim",
+            "desc_random": "Divar kağızı hər dəyişəndə təsadüfi keçid istifadə et",
+            "desc_custom": "Seçilmiş keçidlər arasından təsadüfi seç. Əlavə etmək və ya silmək üçün önizləmələrə klikləyin"
+          },
+          "fade": {
+            "name": "Solma",
+            "desc": "Yeni divar kağızına yumşaq keçid"
+          },
+          "wipe": {
+            "name": "Açılma",
+            "desc": "Ekranın ortasından açılsın"
+          },
+          "circle": {
+            "name": "Dairə",
+            "desc": "Ekranı örtənə qədər dairəni böyüt"
+          },
+          "swipe": {
+            "name": "Sürüşmə",
+            "desc": "Ekranı kənardan və ya küncdən süpür"
+          },
+          "orientation": {
+            "title": "İstiqamət oxu",
+            "desc": "Keçidin açıldığı ox",
+            "random": "Təsadüfi",
+            "horizontal": "Üfüqi",
+            "vertical": "Şaquli"
+          },
+          "origin": {
+            "title": "Başlanğıc",
+            "desc": "Dairənin başladığı yer. Masaüstü menyusu onu həmişə kliklədiyiniz yerdən başladır",
+            "random": "Təsadüfi",
+            "center": "Mərkəz"
+          },
+          "direction": {
+            "title": "İstiqamət",
+            "desc": "Sürüşmənin başladığı kənar və ya künc",
+            "random": "Təsadüfi",
+            "left": "Soldan",
+            "right": "Sağdan",
+            "top": "Yuxarıdan",
+            "bottom": "Aşağıdan",
+            "top_left": "Sol yuxarıdan",
+            "top_right": "Sağ yuxarıdan",
+            "bottom_left": "Sol aşağıdan",
+            "bottom_right": "Sağ aşağıdan"
+          }
+        }
       },
       "element_opacity": {
         "title": "Element şəffaflığı",
@@ -662,6 +731,43 @@
           "blur": "Bulanıqlıq",
           "liquid": "Maye şüşə"
         }
+      },
+      "apps": {
+        "loading": "Quraşdırılmış tətbiqlər axtarılır...",
+        "status": {
+          "error": "Tətbiq edilmədi: {detail}"
+        },
+        "issue": {
+          "missing_config": "Konfiqurasiya tapılmadı. Bunu {file} faylına əlavə edin: {line}",
+          "system_config": "Konfiqurasiyanız {file} faylındadır. Bunu ora əlavə edin: {line}",
+          "read_only": "{file} yalnız oxunuşludur. Bunu ora əlavə edin: {line}",
+          "manual": "Konfiqurasiyanı təhlükəsiz dəyişmək olmadı. Bunu {file} faylına əlavə edin: {line}",
+          "no_theme": "GTK 3 tətbiqlərinin də palitranı izləməsi üçün {line} mövzusunu quraşdırın",
+          "env": "Sessiya mühitində {line} təyin edin",
+          "requires": "Qt tətbiqlərinə mövzu tətbiq etmək üçün {line} quraşdırın",
+          "failed": "Konfiqurasiya yenilənmədi: {line}"
+        },
+        "hint": {
+          "select_in_app": "Tətbiqin ayarlarında Serpantinum mövzusunu seçin",
+          "restart": "Yeni rəngləri görmək üçün açıq pəncərələri yenidən başladın",
+          "neovim": "İstifadə etmək üçün :colorscheme serpantinum işlədin",
+          "helix": "Yeni rəngləri görmək üçün açıq redaktorlarda :config-reload işlədin",
+          "fastfetch": "İstifadə etmək üçün fastfetch -c serpantinum işlədin",
+          "spicetify": "spicetify config current_theme Serpantinum, sonra spicetify apply işlədin",
+          "discord": "Müştərinin mövzu ayarlarında Serpantinum-u aktivləşdirin",
+          "emacs": "İstifadə etmək üçün M-x load-theme serpantinum əmrini icra edin",
+          "steam": "Material-Theme-i Millennium ilə quraşdırın, sonra onun rəng ayarlarında Matugen seçin",
+          "heroic": "Heroic-də fərdi mövzular yolunu onun mövzular qovluğuna təyin edin, sonra serpantinum seçin",
+          "telegram": "Mövzu faylını Telegram-ın söhbət ayarlarından yükləyin"
+        },
+        "list": {
+          "title": "Mövzulu tətbiqlər",
+          "desc": "Qabığın rənglərini izləyən tətbiqlər. Siyahıdan daha çox əlavə edin"
+        },
+        "add": {
+          "title": "Tətbiq əlavə et"
+        },
+        "empty": "Hələ mövzulu tətbiq yoxdur. Siyahıdan birini əlavə edin"
       }
     },
     "file_picker": {
@@ -965,6 +1071,11 @@
         "failed": "Yükləmə uğursuz oldu. Bağlantını yoxlayın.",
         "offline": "Dil siyahısına çatmaq mümkün deyil. Yalnız quraşdırılmış dillər göstərilir.",
         "loading": "Dillər yüklənir..."
+      },
+      "directory": {
+        "title": "Skrinşot qovluğu",
+        "desc": "Skrinşotların saxlanıldığı qovluq",
+        "select_dir": "Qovluq seç..."
       }
     }
   },
@@ -1098,6 +1209,9 @@
       },
       "setting": {
         "show_text": "Mətni göstər"
+      },
+      "category": {
+        "lockscreen": "Kilid ekranı"
       }
     }
   },
@@ -1112,7 +1226,9 @@
     "equalizer": "Səs tezliyi tənzimləyicisi",
     "eq": {
       "apply": "Tətbiq et",
-      "saved": "Saxlanılıb"
+      "saved": "Saxlanılıb",
+      "dynamic": "Dinamik",
+      "dynamic_active": "Səsinizə uyğunlaşır"
     },
     "audio": {
       "title": "Səs",
@@ -1410,7 +1526,8 @@
       "generating_thumbnails": "Kiçik təsvirlər yaradılır...",
       "no_wallpapers_found": "Fon şəkli tapılmadı",
       "videos": "Videolar",
-      "history": "Son tətbiq olunanlar"
+      "history": "Son tətbiq olunanlar",
+      "favorites": "Sevimlilər"
     },
     "filters": {
       "all": "Hamısı",
@@ -1504,11 +1621,21 @@
     },
     "redactor": {
       "no_widgets_active": "Fəal vidcet yoxdur",
-      "click_to_add": "Vidcet əlavə etmək üçün aşağıdakı alətlər zolağında onun nişanına klikləyin",
+      "click_to_add": "Vidcet əlavə etmək üçün aşağıdakı alətlər zolağında kateqoriya seçin və ya axtarın",
       "done": "Hazırdır",
       "widget_singular": "vidcet",
       "widgets_plural": "vidcet",
-      "widgets_short": "v"
+      "widgets_short": "v",
+      "category": {
+        "time": "Vaxt və mətn",
+        "media": "Media",
+        "system": "Sistem",
+        "info": "Məlumat",
+        "other": "Digər"
+      },
+      "search": "Vidcetləri axtar",
+      "results": "Nəticələr",
+      "no_results": "Heç nə tapılmadı"
     },
     "types": {
       "clock": "Saat",
@@ -1521,7 +1648,8 @@
       "battery": "Batareya",
       "github": "Github",
       "time": "Vaxt",
-      "notes": "Qeydlər"
+      "notes": "Qeydlər",
+      "text": "Mətn"
     },
     "variants": {
       "digital": "Rəqəmsal",
@@ -1570,7 +1698,8 @@
     },
     "settings": {
       "lyricsLines": "Sətirlər",
-      "lyricsAlignment": "Hizalama"
+      "lyricsAlignment": "Hizalama",
+      "textContent": "Mətn"
     },
     "align": {
       "left": "Sol",
@@ -1579,6 +1708,9 @@
     },
     "notes": {
       "empty": "Hələ qeyd yoxdur"
+    },
+    "text": {
+      "placeholder": "Mətn daxil edin"
     }
   },
   "cli": {
@@ -1586,7 +1718,7 @@
     "description": "Wayland görüntü birləşdiriciləri üçün iş masası qabığı.",
     "commands": "Əmrlər:",
     "script_commands": "Skript əmrləri:",
-    "launch_desc": "Müstəqil tərkib hissələrini başlat (start, widgetredactor, lock-redactor)",
+    "launch_desc": "Müstəqil tərkib hissələrini başlat (start)",
     "msg_desc": "İnterfeys idarəedicisinə əmrləri və ya iş sahəsi keçidlərini göndər",
     "ipc_desc": "IPC çağırışlarını birbaşa qabığa ötür",
     "kill_desc": "İşləyən arxa plan xidmətini düzgün şəkildə dayandır",
@@ -1600,18 +1732,16 @@
     "daemon_restarted": "Serpantinum arxa plan xidməti yenidən başladıldı.",
     "starting_daemon": "Arxa plan xidməti işləmir. serpantinumd arxa planda başladılır...",
     "error_missing_qml": "Xəta: başladılacaq hədəf göstərilməyib.",
-    "launch_usage": "İstifadə: serpantinum launch <start|widgetredactor|lock-redactor> [args...]",
+    "launch_usage": "İstifadə: serpantinum launch <start> [args...]",
     "error_qml_not_found": "Xəta: {DIR} daxilində {NAME}.qml tapılmadı",
     "error_shell_qml_not_found": "Xəta: {DIR} daxilində shell.qml yolu tapılmadı",
     "error_unknown_command": "Xəta: naməlum əmr '{CMD}'.",
     "error_unknown_target": "Xəta: naməlum hədəf '{TARGET}'.",
     "launch_help": {
-      "usage": "İstifadə: serpantinum launch <start|widgetredactor|lock-redactor> [arguments...]",
+      "usage": "İstifadə: serpantinum launch <start> [arguments...]",
       "description": "Müstəqil tərkib hissələrini birbaşa icra rejimində başlat.",
       "available_targets": "Mövcud hədəflər:",
-      "target_start": "İlkin quraşdırma interfeysini başlat",
-      "target_widgetredactor": "İş masası vidcetlərinə düzəliş etmək üçün interfeysi başlat",
-      "target_lock_redactor": "Kilid ekranı düzən redaktorunu dəyiş, aç və ya bağla"
+      "target_start": "İlkin quraşdırma interfeysini başlat"
     },
     "msg_help": {
       "usage": "İstifadə: serpantinum msg <command|workspace> [arguments...]",
@@ -1644,7 +1774,8 @@
       "hibernate": "Sistemi hibernasiyaya göndər",
       "reboot": "Sistemi yenidən başlat",
       "poweroff": "Sistemi söndür",
-      "redactor": "İş masası vidjet düzəni redaktorunu aç və ya dəyiş"
+      "redactor": "İş masası vidjet düzəni redaktorunu aç və ya dəyiş",
+      "lock_redactor": "Kilid ekranı düzən redaktorunu dəyiş, aç və ya bağla"
     },
     "usage_label": "İstifadə:",
     "config_desc": "Ayarları oxu və dəyiş (get, set, dump, path, edit)",
@@ -1656,10 +1787,11 @@
     "error_unknown_theme": "Xəta: naməlum mövzu '{NAME}'.",
     "error_no_wallpapers": "Xəta: divar kağızı qovluğunda divar kağızı tapılmadı.",
     "error_file_not_found": "Xəta: fayl tapılmadı: {PATH}",
-    "info_desc": "Ayarın cari vəziyyətini göstərmək (dnd, caffeine, dock, theme, wallpaper, monitors, updates...)",
-    "set_desc": "Ayarı dəyişmək (dnd, caffeine, dock, sfx-mute, matugen, lang, theme, wallpaper)",
-    "trigger_desc": "Birdəfəlik əməliyyat icra etmək (idle, notifications-clear, firstlaunch, theme-reload, theme-generate)",
-    "settings_desc": "Ayarlar pəncərəsini aç (istəyə görə müəyyən tabda)"
+    "info_desc": "Ayarın cari vəziyyətini göstərmək (notifications, idle, dock, sfx, theme, lang, wallpaper, monitors, updates)",
+    "set_desc": "Ayarı dəyişmək (notifications, idle, dock, sfx, theme, lang, wallpaper)",
+    "trigger_desc": "Birdəfəlik əməliyyat icra etmək (idle, notifications, theme, firstlaunch)",
+    "settings_desc": "Ayarlar pəncərəsini aç (istəyə görə müəyyən tabda)",
+    "error_unknown_app": "Xəta: naməlum tətbiq '{ID}'."
   },
   "daemon": {
     "already_running": "Arxa plan xidməti artıq işləyir. Çıxılır...",
@@ -1680,6 +1812,11 @@
       "status_running": "Serpantinum arxa plan xidməti işləyir (PID: {PID}).",
       "status_stopped": "Serpantinum arxa plan xidməti işləmir.",
       "unknown_arg": "Naməlum arqument: {ARG}"
+    },
+    "app_name": "Serpantinum",
+    "easyeffects": {
+      "title": "EasyEffects hələ də aktivdir",
+      "body": "Serpantinum artıq öz səs mühərrikinə malikdir və EasyEffects ona mane ola bilər. EasyEffects-dən yalnız Serpantinum üçün istifadə edirdinizsə, onun sistemə girişdə başlamasını söndürün."
     }
   },
   "installer": {

@@ -44,7 +44,12 @@
       "bar_modules": "Moduli",
       "bar_side_modules": "Moduli laterali",
       "display_lockscreen": "Schermata di blocco",
-      "screenshot": "Screenshot"
+      "screenshot": "Screenshot",
+      "theme_appearance": "Aspetto",
+      "theme_apps": "Tema delle app",
+      "theme_wallpapers": "Sfondi",
+      "general_main": "Generale",
+      "general_presets": "Preimpostazioni"
     },
     "launcher": {
       "position": {
@@ -219,10 +224,6 @@
         "title": "Azioni rapide",
         "desc": "Attiva il pannello fluttuante per le azioni rapide"
       },
-      "separatewindow": {
-        "title": "Apri le impostazioni in una finestra separata",
-        "desc": "Apri le impostazioni come una normale finestra ridimensionabile invece di un pannello nella shell"
-      },
       "location": {
         "title": "Posizione",
         "desc": "Imposta la posizione per il meteo e l'orario solare in automatico",
@@ -251,6 +252,21 @@
       "screenshot_on_release": {
         "title": "Cattura area al rilascio del mouse",
         "desc": "Cattura lo screenshot non appena si rilascia il cursore, senza cliccare l'otturatore"
+      },
+      "presets": {
+        "save": {
+          "title": "Salva la configurazione attuale",
+          "desc": "Salva tutte le impostazioni, i widget e gli sfondi come preimpostazione",
+          "button": "Salva preimpostazione"
+        },
+        "empty": "Nessuna preimpostazione. Salva la configurazione attuale per crearne una",
+        "confirm": {
+          "title": "Applicare la preimpostazione?",
+          "desc": "Vuoi davvero applicare questa preimpostazione senza prima salvare le tue impostazioni? Sostituirà le impostazioni attuali e non potrai recuperarle.",
+          "dont_show": "Non mostrare più",
+          "apply": "Applica",
+          "cancel": "Annulla"
+        }
       }
     },
     "display": {
@@ -281,6 +297,10 @@
         "hide_bar": {
           "title": "Nascondi barra nel redattore",
           "desc": "Nascondi automaticamente la barra durante la modifica dei widget in modalità redattore"
+        },
+        "show_distances": {
+          "title": "Mostra distanze",
+          "desc": "Mostra le distanze tra i widget durante lo spostamento o il ridimensionamento nel redattore"
         },
         "hide_presets": "Nascondi predefiniti",
         "choose_preset": "Scegli un predefinito",
@@ -418,6 +438,7 @@
         "desc": "Fai clic con il tasto destro su un elemento per iniziare a raggruppare, poi su un altro per aggiungerlo. Fai clic con il tasto destro su un elemento raggruppato per rimuoverlo.",
         "reset": "Resetta",
         "available": "Disponibile",
+        "shown": "Visibili",
         "left": "Sinistra",
         "center": "Centro",
         "right": "Destra"
@@ -464,21 +485,13 @@
           "wave": "Onda",
           "circle": "Cerchio"
         },
-        "cpu": {
-          "title": "Uso CPU",
-          "desc": "Mostra l'anello di utilizzo del processore"
-        },
-        "ram": {
-          "title": "Uso memoria",
-          "desc": "Mostra l'anello di utilizzo della RAM"
-        },
-        "temp": {
-          "title": "Temperatura",
-          "desc": "Mostra l'anello della temperatura di sistema"
-        },
-        "disk": {
-          "title": "Uso disco",
-          "desc": "Mostra l'anello di utilizzo dello spazio disco"
+        "items": {
+          "title": "Statistiche",
+          "desc": "Trascina le statistiche per riordinarle, o spostale tra le disponibili per nasconderle",
+          "cpu": "CPU",
+          "ram": "Memoria",
+          "temp": "Temperatura",
+          "disk": "Disco"
         }
       },
       "bat": {
@@ -598,6 +611,10 @@
           "title": "Mostra controlli",
           "desc": "Mostra i pulsanti precedente, riproduci e successivo"
         },
+        "hide_when_idle": {
+          "title": "Nascondi quando non è in riproduzione nulla",
+          "desc": "Nasconde il widget dalla barra quando nessun contenuto è attivo"
+        },
         "preview": {
           "title": "Titolo del brano",
           "author": "Song author"
@@ -608,13 +625,14 @@
         "desc": "Cambia lo spessore della barra, i moduli si adattano"
       },
       "menu": {
-        "show_settings": {
-          "title": "Mostra icona impostazioni",
-          "desc": "Mostra il pulsante che apre le impostazioni"
-        },
-        "show_launcher": {
-          "title": "Mostra icona del launcher",
-          "desc": "Mostra il pulsante di ricerca che apre il launcher"
+        "items": {
+          "title": "Pulsanti",
+          "desc": "Trascina i pulsanti per riordinarli, o spostali tra i disponibili per nasconderli",
+          "settings": "Impostazioni",
+          "launcher": "Launcher",
+          "night_light": "Luce notturna",
+          "caffeine": "Caffeina",
+          "shuffle": "Sfondo casuale"
         },
         "style": {
           "title": "Stile",
@@ -650,7 +668,58 @@
         "select_dir": "Seleziona cartella...",
         "select_wallpaper": "Seleziona sfondo",
         "no_wallpaper_selected": "Nessuno sfondo selezionato",
-        "select": "Sfondo"
+        "select": "Sfondo",
+        "transition": {
+          "mode": {
+            "title": "Transizione",
+            "random": "Casuale",
+            "custom": "Selezione personalizzata",
+            "desc_random": "Usa una transizione casuale ogni volta che cambia lo sfondo",
+            "desc_custom": "Scegli a caso tra le transizioni selezionate. Fai clic sulle anteprime per aggiungerle o rimuoverle"
+          },
+          "fade": {
+            "name": "Dissolvenza",
+            "desc": "Dissolvenza morbida verso il nuovo sfondo"
+          },
+          "wipe": {
+            "name": "Apertura",
+            "desc": "Apri dal centro dello schermo"
+          },
+          "circle": {
+            "name": "Cerchio",
+            "desc": "Fai crescere un cerchio fino a coprire lo schermo"
+          },
+          "swipe": {
+            "name": "Scorrimento",
+            "desc": "Attraversa lo schermo da un bordo o da un angolo"
+          },
+          "orientation": {
+            "title": "Orientamento",
+            "desc": "Asse lungo cui si apre la transizione",
+            "random": "Casuale",
+            "horizontal": "Orizzontale",
+            "vertical": "Verticale"
+          },
+          "origin": {
+            "title": "Origine",
+            "desc": "Dove parte il cerchio. Il menu del desktop lo avvia sempre dove hai fatto clic",
+            "random": "Casuale",
+            "center": "Centro"
+          },
+          "direction": {
+            "title": "Direzione",
+            "desc": "Bordo o angolo da cui parte lo scorrimento",
+            "random": "Casuale",
+            "left": "Da sinistra",
+            "right": "Da destra",
+            "top": "Dall'alto",
+            "bottom": "Dal basso",
+            "top_left": "Dall'alto a sinistra",
+            "top_right": "Dall'alto a destra",
+            "bottom_left": "Dal basso a sinistra",
+            "bottom_right": "Dal basso a destra"
+          }
+        }
       },
       "element_opacity": {
         "title": "Opacità degli elementi",
@@ -663,6 +732,43 @@
           "blur": "Sfocatura",
           "liquid": "Vetro liquido"
         }
+      },
+      "apps": {
+        "loading": "Ricerca delle app installate...",
+        "status": {
+          "error": "Impossibile applicare: {detail}"
+        },
+        "issue": {
+          "missing_config": "Configurazione non trovata. Aggiungi questo a {file}: {line}",
+          "system_config": "La tua configurazione è {file}. Aggiungi questo: {line}",
+          "read_only": "{file} è di sola lettura. Aggiungi questo: {line}",
+          "manual": "Impossibile modificare la configurazione in sicurezza. Aggiungi questo a {file}: {line}",
+          "no_theme": "Installa il tema {line} perché anche le app GTK 3 seguano la tavolozza",
+          "env": "Imposta {line} nell'ambiente di sessione",
+          "requires": "Installa {line} per applicare il tema alle app Qt",
+          "failed": "Impossibile aggiornare la configurazione: {line}"
+        },
+        "hint": {
+          "select_in_app": "Scegli il tema Serpantinum nelle impostazioni dell'app",
+          "restart": "Riavvia le finestre aperte per vedere i nuovi colori",
+          "neovim": "Esegui :colorscheme serpantinum per usarlo",
+          "helix": "Esegui :config-reload negli editor aperti per vedere i nuovi colori",
+          "fastfetch": "Esegui fastfetch -c serpantinum per usarlo",
+          "spicetify": "Esegui spicetify config current_theme Serpantinum, poi spicetify apply",
+          "discord": "Attiva Serpantinum nelle impostazioni dei temi del client",
+          "emacs": "Esegui M-x load-theme serpantinum per usarlo",
+          "steam": "Installa Material-Theme con Millennium, poi scegli Matugen nelle sue impostazioni colore",
+          "heroic": "Imposta il percorso dei temi personalizzati di Heroic sulla sua cartella dei temi, poi scegli serpantinum",
+          "telegram": "Carica il file del tema dalle impostazioni chat di Telegram"
+        },
+        "list": {
+          "title": "App con tema",
+          "desc": "App che seguono i colori della shell. Aggiungine altre dall'elenco"
+        },
+        "add": {
+          "title": "Aggiungi app"
+        },
+        "empty": "Nessuna app con tema per ora. Aggiungine una dall'elenco"
       }
     },
     "file_picker": {
@@ -970,6 +1076,11 @@
         "failed": "Download non riuscito. Controlla la connessione.",
         "offline": "Impossibile raggiungere l'elenco delle lingue. Vengono mostrate solo le lingue installate.",
         "loading": "Caricamento delle lingue..."
+      },
+      "directory": {
+        "title": "Cartella degli screenshot",
+        "desc": "Cartella in cui vengono salvati gli screenshot",
+        "select_dir": "Seleziona cartella..."
       }
     }
   },
@@ -1103,6 +1214,9 @@
       },
       "setting": {
         "show_text": "Mostra testo"
+      },
+      "category": {
+        "lockscreen": "Schermata di blocco"
       }
     }
   },
@@ -1117,7 +1231,9 @@
     "equalizer": "Equalizzatore",
     "eq": {
       "apply": "Applica",
-      "saved": "Salvati"
+      "saved": "Salvati",
+      "dynamic": "Dinamico",
+      "dynamic_active": "Si adatta al tuo suono"
     },
     "audio": {
       "title": "Audio",
@@ -1415,7 +1531,8 @@
       "generating_thumbnails": "Generazione miniature...",
       "no_wallpapers_found": "Nessuno sfondo trovato",
       "videos": "Video",
-      "history": "Applicati di recente"
+      "history": "Applicati di recente",
+      "favorites": "Preferiti"
     },
     "filters": {
       "all": "Tutti",
@@ -1509,11 +1626,21 @@
     },
     "redactor": {
       "no_widgets_active": "Nessun widget attivo",
-      "click_to_add": "Clicca un widget nella barra in basso per aggiungerlo",
+      "click_to_add": "Scegli una categoria o cerca nella barra in basso per aggiungere un widget",
       "done": "Fatto",
       "widget_singular": "widget",
       "widgets_plural": "widgets",
-      "widgets_short": "w"
+      "widgets_short": "w",
+      "category": {
+        "time": "Ora e testo",
+        "media": "Media",
+        "system": "Sistema",
+        "info": "Info",
+        "other": "Altro"
+      },
+      "search": "Cerca widget",
+      "results": "Risultati",
+      "no_results": "Nessun risultato"
     },
     "types": {
       "clock": "Orologio",
@@ -1526,7 +1653,8 @@
       "battery": "Batteria",
       "github": "Github",
       "time": "Ora",
-      "notes": "Note"
+      "notes": "Note",
+      "text": "Testo"
     },
     "variants": {
       "digital": "Digitale",
@@ -1575,7 +1703,8 @@
     },
     "settings": {
       "lyricsLines": "Righe",
-      "lyricsAlignment": "Allineamento"
+      "lyricsAlignment": "Allineamento",
+      "textContent": "Testo"
     },
     "align": {
       "left": "Sinistra",
@@ -1584,6 +1713,9 @@
     },
     "notes": {
       "empty": "Ancora nessuna nota"
+    },
+    "text": {
+      "placeholder": "Inserisci testo"
     }
   },
   "cli": {
@@ -1591,7 +1723,7 @@
     "description": "Una shell desktop per compositor Wayland.",
     "commands": "Comandi:",
     "script_commands": "Comandi Script:",
-    "launch_desc": "Avvia componenti autonomi (start, widgetredactor, lock-redactor)",
+    "launch_desc": "Avvia componenti autonomi (start)",
     "msg_desc": "Invia comandi o cambi di workspace al gestore dell'interfaccia",
     "ipc_desc": "Inoltra chiamate IPC direttamente alla shell",
     "kill_desc": "Interrompe in modo pulito il demone in esecuzione",
@@ -1605,18 +1737,16 @@
     "daemon_restarted": "Demone di Serpantinum riavviato.",
     "starting_daemon": "Demone non in esecuzione. Avvio di serpantinumd in background...",
     "error_missing_qml": "Errore: target da avviare mancante.",
-    "launch_usage": "Uso: serpantinum launch <start|widgetredactor|lock-redactor> [argomenti...]",
+    "launch_usage": "Uso: serpantinum launch <start> [argomenti...]",
     "error_qml_not_found": "Errore: impossibile trovare {NAME}.qml in {DIR}",
     "error_shell_qml_not_found": "Errore: impossibile trovare il percorso di shell.qml in {DIR}",
     "error_unknown_command": "Errore: comando sconosciuto '{CMD}'.",
     "error_unknown_target": "Errore: target sconosciuto '{TARGET}'.",
     "launch_help": {
-      "usage": "Uso: serpantinum launch <start|widgetredactor|lock-redactor> [argomenti...]",
+      "usage": "Uso: serpantinum launch <start> [argomenti...]",
       "description": "Avvia componenti autonomi direttamente in modalità esecuzione.",
       "available_targets": "Target disponibili:",
-      "target_start": "Avvia l'interfaccia di configurazione iniziale",
-      "target_widgetredactor": "Avvia l'interfaccia dell'editor di widget desktop",
-      "target_lock_redactor": "Attiva/disattiva, apri o chiudi l'editor del layout della schermata di blocco"
+      "target_start": "Avvia l'interfaccia di configurazione iniziale"
     },
     "msg_help": {
       "usage": "Uso: serpantinum msg <comando|workspace> [argomenti...]",
@@ -1649,7 +1779,8 @@
       "hibernate": "Iberna il sistema",
       "reboot": "Riavvia il sistema",
       "poweroff": "Spegni il sistema",
-      "redactor": "Apri o attiva/disattiva l'editor del layout dei widget del desktop"
+      "redactor": "Apri o attiva/disattiva l'editor del layout dei widget del desktop",
+      "lock_redactor": "Attiva/disattiva, apri o chiudi l'editor del layout della schermata di blocco"
     },
     "usage_label": "Utilizzo:",
     "config_desc": "Leggi e modifica le impostazioni (get, set, dump, path, edit)",
@@ -1661,10 +1792,11 @@
     "error_unknown_theme": "Errore: tema sconosciuto '{NAME}'.",
     "error_no_wallpapers": "Errore: nessuno sfondo trovato nella cartella degli sfondi.",
     "error_file_not_found": "Errore: file non trovato: {PATH}",
-    "info_desc": "Mostra lo stato attuale di un'impostazione (dnd, caffeine, dock, theme, wallpaper, monitors, updates...)",
-    "set_desc": "Modifica un'impostazione (dnd, caffeine, dock, sfx-mute, matugen, lang, theme, wallpaper)",
-    "trigger_desc": "Esegui un'azione singola (idle, notifications-clear, firstlaunch, theme-reload, theme-generate)",
-    "settings_desc": "Apri la finestra delle impostazioni (facoltativamente su una scheda)"
+    "info_desc": "Mostra lo stato attuale di un'impostazione (notifications, idle, dock, sfx, theme, lang, wallpaper, monitors, updates)",
+    "set_desc": "Modifica un'impostazione (notifications, idle, dock, sfx, theme, lang, wallpaper)",
+    "trigger_desc": "Esegui un'azione singola (idle, notifications, theme, firstlaunch)",
+    "settings_desc": "Apri la finestra delle impostazioni (facoltativamente su una scheda)",
+    "error_unknown_app": "Errore: app sconosciuta '{ID}'."
   },
   "daemon": {
     "already_running": "Il demone è già in esecuzione. Uscita...",
@@ -1685,6 +1817,11 @@
       "status_running": "Il demone Serpantinum è in esecuzione (PID: {PID}).",
       "status_stopped": "Il demone Serpantinum non è in esecuzione.",
       "unknown_arg": "Argomento sconosciuto: {ARG}"
+    },
+    "app_name": "Serpantinum",
+    "easyeffects": {
+      "title": "EasyEffects è ancora attivo",
+      "body": "Serpantinum ora ha un proprio motore audio ed EasyEffects può interferire. Se usavi EasyEffects solo per Serpantinum, impedisci che si avvii all'accesso."
     }
   },
   "installer": {

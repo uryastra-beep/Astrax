@@ -14,21 +14,21 @@
      required property var popup
      property alias tabsView: tabsFlickable
      property alias tabsItems: tabsRepeater
-@@ -223,7 +230,7 @@
+@@ -230,7 +237,7 @@
  
                                  Text {
                                      visible: !popup.compact
 -                                    text: I18n.t("guide.tabs." + (tabDelegate.modelData.key || tabDelegate.modelData.id).toLowerCase(), tabDelegate.modelData.name || tabDelegate.modelData.id)
 +                                    text: sidebar.tabLabel(tabDelegate.modelData)
                                      font.family: ThemeBackend.fontFamily
-                                     font.weight: header.active ? Font.Bold : Font.Medium
+                                     font.weight: Font.Medium
                                      font.pixelSize: popup.s(13)
-@@ -373,7 +380,7 @@
+@@ -354,7 +361,7 @@
  
                                                  Text {
                                                      visible: !popup.compact
 -                                                    text: I18n.t("guide.tabs." + (sub.modelData.key || sub.modelData.id).toLowerCase(), sub.modelData.name || sub.modelData.id)
 +                                                    text: sidebar.tabLabel(sub.modelData)
                                                      font.family: ThemeBackend.fontFamily
-                                                     font.weight: sub.isCurrent ? Font.Bold : Font.Medium
-                                                     font.pixelSize: popup.s(12)
+                                                     font.weight: Font.Medium
+                                                     font.pixelSize: popup.s(13)

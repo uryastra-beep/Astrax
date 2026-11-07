@@ -109,7 +109,7 @@ Item {
 
     property bool isDraggingVol: false
     property bool isDraggingBri: false
-    property bool usesDdcBrightness: false
+    readonly property bool usesDdcBrightness: OsdController.brightnessBackend === "ddc"
 
     property bool btStateBeforeAirplane: false
     property bool wifiStateBeforeAirplane: true
@@ -141,6 +141,13 @@ Item {
         }
     }
 
+    Connections {
+        target: OsdController
+        function onSysBrightnessChanged() {
+            if (!root.isDraggingBri) root.sysBrightness = OsdController.sysBrightness;
+        }
+    }
+
     onSysBrightnessChanged: {
         if (root.visible && slidersBox.brightnessSlider && !root.isDraggingBri && slidersBox.brightnessSlider.value !== sysBrightness) {
             slidersBox.brightnessSlider.value = sysBrightness;
@@ -150,7 +157,7 @@ Item {
     Process {
         id: hibernateCheck
         running: false
-        command: ["bash", Caching.serpantinumDir + "/scripts/system/can_hibernate.sh"]
+        command: ["serpantinum-core", "system", "can-hibernate"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text.trim();
@@ -191,6 +198,7 @@ Item {
                 slidersBox.volumeSlider.value = root.sysVolume;
             }
 
+            if (!root.isDraggingBri) root.sysBrightness = OsdController.sysBrightness;
             if (slidersBox.brightnessSlider && !root.isDraggingBri) {
                 slidersBox.brightnessSlider.value = root.sysBrightness;
             }
@@ -214,6 +222,7 @@ Item {
             NotificationManager.sysPanelOpen = true;
             if (quickActionsBox.nightLight) quickActionsBox.nightLight.updateState();
             if (quickActionsBox.coffee) quickActionsBox.coffee.updateState();
+            root.sysBrightness = OsdController.sysBrightness;
             resetAndPlayIntro();
             forceActiveFocus();
             briPollerTimer.interval = 150;
@@ -229,34 +238,26 @@ Item {
 
     Timer {
         id: briPollerTimer
-        interval: root.usesDdcBrightness ? 10000 : 1500
+        interval: 10000
         repeat: false
         onTriggered: {
-            if (root.visible) {
+            if (root.visible && root.usesDdcBrightness) {
                 briPoller.running = true;
-                interval = root.usesDdcBrightness ? 10000 : 1500;
+                interval = 10000;
             }
         }
     }
 
     Process {
-        id: briBackend
-        command: ["bash", Caching.qsDir + "/../scripts/brightness.sh", "backend"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: root.usesDdcBrightness = this.text.trim() === "ddc"
-        }
-    }
-
-    Process {
         id: briPoller
-        command: ["bash", Caching.qsDir + "/../scripts/brightness.sh", "get"]
+        command: ["serpantinum-core", "brightness", "get"]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text.trim();
-                if (out !== "" && !root.isDraggingBri) {
-                    root.sysBrightness = parseInt(out) || 0;
+                let val = parseInt(out);
+                if (!isNaN(val) && val >= 0 && !root.isDraggingBri) {
+                    root.sysBrightness = val;
                 }
                 if (root.visible) briPollerTimer.start();
             }
@@ -265,16 +266,16 @@ Item {
 
     ParallelAnimation {
         id: startupSequence
-        NumberAnimation { target: root; property: "introContent"; to: 1.0; duration: 320; easing.type: Easing.OutCubic }
-        NumberAnimation { target: root; property: "introTop"; from: 0; to: 1.0; duration: 320; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "introContent"; to: 1.0; duration: 250; easing.type: Easing.OutCubic }
+        NumberAnimation { target: root; property: "introTop"; from: 0; to: 1.0; duration: 250; easing.type: Easing.OutCubic }
 
         SequentialAnimation {
             PauseAnimation { duration: 30 }
-            NumberAnimation { target: root; property: "introSliders"; from: 0; to: 1.0; duration: 320; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "introSliders"; from: 0; to: 1.0; duration: 250; easing.type: Easing.OutCubic }
         }
         SequentialAnimation {
             PauseAnimation { duration: 55 }
-            NumberAnimation { target: root; property: "introQuickActions"; from: 0; to: 1.0; duration: 320; easing.type: Easing.OutCubic }
+            NumberAnimation { target: root; property: "introQuickActions"; from: 0; to: 1.0; duration: 250; easing.type: Easing.OutCubic }
         }
         SequentialAnimation {
             PauseAnimation { duration: 80 }
@@ -303,13 +304,13 @@ Item {
     SequentialAnimation {
         id: closeSequence
         ParallelAnimation {
-            NumberAnimation { target: root; property: "introContent"; to: 0.0; duration: 260; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introTop"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introSliders"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introQuickActions"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introNotifs"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introActions"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
-            NumberAnimation { target: root; property: "introCore"; to: 0.0; duration: 220; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introContent"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introTop"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introSliders"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introQuickActions"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introNotifs"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introActions"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
+            NumberAnimation { target: root; property: "introCore"; to: 0.0; duration: 250; easing.type: Easing.InCubic }
         }
         ScriptAction {
             script: {
@@ -392,7 +393,7 @@ Item {
                     text: timeString
                     Behavior on color {
                         enabled: root.visible
-                        ColorAnimation { duration: 300 }
+                        ColorAnimation { duration: 250 }
                     }
                 }
             }
@@ -410,7 +411,6 @@ Item {
         bottomLeftRadius: root.isLeftAnchored ? 0 : radius
         topRightRadius: root.isLeftAnchored ? radius : 0
         bottomRightRadius: root.isLeftAnchored ? radius : 0
-        border.width: 0
         clip: true
         opacity: root.introContent
 
@@ -518,7 +518,6 @@ Item {
                                 onTriggered: {
                                     closeSequence.start();
                                     Quickshell.execDetached(["bash", Caching.serpantinumDir + "/scripts/system/exit.sh"]);
-                                    Quickshell.execDetached(["sh", "-c", "echo 'close' > " + Caching.runDir + "/widget_state"]);
                                 }
                             }
 

@@ -474,7 +474,7 @@
      property real polledPosition: 0
      property real nextBoundaryTime: Infinity
  
-@@ -174,6 +600,10 @@
+@@ -178,6 +604,10 @@
                      let w = words[i];
                      let end = (w.endTime !== undefined && w.endTime > w.time) ? w.endTime : (i < words.length - 1 ? words[i + 1].time : (w.time + 0.8));
                      if (w.time > p && w.time < best) best = w.time;
@@ -485,7 +485,7 @@
                      if (end > p && end < best) best = end;
                  }
              }
-@@ -243,7 +673,7 @@
+@@ -247,7 +677,7 @@
                  if (typeof root.player.positionChanged === "function") {
                      root.player.positionChanged();
                  }
@@ -494,7 +494,7 @@
              } else {
                  root.applyPosition(MprisController.livePosition);
              }
-@@ -285,10 +715,10 @@
+@@ -289,10 +719,10 @@
          function onPositionChanged() {
              if (!root.player) return;
              if (root.player.isPlaying) {
@@ -507,7 +507,7 @@
              }
          }
          function onTrackTitleChanged() {
-@@ -302,7 +732,14 @@
+@@ -306,7 +736,14 @@
          }
      }
  
@@ -523,7 +523,7 @@
      onPlayerChanged: triggerSearch()
  
      property double lastAttemptAt: 0
-@@ -314,6 +751,7 @@
+@@ -318,6 +755,7 @@
  
      function triggerSearch() {
          if (root.subscribers <= 0) return;
@@ -531,7 +531,7 @@
  
          if (!isMediaActive || currentTrackKey === "") {
              lastFetchedKey = "";
-@@ -336,6 +774,11 @@
+@@ -340,6 +778,11 @@
          lastFetchedKey = currentTrackKey;
          activeFetchKey = currentTrackKey;
          if (activeSession) activeSession.done = true;
@@ -542,8 +542,8 @@
 +        lookupBest(currentTrackKey);
          activeSession = null;
          searchTimeoutTimer.stop();
-         cacheReadProcess.running = false;
-@@ -643,11 +1086,14 @@
+         cacheReadProcess.targetKey = "";
+@@ -649,11 +1092,14 @@
          return result;
      }
  
@@ -561,7 +561,7 @@
          root.loading = false;
          if (root.hasLyrics) {
              let mem = getMemCache();
-@@ -663,13 +1109,69 @@
+@@ -669,13 +1115,69 @@
          if (session.netEaseDone && session.lrclibDone) {
              session.done = true;
              searchTimeoutTimer.stop();
@@ -632,11 +632,10 @@
          }
      }
  
-@@ -1048,6 +1550,39 @@
-             }
+@@ -1044,6 +1546,39 @@
          }
      }
-+
+ 
 +    Timer {
 +        interval: 1500
 +        repeat: true
@@ -669,6 +668,7 @@
 +            }
 +        }
 +    }
- 
-     Process {
++
+     FileView {
          id: saveLyricsProcess
+         printErrors: false

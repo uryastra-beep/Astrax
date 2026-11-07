@@ -1,6 +1,6 @@
 --- a/src/quickshell/singletons/theme/Wallpaper.qml
 +++ b/src/quickshell/singletons/theme/Wallpaper.qml
-@@ -29,8 +29,43 @@
+@@ -85,8 +85,43 @@
          root.engines = map;
      }
  
