@@ -2,8 +2,10 @@
 # Describe the current clipboard as one JSON line for the Dynamic Island.
 #   clip-event.sh copied|pasted
 # Passwords from managers that flag their copies as secret are never announced.
+# Every wl-paste has a timeout: wl-paste --watch runs handlers one at a time, so one source that never
+# answers (a stuck screenshot tool) would block every later copy card.
 state="${1:-copied}"
-types=$(wl-paste --list-types 2>/dev/null) || exit 0
+types=$(timeout 3 wl-paste --list-types 2>/dev/null) || exit 0
 [ -z "$types" ] && exit 0
 case "$types" in *x-kde-passwordManagerHint*) exit 0 ;; esac
 dir="${XDG_RUNTIME_DIR:-/tmp}/astrax-island"
@@ -11,8 +13,8 @@ mkdir -p "$dir"
 
 if printf '%s\n' "$types" | grep -qxE 'text/uri-list|x-special/gnome-copied-files'; then
     # file managers offer text/uri-list; Nautilus also tells copy from cut in gnome-copied-files
-    gnome=$(wl-paste -t x-special/gnome-copied-files 2>/dev/null | tr -d '\r')
-    uris=$(wl-paste -t text/uri-list 2>/dev/null | tr -d '\r' | grep '^file://')
+    gnome=$(timeout 3 wl-paste -t x-special/gnome-copied-files 2>/dev/null | tr -d '\r')
+    uris=$(timeout 3 wl-paste -t text/uri-list 2>/dev/null | tr -d '\r' | grep '^file://')
     [ -z "$uris" ] && uris=$(printf '%s\n' "$gnome" | grep '^file://')
     [ -z "$uris" ] && exit 0
     action=copy
@@ -25,7 +27,7 @@ if printf '%s\n' "$types" | grep -qxE 'text/uri-list|x-special/gnome-copied-file
 elif printf '%s\n' "$types" | grep -q '^image/'; then
     mime=$(printf '%s\n' "$types" | grep -m1 '^image/')
     f="$dir/clip-$(date +%s%N).img"
-    wl-paste -t "$mime" > "$f" 2>/dev/null
+    timeout 3 wl-paste -t "$mime" > "$f" 2>/dev/null
     [ -s "$f" ] || { rm -f "$f"; exit 0; }
     # keep only the last few thumbnails
     ls -t "$dir"/clip-*.img 2>/dev/null | tail -n +6 | xargs -r rm -f
@@ -35,7 +37,7 @@ elif printf '%s\n' "$types" | grep -q '^image/'; then
     jq -nc --arg state "$state" --arg thumb "$f" --arg w "${w:-0}" --arg h "${h:-0}" --argjson size "$size" \
         '{kind:"image", state:$state, thumb:$thumb, w:($w|tonumber), h:($h|tonumber), size:$size}'
 else
-    txt=$(wl-paste -n -t text/plain 2>/dev/null | head -c 20000)
+    txt=$(timeout 3 wl-paste -n -t text/plain 2>/dev/null | head -c 20000)
     [ -z "$txt" ] && exit 0
     chars=$(printf '%s' "$txt" | wc -m)
     lines=$(printf '%s\n' "$txt" | grep -c .)

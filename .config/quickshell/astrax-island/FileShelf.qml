@@ -21,7 +21,7 @@ Item {
     property var addedIds: []
     property var moveFrom: ({})
     readonly property int visibleRows: count >= 4 ? 2 : 1
-    readonly property int preferredHeight: 224 + (visibleRows-1) * 118
+    readonly property int preferredHeight: 206 + (visibleRows-1) * 118
     property int dropSlot: -1
     readonly property bool hasRoom: items.length < 8 || items.some(item => item.files.length < 4)
     readonly property bool busy: worker.running || removingId !== ""
@@ -87,26 +87,88 @@ Item {
         }
     }
 
-    Text {
-        id: title
-        text: shelf.hoveringDrop ? (shelf.hasRoom ? "Drop to save" : "Shelf full") : "Files"
-        color: "#f5f5f7"; font.family: shelf.textFont; font.pixelSize: 22; font.weight: Font.DemiBold
+    // ---------------------------------------------------------------- NotchPixel-style header
+    // "Shelf · N files" on the left; save all to
+    // Downloads, copy all as files, and clear on the right.
+    readonly property color accent: "#8fe388"
+    readonly property var allFiles: { const out = []; for (const it of items) for (const f of it.files) out.push(f); return out; }
+    readonly property var allPaths: allFiles.map(f => decodeURIComponent(String(f.uri).replace(/^file:\/\//, "")))
+    function colorFor(name, isDir) {
+        if (isDir) return "#5ac8fa";
+        const e = FI.ext(name);
+        if (e === "pdf") return "#ff6b6b";
+        if (["png","jpg","jpeg","gif","webp","svg","bmp","heic","avif"].indexOf(e) >= 0) return "#ffd60a";
+        if (["mp4","mkv","mov","webm","avi","m4v"].indexOf(e) >= 0) return "#4aa3ff";
+        if (["mp3","flac","wav","ogg","m4a","opus","aac"].indexOf(e) >= 0) return "#ff5f8f";
+        if (["zip","rar","7z","tar","gz","xz","bz2","zst","iso"].indexOf(e) >= 0) return "#ffb340";
+        if (["py","js","ts","qml","rs","c","cpp","h","sh","lua","json","html","css","java","go"].indexOf(e) >= 0) return "#bf8cff";
+        if (["doc","docx","odt","txt","md","rtf","pptx","xlsx","csv","ods"].indexOf(e) >= 0) return "#64d2ff";
+        return "#d1d1d6";
     }
-    Text {
-        anchors.right: parent.right; anchors.verticalCenter: title.verticalCenter
-        text: shelf.count + " / 8 groups"
-        color: "#98989d"; font.family: shelf.textFont; font.pixelSize: 13; font.weight: Font.Medium
+    property string flash: ""
+    Timer { id: flashClear; interval: 2400; onTriggered: shelf.flash = "" }
+    function say(t) { flash = t; flashClear.restart(); }
+    Process { id: shelfAction; onExited: code => { if (shelfAction.okText) shelf.say(code === 0 ? shelfAction.okText : "Something went wrong"); } property string okText: "" }
+    function saveAll() {
+        if (!allPaths.length || shelfAction.running) return;
+        shelfAction.okText = "Saved to Downloads";
+        shelfAction.command = ["sh", "-c", "d=\"$(xdg-user-dir DOWNLOAD 2>/dev/null || echo \"$HOME/Downloads\")\"; shift; cp -rn -- \"$@\" \"$d\"/", "sh", "x"].concat(allPaths);
+        shelfAction.running = true;
     }
-    Text {
-        id: subtitle
-        anchors.top: title.bottom; anchors.topMargin: 6
-        width: parent.width; elide: Text.ElideRight
-        text: shelf.busy ? "Saving…" : shelf.message || (shelf.hoveringDrop ? "Your files, ready for later" : "Drag to take · copy to paste")
-        color: "#98989d"; font.family: shelf.textFont; font.pixelSize: 12
+    function copyAll() {
+        if (!allFiles.length || shelfAction.running) return;
+        shelfAction.okText = "Copied, paste anywhere";
+        shelfAction.command = ["sh", "-c", "printf '%s\\r\\n' \"$@\" | wl-copy -t text/uri-list", "sh"].concat(allFiles.map(f => String(f.uri)));
+        shelfAction.running = true;
+    }
+    function clearAll() { for (const it of items) request("remove", [it.id]); }
+
+    Item {
+        id: panelHeader
+        width: parent.width; height: 36
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+            Text {
+                text: shelf.hoveringDrop ? (shelf.hasRoom ? "Drop to save" : "Shelf full") : "Shelf"
+                color: "#f5f5f7"; font.family: shelf.textFont; font.pixelSize: 18; font.weight: Font.DemiBold
+            }
+            Text {
+                anchors.baseline: parent.children[0].baseline
+                text: shelf.busy ? "· Saving…" : (shelf.flash || shelf.message)
+                      ? "· " + (shelf.flash || shelf.message)
+                      : "· " + shelf.allFiles.length + (shelf.allFiles.length === 1 ? " file" : " files")
+                color: "#8e8e93"; font.family: shelf.textFont; font.pixelSize: 13
+            }
+        }
+        Row {
+            anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+            Repeater {
+                model: [
+                    { g: "\uf019", tip: "Save all to Downloads", a: "save" },
+                    { g: "\uf0c5", tip: "Copy all", a: "copy" },
+                    { g: "\uf1f8", tip: "Clear shelf", a: "clear" }
+                ]
+                Rectangle {
+                    required property var modelData
+                    width: 32; height: 32; radius: 16
+                    opacity: shelf.allFiles.length ? 1 : 0.4
+                    color: actArea.containsMouse ? "#24ffffff" : "transparent"
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Text { anchors.centerIn: parent; text: modelData.g; color: "#e5e5ea"; font.family: shelf.iconFont; font.pixelSize: 14 }
+                    MouseArea {
+                        id: actArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        enabled: shelf.allFiles.length > 0 && !shelf.busy
+                        onClicked: modelData.a === "save" ? shelf.saveAll() : modelData.a === "copy" ? shelf.copyAll() : shelf.clearAll()
+                    }
+                }
+            }
+        }
     }
     Grid {
         id: grid
-        anchors.top: subtitle.bottom; anchors.topMargin: 20
+        anchors.top: panelHeader.bottom; anchors.topMargin: 14
         columns: 4; spacing: 10
         Repeater {
             id: slots
@@ -136,10 +198,9 @@ Item {
                 }
                 readonly property bool isShelfFile: true
                 readonly property bool removing: entry !== null && shelf.removingId === entry.id
-                Timer {
-                    interval: 250
-                    running: tile.removing
-                    onTriggered: shelf.request("remove", [shelf.removingId])
+                onRemovingChanged: {
+                    if (removing) { contentReturn.stop(); removalFade.restart(); }
+                    else { removalFade.stop(); contentReturn.restart(); }
                 }
                 width: (shelf.width - 30) / 4; height: 108; radius: 18
                 color: "transparent"
@@ -156,8 +217,11 @@ Item {
                 }
                 readonly property real emptyOpacity: Math.max(0, index-shelf.count) === 0 ? 1 : index-shelf.count === 1 ? 0.42 : index-shelf.count === 2 ? 0.18 : 0.055
                 Item {
+                    // Material belongs to the slot, not to its empty state.
+                    // File content can fade independently while this stays put.
                     anchors.fill: parent
-                    visible: tile.entry === null
+                    opacity: tile.entry !== null ? (shelf.hoveringDrop && shelf.dropSlot === tile.index ? 1 : 0) : tile.emptyOpacity
+                    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
                     Rectangle {
                         anchors.fill: parent; radius: 18
                         color: "#100e0e12"
@@ -225,10 +289,24 @@ Item {
                     onPressed: tile.grabToImage(result => { dragProxy.Drag.imageSource = result.url; })
                 }
                 Item {
+                    id: fileContent
                     anchors.fill: parent
-                    opacity: tile.removing ? 0 : 1
-                    Behavior on opacity {
-                        NumberAnimation { duration: tile.removing ? 220 : 100; easing.type: Easing.OutCubic }
+                    opacity: 1
+                    // Standalone animation: its completion commits the removal.
+                    // Behavior child animations do not provide that lifecycle.
+                    NumberAnimation {
+                        id: removalFade
+                        target: fileContent; property: "opacity"; to: 0
+                        duration: 280; easing.type: Easing.InOutCubic
+                        onFinished: {
+                            if (tile.removing && tile.entry)
+                                shelf.request("remove", [tile.entry.id]);
+                        }
+                    }
+                    NumberAnimation {
+                        id: contentReturn
+                        target: fileContent; property: "opacity"; to: 1
+                        duration: 180; easing.type: Easing.InOutCubic
                     }
                     Item {
                         id: arrivingFile
@@ -239,7 +317,7 @@ Item {
                         SequentialAnimation {
                             id: relocate
                             PropertyAction { target: arrivingFile; property: "relocation"; value: 0 }
-                            NumberAnimation { target: arrivingFile; property: "relocation"; to: 1; duration: 240; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: arrivingFile; property: "relocation"; to: 1; duration: 280; easing.type: Easing.InOutCubic }
                         }
                         opacity: progress
                         scale: 0.96 + 0.04 * progress
@@ -257,17 +335,17 @@ Item {
                             }
                         }
                         Image {
-                            x: (parent.width - 32) / 2; y: 13; width: 32; height: 32
-                            source: tile.entry && /\.(png|jpg|jpeg|webp|gif)$/i.test(tile.entry.name) ? tile.entry.uri : ""
+                            x: (parent.width - 50) / 2; y: 4; width: 50; height: 50
+                            source: tile.entry && !tile.entry.files[0].isDir && /\.(png|jpg|jpeg|webp|gif)$/i.test(tile.entry.name) ? tile.entry.uri : ""
                             fillMode: Image.PreserveAspectCrop
                             visible: tile.entry !== null && tile.entry.files.length === 1 && status === Image.Ready
                         }
                         Text {
-                            anchors.horizontalCenter: parent.horizontalCenter; y: 12
-                            text: tile.entry ? FI.glyphFor(tile.entry.name, false) : ""
-                            visible: tile.entry !== null && tile.entry.files.length === 1 && !/\.(png|jpg|jpeg|webp|gif)$/i.test(tile.entry.name)
-                            color: tile.entry ? "#f5f5f7" : "#48484a"
-                            font.family: tile.entry ? shelf.iconFont : shelf.textFont; font.pixelSize: 31
+                            anchors.horizontalCenter: parent.horizontalCenter; y: 2
+                            text: tile.entry ? FI.glyphFor(tile.entry.name, tile.entry.files[0].isDir === true) : ""
+                            visible: tile.entry !== null && tile.entry.files.length === 1 && (tile.entry.files[0].isDir === true || !/\.(png|jpg|jpeg|webp|gif)$/i.test(tile.entry.name))
+                            color: tile.entry ? shelf.colorFor(tile.entry.name, tile.entry.files[0].isDir === true) : "#48484a"
+                            font.family: tile.entry ? shelf.iconFont : shelf.textFont; font.pixelSize: 46
                         }
                         Grid {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -277,34 +355,34 @@ Item {
                                 model: tile.entry && tile.entry.files.length > 1 ? tile.entry.files : []
                                 delegate: Item {
                                     required property var modelData
-                                    width: 19; height: 19
+                                    width: 25; height: 25
                                     Image {
                                         id: groupThumb
                                         anchors.fill: parent
-                                        source: /\.(png|jpg|jpeg|webp|gif)$/i.test(modelData.name) ? modelData.uri : ""
+                                        source: !modelData.isDir && /\.(png|jpg|jpeg|webp|gif)$/i.test(modelData.name) ? modelData.uri : ""
                                         fillMode: Image.PreserveAspectCrop
                                     }
                                     Text {
                                         anchors.centerIn: parent
                                         visible: groupThumb.status !== Image.Ready
-                                        text: FI.glyphFor(modelData.name, false)
-                                        color: "#f5f5f7"
-                                        font.family: shelf.iconFont; font.pixelSize: 18
+                                        text: FI.glyphFor(modelData.name, modelData.isDir === true)
+                                        color: shelf.colorFor(modelData.name, modelData.isDir === true)
+                                        font.family: shelf.iconFont; font.pixelSize: 22
                                     }
                                 }
                             }
                         }
                         Text {
-                            x: 8; y: 52; width: parent.width - 16
+                            x: 6; y: 60; width: parent.width - 12
                             text: tile.entry ? tile.entry.name : ""
                             elide: Text.ElideMiddle; horizontalAlignment: Text.AlignHCenter
                             color: tile.entry ? "#f5f5f7" : "#636366"
-                            font.family: shelf.textFont; font.pixelSize: 11; font.weight: Font.Medium
+                            font.family: shelf.textFont; font.pixelSize: 12; font.weight: Font.DemiBold
                         }
                         Text {
-                            anchors.horizontalCenter: parent.horizontalCenter; y: 78
-                            text: tile.entry && tile.entry.files.length > 1 ? "Copy " + tile.entry.files.length : "Copy"; visible: tile.entry !== null
-                            color: "#0a84ff"; font.family: shelf.textFont; font.pixelSize: 11
+                            anchors.horizontalCenter: parent.horizontalCenter; y: 82
+                            text: tile.entry && tile.entry.files.length > 1 ? "Copy " + tile.entry.files.length : tile.entry && tile.entry.files[0].isDir ? "Copy folder" : "Copy"; visible: tile.entry !== null
+                            color: shelf.accent; font.family: shelf.textFont; font.pixelSize: 11
                             MouseArea {
                                 anchors.fill: parent; anchors.margins: -6
                                 cursorShape: Qt.PointingHandCursor

@@ -65,6 +65,11 @@ Item {
         command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--watch", "sh", clip.script, "copied"]
         stdout: SplitParser { onRead: line => clip.handle(line) }
     }
+    // history for the Super+V panel (cliphist), kept by the island so it never depends on autostart
+    Process {
+        running: clip.enabled
+        command: ["setpriv", "--pdeathsig", "TERM", "wl-paste", "--watch", "sh", Quickshell.shellPath("clip-store.sh")]
+    }
     Process {
         id: pasteProc
         command: ["sh", clip.script, "pasted"]

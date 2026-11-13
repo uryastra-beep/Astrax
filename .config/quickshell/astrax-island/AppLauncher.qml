@@ -145,32 +145,39 @@ Item {
         else return;
         event.accepted = true;
     }
-    Text { text: "Apps"; color: "#f5f5f7"; font.family: launcher.textFont; font.pixelSize: 21; font.weight: Font.DemiBold }
-    Rectangle {
-        anchors.right: parent.right; width: 25; height: 25; radius: 12.5; color: "#29292c"
-        Text { anchors.centerIn: parent; text: "×"; color: "#d1d1d6"; font.pixelSize: 19 }
-        MouseArea { anchors.fill: parent; onClicked: launcher.dismissed() }
+    // ---------------------------------------------------------------- Argon chrome
+    readonly property color accent: "#8fd3ff"
+    function tint(al) { return Qt.rgba(accent.r, accent.g, accent.b, al); }
+    ArgonGlow { accent: launcher.accent; reach: 130 }
+    ArgonHeader {
+        id: panelHeader
+        glyph: "\uf009"; title: "Apps"; accent: launcher.accent
+        textFont: launcher.textFont; iconFont: launcher.iconFont
+        onCloseClicked: launcher.dismissed()
     }
-    Rectangle {
+    ArgonBar {
         id: searchBox
-        y: 39; width: parent.width; height: 32; radius: 11
-        color: "#20ffffff"; border.width: 1; border.color: "#14ffffff"
+        anchors.bottom: parent.bottom
+        width: parent.width; accent: launcher.accent
+        iconFont: launcher.iconFont; textFont: launcher.textFont
+        focused: search.activeFocus
         TextInput {
             id: search
-            anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12
+            anchors.fill: parent
             verticalAlignment: TextInput.AlignVCenter; clip: true
-            color: "#f5f5f7"; selectionColor: "#0a84ff"
-            font.family: launcher.textFont; font.pixelSize: 12
+            color: "#f5f5f7"; selectionColor: launcher.accent
+            cursorDelegate: Rectangle { width: 2; radius: 1; color: launcher.accent }
+            font.family: launcher.textFont; font.pixelSize: 13
             onTextChanged: { launcher.selectedIndex = 0; launcher.dockMenuApp = ""; }
             Keys.onPressed: event => launcher.key(event)
-            Text { anchors.verticalCenter: parent.verticalCenter; text: "Search apps…"; color: "#98989d"; visible: !search.text; font: search.font }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: "Search apps…  WASD to move · ↵ to open"; color: "#7c7c82"; visible: !search.text; font: search.font }
         }
     }
     GridView {
         id: grid
-        anchors.top: searchBox.bottom; anchors.topMargin: 12
+        anchors.top: panelHeader.bottom; anchors.topMargin: 6
         anchors.left: parent.left; anchors.right: parent.right
-        anchors.bottom: footer.top; anchors.bottomMargin: 8
+        anchors.bottom: searchBox.top; anchors.bottomMargin: 8
         cellWidth: width/launcher.columns; cellHeight: 82
         clip: true; boundsBehavior: Flickable.StopAtBounds
         model: launcher.apps
@@ -194,7 +201,7 @@ Item {
                 color: "#f5f5f7"; font.family: launcher.textFont; font.pixelSize: 11; font.weight: Font.Medium
                 horizontalAlignment: Text.AlignHCenter; wrapMode: Text.Wrap; maximumLineCount: 2; elide: Text.ElideRight
             }
-            Rectangle { anchors.right: parent.right; anchors.rightMargin: 12; y: 11; width: 5; height: 5; radius: 2.5; color: "#0a84ff"; visible: launcher.pinned.indexOf(tile.modelData.id) >= 0 }
+            Rectangle { anchors.right: parent.right; anchors.rightMargin: 12; y: 11; width: 5; height: 5; radius: 2.5; color: launcher.accent; visible: launcher.pinned.indexOf(tile.modelData.id) >= 0 }
             MouseArea {
                 id: tileMouse
                 anchors.fill: parent; hoverEnabled: true
@@ -228,7 +235,7 @@ Item {
                 xScale: selectionGlass.elasticX; yScale: selectionGlass.elasticY
             }
             width: Math.max(0, grid.cellWidth-8); height: grid.cellHeight-8
-            radius: 16; color: "transparent"; border.width: 1; border.color: "#70ffffff"
+            radius: 16; color: "transparent"; border.width: 1; border.color: launcher.tint(0.38)
             Behavior on x { NumberAnimation { id: selectorMoveX; duration: 200; easing.type: Easing.OutCubic } }
             // Animate within the viewport; let the shared scroll carry the selector at an edge.
             Behavior on y {
@@ -236,9 +243,9 @@ Item {
                 NumberAnimation { id: selectorMoveY; duration: 220; easing.type: Easing.OutCubic }
             }
             gradient: Gradient {
-                GradientStop { position: 0; color: "#28ffffff" }
-                GradientStop { position: 0.45; color: "#08ffffff" }
-                GradientStop { position: 1; color: "#16ffffff" }
+                GradientStop { position: 0; color: launcher.tint(0.16) }
+                GradientStop { position: 0.5; color: launcher.tint(0.06) }
+                GradientStop { position: 1; color: launcher.tint(0.14) }
             }
             ShaderEffect {
                 anchors.fill: parent
@@ -256,7 +263,7 @@ Item {
             }
             // Follow the animated panel geometry directly: a second width tween starts as a thin sliver.
         }
-        Text { anchors.centerIn: parent; visible: !launcher.apps.length; text: "No apps found"; color: "#98989d"; font.family: launcher.textFont; font.pixelSize: 12 }
+        Text { anchors.centerIn: parent; visible: !launcher.apps.length; text: "No apps match"; color: "#8e8e93"; font.family: launcher.textFont; font.pixelSize: 12 }
     }
     MouseArea {
         anchors.fill: parent; z: 90
@@ -273,8 +280,8 @@ Item {
         visible: opacity > 0
         scale: 0.96 + opacity * 0.04
         Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-        color: launcher.glassEnabled ? "#b32a2a30" : "#f02a2a30"
-        border.width: 1; border.color: "#50ffffff"
+        color: "#f0141416"
+        border.width: 1; border.color: launcher.tint(0.3)
         readonly property bool alreadyPinned: launcher.dockPins.indexOf(launcher.dockMenuApp) >= 0
         ShaderEffect {
             anchors.fill: parent
@@ -291,11 +298,11 @@ Item {
         }
         Rectangle {
             anchors.fill: parent; anchors.margins: 4; radius: 8
-            color: dockMenuMouse.containsMouse && !dockMenu.alreadyPinned ? "#0a84ff" : "transparent"
+            color: dockMenuMouse.containsMouse && !dockMenu.alreadyPinned ? launcher.tint(0.28) : "transparent"
             Text {
                 anchors.centerIn: parent
                 text: dockMenu.alreadyPinned ? "Already in Dock" : "Add to Dock"
-                color: dockMenu.alreadyPinned ? "#98989d" : "#f5f5f7"
+                color: dockMenu.alreadyPinned ? "#8e8e93" : "#f5f5f7"
                 font.family: launcher.textFont; font.pixelSize: 12
             }
             MouseArea {
@@ -305,5 +312,4 @@ Item {
             }
         }
     }
-    Text { id: footer; anchors.bottom: parent.bottom; text: "WASD / Arrows Move · Shift / ↵ Open · Ctrl+L Search"; color: "#98989d"; font.family: launcher.textFont; font.pixelSize: 10 }
 }

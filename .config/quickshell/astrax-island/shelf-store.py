@@ -12,8 +12,8 @@ def local_path(uri):
     if u.scheme != 'file' or u.netloc not in ('', 'localhost'):
         raise ValueError('Only local files are supported')
     p = Path(unquote(u.path))
-    if not p.is_absolute() or p.is_symlink() or not p.is_file():
-        raise ValueError('Select a regular file, not a folder or link')
+    if not p.is_absolute() or p.is_symlink() or not (p.is_file() or p.is_dir()):
+        raise ValueError('Select a regular file or folder, not a link')
     return p
 
 def run(root, command, values):
@@ -58,9 +58,30 @@ def run(root, command, values):
                     if root.resolve() in p.resolve().parents:
                         continue
                     st = p.stat()
-                    source = [str(p.resolve()), st.st_size, st.st_mtime_ns]
+                    is_dir = p.is_dir()
+                    source = [str(p.resolve()), 0 if is_dir else st.st_size, st.st_mtime_ns]
                     if any(i.get('source') == source for i in items):
                         continue
+                    if is_dir:
+                        # a whole folder is one entry that owns its slot, so the 4-per-slot cap never applies
+                        occupied = {i['slot'] for i in items}
+                        folder_slot = target if target is not None and target not in occupied else next((slot for slot in range(LIMIT) if slot not in occupied), None)
+                        if folder_slot is None:
+                            rejected += 1; continue
+                        key = uuid.uuid4().hex
+                        tmp = Path(tempfile.mkdtemp(prefix='.incoming-', dir=root))
+                        try:
+                            shutil.copytree(p, tmp / p.name, symlinks=True)
+                            os.replace(tmp, root / key)
+                        except BaseException:
+                            shutil.rmtree(tmp, ignore_errors=True)
+                            raise
+                        saved = root / key / p.name
+                        items.append(dict(id=key, name=p.name, path=str(saved), uri=saved.as_uri(), size=0, isDir=True, source=source, slot=folder_slot))
+                        added += 1
+                        continue
+                    if target is not None and any(i['slot'] == target and i.get('isDir') for i in items):
+                        target = None
                     if target is None or sum(i['slot'] == target for i in items) >= PER_SLOT:
                         if command == 'add':
                             target = next((slot for slot in range(LIMIT) if sum(i['slot'] == slot for i in items) < PER_SLOT), None)
@@ -81,7 +102,7 @@ def run(root, command, values):
                     rejected += 1
             message = ('Saved: ' + str(added)) if added else 'No files added'
             if rejected:
-                message += ' · Maximum 4 per slot or file unavailable'
+                message += ' · Maximum 4 files per slot or item unavailable'
         elif command in ('remove', 'copy'):
             identifier = values[0]
             if identifier.startswith('group-'):
@@ -100,7 +121,7 @@ def run(root, command, values):
                     raise ValueError('Invalid identifier')
                 managed = root / key
                 p = Path(item['path'])
-                if p.parent != managed or not p.is_file():
+                if p.parent != managed or not (p.is_file() or p.is_dir()):
                     raise ValueError('The saved copy is unavailable')
             if command == 'remove':
                 keys = {i['id'] for i in selected}

@@ -60,13 +60,13 @@ Item {
     property int lastBri: -1
     Process {
         running: true
-        command: ["setpriv", "--pdeathsig", "TERM", "bash", src.serpDir + "/../scripts/brightness.sh", "watch"]
+        command: ["setpriv", "--pdeathsig", "TERM", "serpantinum-core", "watch", "brightness"]
         stdout: SplitParser { onRead: briDebounce.restart() }
     }
     Timer { id: briDebounce; interval: 40; onTriggered: { briGet.running = false; briGet.running = true; } }
     Process {
         id: briGet
-        command: ["bash", src.serpDir + "/../scripts/brightness.sh", "get"]
+        command: ["serpantinum-core", "brightness", "get"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const v = parseInt(this.text.trim());
@@ -167,7 +167,7 @@ Item {
                 const bat = modelData.batteryAvailable ? Math.round(modelData.battery * 100) : -1;
                 src.event({ kind: "bt:" + name, layout: "status", glyph: src.btGlyph(modelData.icon), title: name,
                             detail: isConnected ? (bat >= 0 ? "Connected · " + bat + "%" : "Connected") : "Disconnected",
-                            accent: isConnected ? "#0a84ff" : "#8e8e93", duration: 2400 });
+                            accent: isConnected ? "#4aa3ff" : "#8e8e93", duration: 2400 });
             }
             Component.onCompleted: seen = true
         }

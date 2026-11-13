@@ -9,7 +9,7 @@ The desktop follows whatever you're listening to: window borders, widgets, visua
 whole shell theme take their colors from the album art, lyrics are on screen word by word, and some
 songs switch the desktop into their own hand-made theme.
 
-**Version:** 1.16.0 (see [CHANGELOG.md](CHANGELOG.md))  
+**Version:** 1.17.0 (see [CHANGELOG.md](CHANGELOG.md))  
 **Current Serpantinum version: 2.4.2** (the version Astrax is developed and tested on; the installer pins it)
 
 ## Install
@@ -350,16 +350,34 @@ Triple-click the island (or `qs -c astrax-island ipc call island toggleList`) fo
 list: notifications, files, clipboard and devices in one list, newest first. It closes when you
 click outside (while it is open a transparent layer covers the screen and takes that click).
 
-Gestures on the island: one click opens the media panel (after a 0.5 s wait so a triple click can
-be told apart; closing is instant), triple left click = notification history, double right click =
-Overview, triple right click = Files Shelf. Clicking outside compacts it without blocking the apps
-behind it, and right-click on a notification dismisses it. New notifications stack on top of the
-older ones (three visible at a time).
+Gestures on the island: one click on the idle island opens the **Ask** panel (with music playing, one
+click opens the player and a double left click opens Ask; closing is instant), triple left click =
+notification history, double right click = the **hub** (tabs: Web, Notifications, Clipboard, Widgets,
+Controls, Call and the Overview), triple right click = Files Shelf. A double click no longer counts as
+a triple. Clicking outside compacts it without blocking the apps behind it, and right-click on a
+notification dismisses it. New notifications stack on top of the older ones (three visible at a time).
 
 - **Super and Alt+Tab inside the island**: the app launcher (five apps per row, `WASD` / arrows,
   `Shift` / `Enter` to open, `Ctrl+L` to search, `Ctrl+F` to pin) and the window switcher (up to four
   windows per row) open in the island. With the island off, the original `astrax-launcher` and
   `astrax-app-switcher` panels are used.
+- **Argon look**: every panel shares one design (`ArgonGlow`, `ArgonHeader`, `ArgonBar`, `ArgonIconButton`).
+  The expanded music card has the blurred cover rising and falling behind it, a progress wave, the
+  icon of the app that is playing and lyrics off by default; the notch shoulders take the colour of
+  the island's border.
+- **Hub** (double right click): Web shortcuts, Notifications, Clipboard history, Widgets (weather, calendar),
+  Controls (brightness, volume, Wi-Fi, Bluetooth, night light, do not disturb, mute, power profile) and
+  Call (speaker / microphone, record). The weather uses the location in the `island` key of
+  `settings.json` (`weatherLat`, `weatherLon`, `weatherCity`) or, if unset, a public-IP lookup
+  (ipapi.co) cached locally. The calendar line is optional: `control-calendar.py` reads a Google
+  Calendar secret iCal address (`calendarIcs`) from `~/.config/astrax-island/control.json`; without that file
+  the reminders stay empty.
+- **Ask panel**, **Translator**: see below.
+- **Other panels** (no key is bound by default, because `SUPER+V`, `SUPER+F`, `SUPER+.` and `SUPER+M`
+  belong to the sessions; bind them yourself with `hl.bind(..., hl.dsp.exec_cmd("qs -c astrax-island ipc call island <name>"))`):
+  `toggleClip` (clipboard history), `toggleEmoji` (emoji picker, drawn with the system emoji font),
+  `toggleQa` (quick actions), `toggleAi` (AI monitor: Claude and Codex state and usage, read locally from
+  `~/.claude` and `~/.codex`), `toggleControl` (Ask), `toggleOverview`, `toggleList`, `toggleApps`, `toggleSwitcher`.
 - **Overview**: clock, device batteries, Wi-Fi / Bluetooth, an on-this-PC screen-time estimate
   (idle after 60 s, seven days kept locally), system and storage, and a files shortcut. Widgets can
   be turned on, off and reordered in `SUPER+C` > Dynamic Island.
@@ -382,10 +400,36 @@ screen selector, glass / opacity / refraction, bounce, margin, duration, follow 
 when idle. Settings live in the `island` key of Serpantinum's `settings.json`. It starts at login
 (`autostart.lua`); to run it by hand: `qs -c astrax-island -d`.
 
-It needs `inotify-tools`, `wl-clipboard`, `jq` and `util-linux` (the installer adds them). It needs Astrax's overrides of Serpantinum's `NotificationManager.qml`, `NotificationPopups.qml`,
+It needs `inotify-tools`, `wl-clipboard`, `jq` and `util-linux` (the installer adds them). For the panels
+below you also need (nothing else): `zenity` (the + button), `wl-clipboard` and `cliphist` (Clipboard),
+`powerprofilesctl` (Controls), `pw-play` / `pw-record` and `ffplay` (Call) and `translate-shell` (Translator). It needs Astrax's overrides of Serpantinum's `NotificationManager.qml`, `NotificationPopups.qml`,
 `OsdController.qml`, `GuidePopup.qml` and `GuideSidebar.qml` (plus the new `IslandTab.qml`);
 `patches/serpantinum-*-island.patch` re-apply them after a Serpantinum update. Turning the island
 off in its tab gives Serpantinum's own popups back.
+
+#### Connect Claude and Codex to the Dynamic Island
+
+- **Open it**: click the idle island (or double-click it while music is playing) to open the Ask
+  panel. Click the logo or press `Tab` to switch between Claude and Codex. `Enter` sends, `+` attaches
+  files, `Esc` closes.
+- **Claude**: install the Claude Code CLI and open it once to log in. Check it with `claude -p "hi"`.
+  The island runs `claude -p --model haiku` (with `--tools Read` and `--add-dir` when you attach files).
+- **Codex**: install the Codex CLI and log in. Check it with `codex exec "hi"`. The island runs
+  `codex exec --skip-git-repo-check --ephemeral -s read-only` (attached images go in with `-i`). It uses
+  the `codex` in your `PATH`.
+- Everything goes through `~/.config/quickshell/astrax-island/control-ask.sh`: change the model or the
+  prompt there.
+- Answers come back in the language of the question. Nothing from the conversation is stored.
+- **Troubleshooting**: if it says "Couldn't answer (error N)", run the command above by hand in a terminal.
+
+#### Translator (Super+T)
+
+- Select text anywhere and press `Super+T`, or press it and type. Pick the target language (EN ES FR DE PT
+  IT JA KO ZH RU). `Ctrl+Enter` copies the result.
+- No AI and nothing is stored: it uses [translate-shell](https://github.com/soimort/translate-shell),
+  Google first and Bing as backup. Install it with `sudo pacman -S translate-shell`.
+- `SUPER+T` is the editor in the Caelestia session's binds; use another key there if you use both.
+- **Troubleshooting**: if it says "Couldn't translate", run `trans -b -t en "hola"` in a terminal.
 
 ### macOS-style Dock (optional)
 

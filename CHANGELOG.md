@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.17.0
+
+- **Dynamic Island: Argon redesign.** Every panel was redrawn with shared components (`ArgonGlow`,
+  `ArgonHeader`, `ArgonBar`, `ArgonIconButton`). The expanded music card has the blurred cover rising
+  and falling behind it, a progress wave, the icon of the app that is playing and lyrics off by default,
+  and the notch shoulders take the colour of the island's border. The whole UI is in English.
+- **Ask panel (1 click).** Click the idle island (double click while music is playing) to ask Claude or
+  Codex one question from the island. `control-ask.sh` runs `claude -p --model haiku` or
+  `codex exec ... -s read-only` (`codex` from your `PATH`, with the copy bundled in the desktop app as a
+  fallback). Setup and troubleshooting in the README ("Connect Claude and Codex to the Dynamic Island").
+- **Hub (double right click)** with tabs: Web, Notifications, Clipboard, Widgets, Controls, Call and the
+  Overview. New `hub-weather.py`; `control-calendar.py` is optional (`calendarIcs` in
+  `~/.config/astrax-island/control.json`). **Files Shelf** (triple right click) redesigned.
+- **Translator (`Super+T`).** `TranslatorPanel.qml` + `translate.py`, no AI: it uses `translate-shell`
+  (Google first, Bing as backup), translates as you type, takes the selected text when it opens, 10
+  languages, `Ctrl+Enter` copies. Nothing is stored. New bind and `binds.json` entry.
+- **More panels reachable by IPC** (no default keys, see the README): clipboard history, emoji picker
+  (system emoji font), quick actions, AI monitor (`ai-monitor.py`), idle strip and notification history.
+- **Fixes.** A double click no longer counts as a triple (`registerLeftClick`). Copying from the emoji
+  panel works (`wl-copy` detached, `preventStealing` on the rows). Every `wl-paste` in `clip-event.sh`
+  has a 3 s timeout: a hung `wl-paste` used to block every "copied" notice.
+- `THIRD_PARTY_NOTICES.md` lists where the Claude and Codex logos come from.
+
 ## 1.16.0
 
 - **Serpantinum 2.4.2.** The installer is now pinned to the `v2.4.2` tag (commit `05d6470`). Every

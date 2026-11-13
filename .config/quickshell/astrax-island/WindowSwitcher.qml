@@ -13,6 +13,7 @@ Item {
     property point glassOrigin: Qt.point(0, 0)
     property vector2d glassScreen: Qt.vector2d(1, 1)
     property string textFont: "Rubik"
+    property string iconFont: "Iosevka Nerd Font"
     property var groups: []
     property int selectedIndex: 0
     property bool selectionReady: false
@@ -54,6 +55,10 @@ Item {
     }
     readonly property var filtered: groups.filter(g => !search.text || g.windows.some(w =>
         (w.title+" "+w.cls).toLowerCase().indexOf(search.text.toLowerCase()) >= 0))
+    // Public layout contract used by the island, grid and keyboard navigation.
+    // Empty/loading results still need one column and one visible row.
+    readonly property int columns: Math.min(4, Math.max(1, filtered.length))
+    readonly property int preferredHeight: 150 + Math.min(3, Math.max(1, Math.ceil(filtered.length / columns))) * 116
     onRawGroupsChanged: settle.restart()
     onFilteredChanged: selectedIndex = Math.min(selectedIndex, Math.max(0, filtered.length-1))
     onOpenedChanged: {
@@ -104,36 +109,39 @@ Item {
         else return;
         event.accepted = true;
     }
-    Text {
-        text: "Windows"; color: "#f5f5f7"
-        font.family: switcher.textFont; font.pixelSize: 21; font.weight: Font.DemiBold
+    // ---------------------------------------------------------------- Argon chrome
+    readonly property color accent: "#7ee0b5"
+    function tint(al) { return Qt.rgba(accent.r, accent.g, accent.b, al); }
+    ArgonGlow { accent: switcher.accent; reach: 130 }
+    ArgonHeader {
+        id: panelHeader
+        glyph: "\uf2d2"; title: "Windows"; accent: switcher.accent
+        textFont: switcher.textFont; iconFont: switcher.iconFont
+        onCloseClicked: switcher.dismissed()
     }
-    Rectangle {
-        anchors.right: parent.right; width: 25; height: 25; radius: 12.5
-        color: closeArea.containsMouse ? "#444448" : "#29292c"
-        Text { anchors.centerIn: parent; text: "×"; color: "#d1d1d6"; font.pixelSize: 19 }
-        MouseArea { id: closeArea; anchors.fill: parent; hoverEnabled: true; onClicked: switcher.dismissed() }
-    }
-    Rectangle {
+    ArgonBar {
         id: searchBox
-        y: 39; width: parent.width; height: 32; radius: 11
-        color: "#20ffffff"; border.width: 1; border.color: "#14ffffff"
+        anchors.bottom: parent.bottom
+        width: parent.width; accent: switcher.accent
+        iconFont: switcher.iconFont; textFont: switcher.textFont
+        focused: search.activeFocus
         TextInput {
             id: search
-            anchors.fill: parent; anchors.leftMargin: 12; anchors.rightMargin: 12
+            anchors.fill: parent
             verticalAlignment: TextInput.AlignVCenter; clip: true
-            color: "#f5f5f7"; selectionColor: "#0a84ff"
-            font.family: switcher.textFont; font.pixelSize: 12
+            color: "#f5f5f7"; selectionColor: switcher.accent
+            cursorDelegate: Rectangle { width: 2; radius: 1; color: switcher.accent }
+            font.family: switcher.textFont; font.pixelSize: 13
             onTextChanged: switcher.selectedIndex = 0
             Keys.onPressed: event => switcher.key(event)
-            Text { anchors.verticalCenter: parent.verticalCenter; text: "Search windows…"; color: "#98989d"; visible: !search.text; font: search.font }
+            Text { anchors.verticalCenter: parent.verticalCenter; text: "Search windows…  ↵ to open"; color: "#7c7c82"; visible: !search.text; font: search.font }
         }
     }
     GridView {
         id: cards
-        anchors.top: searchBox.bottom; anchors.topMargin: 12
+        anchors.top: panelHeader.bottom; anchors.topMargin: 6
         anchors.left: parent.left; anchors.right: parent.right
-        anchors.bottom: footer.top; anchors.bottomMargin: 8
+        anchors.bottom: searchBox.top; anchors.bottomMargin: 8
         clip: true; cellWidth: width/switcher.columns; cellHeight: 116
         boundsBehavior: Flickable.StopAtBounds
         model: switcher.filtered
@@ -151,9 +159,9 @@ Item {
             width: cards.cellWidth; height: cards.cellHeight
             Rectangle {
                 anchors.fill: parent; anchors.margins: 4; radius: 16
-                color: card.selected ? "#14303034" : "#1c1c1e"
+                color: card.selected ? switcher.tint(0.06) : "#0b0b0c"
                 border.width: 1
-                border.color: "#18ffffff"
+                border.color: card.selected ? switcher.tint(0.22) : "#14ffffff"
                 Behavior on color { ColorAnimation { duration: 130 } }
                 MouseArea {
                     anchors.fill: parent; hoverEnabled: true
@@ -188,7 +196,7 @@ Item {
                             required property var modelData
                             width: (parent.width-(parent.columns-1)*4)/parent.columns
                             height: card.modelData.windows.length > 2 ? 28 : 60
-                            radius: 6; color: "#101012"; clip: true
+                            radius: 8; color: "#101012"; clip: true
                             ScreencopyView {
                                 id: preview
                                 anchors.fill: parent
@@ -198,7 +206,7 @@ Item {
                             AppIcon { appleStyle: true; anchors.centerIn: parent; size: 22; app: modelData.cls; icon: modelData.icon; visible: !preview.hasContent }
                             MouseArea { anchors.fill: parent; onClicked: switcher.activate(card.modelData, modelData) }
                             Rectangle {
-                                anchors.right: parent.right; width: 17; height: 17; radius: 8.5; color: "#cc303034"
+                                anchors.right: parent.right; width: 17; height: 17; radius: 8.5; color: "#e6141416"
                                 Text { anchors.centerIn: parent; text: "×"; color: "white"; font.pixelSize: 13 }
                                 MouseArea { anchors.fill: parent; onClicked: switcher.closeWindow(modelData) }
                             }
@@ -212,7 +220,7 @@ Item {
                 }
                 Text {
                     x: 10; y: 89; text: "Desktop " + card.modelData.localWs
-                    color: "#98989d"; font.family: switcher.textFont; font.pixelSize: 10
+                    color: "#8e8e93"; font.family: switcher.textFont; font.pixelSize: 10
                 }
             }
         }
@@ -236,7 +244,7 @@ Item {
                 xScale: selectionGlass.elasticX; yScale: selectionGlass.elasticY
             }
             width: Math.max(0, cards.cellWidth-8); height: cards.cellHeight-8
-            radius: 16; color: "transparent"; border.width: 1; border.color: "#70ffffff"
+            radius: 16; color: "transparent"; border.width: 1; border.color: switcher.tint(0.42)
             Behavior on x { NumberAnimation { id: selectorMoveX; duration: 200; easing.type: Easing.OutCubic } }
             // Animate within the viewport; let the shared scroll carry the selector at an edge.
             Behavior on y {
@@ -244,9 +252,9 @@ Item {
                 NumberAnimation { id: selectorMoveY; duration: 220; easing.type: Easing.OutCubic }
             }
             gradient: Gradient {
-                GradientStop { position: 0; color: "#28ffffff" }
-                GradientStop { position: 0.45; color: "#08ffffff" }
-                GradientStop { position: 1; color: "#16ffffff" }
+                GradientStop { position: 0; color: switcher.tint(0.16) }
+                GradientStop { position: 0.5; color: switcher.tint(0.06) }
+                GradientStop { position: 1; color: switcher.tint(0.14) }
             }
             ShaderEffect {
                 anchors.fill: parent
@@ -268,13 +276,7 @@ Item {
             anchors.centerIn: parent
             visible: switcher.filtered.length === 0
             text: search.text ? "No results" : "No windows on this display"
-            color: "#98989d"; font.family: switcher.textFont; font.pixelSize: 12
+            color: "#8e8e93"; font.family: switcher.textFont; font.pixelSize: 12
         }
-    }
-    Text {
-        id: footer
-        anchors.bottom: parent.bottom
-        text: "↑↓ Select · ↵ Open · esc Close"
-        color: "#98989d"; font.family: switcher.textFont; font.pixelSize: 10
     }
 }

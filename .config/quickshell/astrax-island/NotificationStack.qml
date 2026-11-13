@@ -8,7 +8,9 @@ Item {
     property bool expandedBody: false
     property string textFont: "Rubik"
     property color foreground: "#f5f5f7"
-    property color secondary: Qt.rgba(1, 1, 1, 0.58)
+    property color secondary: Qt.rgba(1, 1, 1, 0.5)
+    // Argon look: black body, flat dark pills, one soft accent
+    readonly property color accent: "#4aa3ff"
     signal pressed(var event, int button)
     signal doublePressed(var event)
     signal actionRequested(var event, string action)
@@ -97,8 +99,10 @@ Item {
                             model: actions.items
                             Rectangle {
                                 required property var modelData
-                                height: 26; width: label.implicitWidth + 24; radius: 13
-                                color: button.pressed ? Qt.rgba(1, 1, 1, 0.28) : Qt.rgba(1, 1, 1, 0.16)
+                                height: 28; width: label.implicitWidth + 26; radius: 14
+                                color: button.pressed ? Qt.rgba(1, 1, 1, 0.20) : (button.containsMouse ? Qt.rgba(1, 1, 1, 0.13) : Qt.rgba(1, 1, 1, 0.08))
+                                border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.10)
+                                Behavior on color { ColorAnimation { duration: 120 } }
                                 Text {
                                     id: label
                                     anchors.centerIn: parent
@@ -108,6 +112,7 @@ Item {
                                 MouseArea {
                                     id: button
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: stack.actionRequested(row.event, modelData.id)
                                 }
@@ -119,7 +124,7 @@ Item {
                     visible: row.index < stack.rows.count - 1
                     x: 66; width: Math.max(0, parent.width - x - 16)
                     anchors.bottom: parent.bottom
-                    height: 1; color: Qt.rgba(1, 1, 1, 0.10)
+                    height: 1; color: Qt.rgba(1, 1, 1, 0.07)
                 }
             }
         }

@@ -60,6 +60,12 @@
   "session": "Serpantinum"
  },
  {
+  "keys": "SUPER + T",
+  "desc": "Translator (Dynamic Island)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
   "keys": "SUPER + I",
   "desc": "Bind search (this menu)",
   "group": "Launchers and apps",

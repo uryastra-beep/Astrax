@@ -44,3 +44,16 @@ and want an icon removed, open an issue and it will be taken out of the pack.
 modified build of https://github.com/kmod-midori/ancs-linux (MIT, Copyright (c) 2024 Midori Kochiya;
 the pack carries its LICENSE and the modified source), plus a few helper scripts. The island works
 without it.
+
+## Claude and Codex logos in the Ask panel (`astrax-island/control-icons/`)
+
+- `claude-spark.svg`: the Claude spark, from Wikimedia Commons (`File:Claude_AI_logo.svg`, marked public domain there).
+- `codex.png`: the Codex logo, taken from the Codex / ChatGPT desktop app installed on the author's PC.
+
+Claude and Codex are trademarks of their owners (Anthropic and OpenAI). The logos are used only to
+identify the service the panel talks to; Astrax is not affiliated with or endorsed by them.
+
+## translate-shell (not bundled)
+
+The Translator (`Super+T`) calls the `trans` command of [translate-shell](https://github.com/soimort/translate-shell)
+(public-domain / Unlicense). It is installed by the user (`sudo pacman -S translate-shell`), not shipped in this repository.

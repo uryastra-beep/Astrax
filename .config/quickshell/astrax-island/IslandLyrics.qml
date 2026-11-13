@@ -14,7 +14,6 @@ Item {
         player.length || 0, String((player.metadata || {})["mpris:trackid"] || ""),
         String(player.identity || player.desktopEntry || "")]) : ""
     property var lines: []
-    property bool helperMissing: false
     property var clockSample: ({})
     readonly property real syncedPosition: {
         const sample = clockSample;
@@ -161,11 +160,7 @@ Item {
             if (!lyrics.requestKey) return;
             if (feed.running) return;
             feed.loadedKey = lyrics.requestKey;
-            // The lyrics helper belongs to the optional iPhone/Bluetooth pack (`astrax-iphone install`).
-            // Without it exit code 99 is returned and the island simply shows no lyrics.
-            if (lyrics.helperMissing) return;
-            feed.command = ["sh", "-c", "[ -f \"$1\" ] || exit 99; exec /usr/bin/python3 \"$1\" \"$2\"",
-                            "sh", Quickshell.env("HOME") + "/.local/lib/iphone-notifications/island-lyrics.py", lyrics.requestKey];
+            feed.command = ["/usr/bin/python3", Quickshell.env("HOME") + "/.local/lib/iphone-notifications/island-lyrics.py", lyrics.requestKey];
             feed.running = true;
         }
     }
@@ -182,8 +177,7 @@ Item {
                 } catch (e) {}
             }
         }
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode === 99) { lyrics.helperMissing = true; return; }
+        onExited: {
             if (!lyrics.requestKey) return;
             if (loadedKey === lyrics.requestKey) retryFeed.restart();
             else restartFeed.restart();

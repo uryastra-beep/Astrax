@@ -14,3 +14,8 @@ for _, button in ipairs({ "mouse:272", "mouse:273", "mouse:274" }) do
         description = "Dynamic Island: outside click"
     })
 end
+
+-- Translator (translate-shell, no AI) inside the island: select text anywhere, or type.
+hl.bind("SUPER + T", hl.dsp.exec_cmd("qs -c astrax-island ipc call island toggleTranslate"), {
+    description = "Dynamic Island: translator"
+})
