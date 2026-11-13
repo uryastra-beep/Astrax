@@ -125,10 +125,16 @@ Item {
         MouseArea {
             id: tsArea
             anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+            // Only a real drag moves the value. No wheel handler: a touchpad's inertial scrolling sends hundreds of
+            // events after the fingers lift and each one used to nudge the value, so brightness/volume kept
+            // drifting by themselves (and the volume HUD kept popping up).
+            property bool dragging: false
             function apply(my) { ts.moved(Math.max(0, Math.min(1, 1 - my / height))); }
-            onPressed: m => apply(m.y)
-            onPositionChanged: m => { if (pressed) apply(m.y); }
-            onWheel: w => ts.moved(Math.max(0, Math.min(1, ts.level + (w.angleDelta.y > 0 ? 0.05 : -0.05))))
+            onPressed: m => { dragging = true; apply(m.y); }
+            onReleased: dragging = false
+            onCanceled: dragging = false
+            onPositionChanged: m => { if (dragging && pressed) apply(m.y); }
+            preventStealing: true
         }
     }
     Row {

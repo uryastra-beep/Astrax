@@ -39,7 +39,15 @@ Item {
     // Match Astrax: real word timings first, syllable-weighted estimation for LRC.
     readonly property string currentWord: lineIndex >= 0
         ? activeWordText(lines[lineIndex], syncedPosition) : ""
-    opacity: currentWord !== "" ? 1 : 0
+    // line by line: the whole current line, sliding in as the next one starts
+    readonly property string currentLine: {
+        if (lineIndex < 0) return "";
+        const ln = lines[lineIndex];
+        let t = String(ln.mainText !== undefined ? ln.mainText : (ln.text || "")).replace(/\u200b/g, "").trim();
+        if (t === "" && ln.words && ln.words.length) t = ln.words.map(w => w.text).join(" ").trim();
+        return t !== "" ? t : "♪";
+    }
+    opacity: lines.length > 0 ? 1 : 0
 
     readonly property bool englishLyrics: {
         let L = lyrics.lines;
@@ -145,6 +153,32 @@ Item {
     }
 
 
+    // index of the word being sung in line `ln` (words before it are done; n = the whole line is done)
+    function wordIndexFor(ln, idx, pos) {
+        const ws = ln.words;
+        if (ws && ws.length > 0) {
+            let k = 0;
+            for (let i = 0; i < ws.length; i++) { if (pos >= ws[i].time) k = i; else break; }
+            if (pos > ws[ws.length - 1].endTime + 0.1) return ws.length;
+            return k;
+        }
+        const sp = splitLine(ln.mainText !== undefined ? ln.mainText : (ln.text || ""));
+        if (sp.length <= 1) return pos > (ln.time || 0) + 0.4 ? sp.length : 0;
+        let total = 0;
+        for (let i = 0; i < sp.length; i++) total += sp[i].weight;
+        const start = ln.time || 0;
+        const nxt = (idx + 1 < lyrics.lines.length) ? lyrics.lines[idx + 1].time : start + total * secPerSyllable + 1;
+        const gap = Math.max(0.8, nxt - start);
+        const sung = Math.max(0.8, Math.min(gap - 0.15, total * secPerSyllable * 1.12));
+        const t = pos - start - 0.05;
+        if (t >= sung) return sp.length;
+        const frac = Math.max(0, t / sung);
+        let acc = 0;
+        for (let i = 0; i < sp.length; i++) { acc += sp[i].weight / total; if (frac < acc) return i; }
+        return sp.length - 1;
+    }
+    readonly property int wordIdx: lineIndex >= 0 ? wordIndexFor(lines[lineIndex], lineIndex, syncedPosition) : 0
+
     onRequestKeyChanged: {
         lines = [];
         clockSample = ({});
@@ -184,19 +218,80 @@ Item {
         }
     }
     Timer { id: retryFeed; interval: 2000; onTriggered: if (!feed.running) restartFeed.restart() }
-    Text {
+    // list like the reference: the line being sung big and bright with its words lighting up as they pass,
+    // the lines around it dim, everything glides to the new line
+    ListView {
+        id: list
         anchors.fill: parent
-        text: lyrics.currentWord
-        textFormat: Text.PlainText
-        color: "#f5f5f7"
-        font.family: lyrics.textFont
-        font.pixelSize: 24
-        font.weight: Font.DemiBold
-        fontSizeMode: Text.Fit
-        minimumPixelSize: 11
-        maximumLineCount: 1
-        elide: Text.ElideRight
-        verticalAlignment: Text.AlignVCenter
-        horizontalAlignment: Text.AlignHCenter
+        interactive: false
+        clip: true
+        model: lyrics.lines
+        currentIndex: Math.max(0, lyrics.lineIndex)
+        header: Item { height: list.height / 2 - 14 }
+        footer: Item { height: list.height / 2 - 14 }
+        function recenter(animate) {
+            const it = itemAtIndex(currentIndex);
+            if (!it) { positionViewAtIndex(currentIndex, ListView.Center); return; }
+            const y = it.y + it.height / 2 - height / 2;
+            if (animate && Math.abs(y - contentY) < height * 3) { glide.stop(); glide.from = contentY; glide.to = y; glide.start(); }
+            else { glide.stop(); contentY = y; }
+        }
+        NumberAnimation { id: glide; target: list; property: "contentY"; duration: 760; easing.type: Easing.OutQuint }
+        onCurrentIndexChanged: Qt.callLater(() => recenter(true))
+        onCountChanged: Qt.callLater(() => recenter(false))
+        Component.onCompleted: Qt.callLater(() => recenter(false))
+        delegate: Item {
+            id: row
+            required property var modelData
+            required property int index
+            width: list.width
+            height: measure.implicitHeight + 10
+            readonly property int dist: Math.abs(index - list.currentIndex)
+            readonly property bool cur: dist === 0
+            readonly property string lineText: String(modelData.mainText !== undefined ? modelData.mainText : (modelData.text || "")).replace(/\u200b/g, "").trim() || "♪"
+            readonly property var wordList: (modelData.words && modelData.words.length > 0)
+                ? modelData.words.map(w => String(w.text).trim()).filter(w => w !== "")
+                : lineText.split(/\s+/)
+            opacity: cur ? 1 : dist === 1 ? 0.4 : dist === 2 ? 0.2 : 0.08
+            Behavior on opacity { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
+            scale: cur ? 1.04 : 1
+            transformOrigin: Item.Left
+            Behavior on scale { NumberAnimation { duration: 520; easing.type: Easing.OutCubic } }
+            Text {   // measures the line and shows it while it is not the active one
+                id: measure
+                x: 14; width: parent.width - 28; anchors.verticalCenter: parent.verticalCenter
+                text: row.lineText
+                textFormat: Text.PlainText
+                wrapMode: Text.WordWrap
+                color: "#f5f5f7"
+                font.family: lyrics.textFont; font.pixelSize: 16; font.weight: Font.DemiBold
+                opacity: row.cur ? 0 : 1
+                Behavior on opacity { NumberAnimation { duration: 260 } }
+            }
+            Flow {   // the active line: each word lights up as it is sung
+                x: 14; width: parent.width - 28; anchors.verticalCenter: parent.verticalCenter
+                spacing: 4.5
+                opacity: row.cur ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: 260 } }
+                Repeater {
+                    model: row.cur ? row.wordList : []
+                    Text {
+                        required property string modelData
+                        required property int index
+                        readonly property bool done: index < lyrics.wordIdx
+                        readonly property bool now: index === lyrics.wordIdx
+                        text: modelData
+                        textFormat: Text.PlainText
+                        color: "#ffffff"
+                        font.family: lyrics.textFont; font.pixelSize: 16; font.weight: Font.Bold
+                        opacity: now ? 1 : done ? 0.78 : 0.3
+                        Behavior on opacity { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        transformOrigin: Item.Bottom
+                        scale: now ? 1.08 : 1
+                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutBack } }
+                    }
+                }
+            }
+        }
     }
 }

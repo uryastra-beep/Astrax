@@ -741,7 +741,7 @@ ShellRoot {
     }
 
     // ---------------------------------------------------------------- mode
-    readonly property string mode: appLauncherOpen ? "apps" : switcherOpen ? "switcher" : (shelfOpen || shelfPreview) ? "shelf" : qaOpen ? "qa" : clipOpen ? "clip" : aiOpen ? "ai" : trOpen ? "tr" : ctrlOpen ? "ctrl" : emojiOpen ? "emoji" : overviewOpen ? "overview" : listOpen ? "list" : current ? current.layout
+    readonly property string mode: appLauncherOpen ? "apps" : switcherOpen ? "switcher" : (shelfOpen || shelfPreview) ? "shelf" : qaOpen ? "qa" : clipOpen ? "clip" : aiOpen ? "ai" : trOpen ? "tr" :ctrlOpen ? "ctrl" : emojiOpen ? "emoji" : overviewOpen ? "overview" : listOpen ? "list" : current ? current.layout
         : (expanded && hasMusic) ? "musicExpanded" : hasMusic ? "music" : "idle"
     readonly property bool largeView: mode === "apps" || mode === "switcher" || mode === "list" || mode === "notif" || mode === "musicExpanded" || mode === "overview" || mode === "shelf" || mode === "clip" || mode === "ai" || mode === "tr" || mode === "ctrl" || mode === "emoji" || mode === "qa"
 
@@ -839,7 +839,7 @@ ShellRoot {
             transform: Scale { origin.x: notchBack.width / 2; origin.y: pill.scaleOriginY; xScale: pill.bx; yScale: pill.by }
             readonly property color tint: Qt.rgba(0.08, 0.08, 0.1, root.glassAlpha)
             // the shoulders grow with the panel: 12 px on the idle notch, up to 26 px on big panels
-            readonly property real wing: Math.round(Math.max(12, Math.min(26, Math.min(width / 16, height / 7))) * 2) / 2
+            readonly property real wing: Math.round(Math.max(8, Math.min(26, Math.min(width / 16, height / 7))) * 2) / 2
 
             Rectangle {
                 visible: pill.glassOn
@@ -1118,7 +1118,7 @@ ShellRoot {
                 case "qa": return panelMetric(qaLoader.item, "preferredHeight", 226);
                 case "shelf": return shelf.preferredHeight;
                 case "list": return listH;
-                case "musicExpanded": return (root.cfg.showLyrics !== false && root.player !== null && !root.musicLyricsHidden) ? 202 : 158;
+                case "musicExpanded": return (root.cfg.showLyrics !== false && root.player !== null && !root.musicLyricsHidden) ? 316 : 158;
                 case "notif": return notifH;
                 case "file": return 46;
                 default: return 34;
@@ -1126,7 +1126,7 @@ ShellRoot {
             }
             width: root.notch ? Math.max(targetW, root.notchW) : targetW
             height: root.notch ? Math.max(targetH, root.notchH) : targetH
-            radius: root.notch ? Math.min(height / 2, height <= 48 ? 14 : 28) : (height <= 48 ? height / 2 : 34)
+            radius: root.notch ? Math.min(height / 2, height <= 48 ? Math.max(8, Math.min(14, height * 0.3)) : 28) : (height <= 48 ? height / 2 : 34)
             topLeftRadius: root.notch ? 0 : radius
             topRightRadius: root.notch ? 0 : radius
             clip: true
@@ -1945,17 +1945,28 @@ ShellRoot {
                     readonly property real pos: root.player ? root.player.position : 0
                     readonly property real frac: len > 0 ? Math.max(0, Math.min(1, pos / len)) : 0
                     property real phase: 0
+                    // drag the line to scrub; on release it keeps the dragged spot until the player catches up
+                    // (no jump back to the old position) and glides there
+                    property bool dragging: false
+                    property real dragFrac: 0
+                    property real holdFrac: -1
+                    readonly property real target: dragging ? dragFrac : holdFrac >= 0 ? holdFrac : frac
+                    property real disp: target
+                    Behavior on disp { enabled: wave.dragging || wave.holdFrac >= 0; NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
+                    readonly property real shownPos: (dragging || holdFrac >= 0) ? disp * len : pos
+                    onFracChanged: if (holdFrac >= 0 && Math.abs(frac - holdFrac) < 0.012) holdFrac = -1
+                    Timer { id: holdTimer; interval: 1500; onTriggered: wave.holdFrac = -1 }
                     FrameAnimation {
                         running: bigMusic.on && root.player !== null && root.player.isPlaying
                         onTriggered: { wave.phase = (wave.phase + frameTime * 6) % (Math.PI * 2); waveCanvas.requestPaint(); }
                     }
-                    onFracChanged: waveCanvas.requestPaint()
+                    onDispChanged: waveCanvas.requestPaint()
                     Canvas {
                         id: waveCanvas
                         anchors.fill: parent
                         onPaint: {
                             const c = getContext("2d"); c.reset();
-                            const w = width, h = height, mid = h / 2, x0 = w * wave.frac;
+                            const w = width, h = height, mid = h / 2, x0 = w * wave.disp;
                             c.lineCap = "round"; c.lineWidth = 3;
                             c.strokeStyle = "rgba(255,255,255,0.22)";
                             c.beginPath(); c.moveTo(Math.min(w - 2, x0 + 6), mid); c.lineTo(w - 2, mid); c.stroke();
@@ -1972,14 +1983,24 @@ ShellRoot {
                         }
                     }
                     Rectangle {   // knob
-                        x: Math.max(0, wave.width * wave.frac - 2); anchors.verticalCenter: parent.verticalCenter
+                        x: Math.max(0, wave.width * wave.disp - 2); anchors.verticalCenter: parent.verticalCenter
                         width: 4; height: 16; radius: 2; color: "#ffffff"
                     }
                     MouseArea {   // seek
                         anchors.fill: parent; anchors.topMargin: -4; anchors.bottomMargin: -4
                         cursorShape: Qt.PointingHandCursor
                         enabled: root.player !== null && root.player.canSeek && wave.len > 0
-                        onClicked: m => { root.player.position = wave.len * Math.max(0, Math.min(1, m.x / width)); }
+                        preventStealing: true
+                        function fracAt(x) { return Math.max(0, Math.min(1, x / width)); }
+                        onPressed: m => { wave.holdFrac = -1; wave.dragFrac = fracAt(m.x); wave.dragging = true; }
+                        onPositionChanged: m => { if (pressed) wave.dragFrac = fracAt(m.x); }
+                        onReleased: m => {
+                            const f = fracAt(m.x);
+                            wave.holdFrac = f; wave.dragging = false;
+                            root.player.position = wave.len * f;
+                            holdTimer.restart();
+                        }
+                        onCanceled: wave.dragging = false
                     }
                 }
 
@@ -1990,12 +2011,12 @@ ShellRoot {
                     y: wave.y + wave.height + 6; height: 24
                     Text {
                         anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                        text: bigMusic.clock(wave.pos)
+                        text: bigMusic.clock(wave.shownPos)
                         color: Qt.rgba(1, 1, 1, 0.7); font.family: "Adwaita Mono"; font.pixelSize: 12
                     }
                     Text {
                         anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                        text: wave.len > 0 ? "-" + bigMusic.clock(wave.len - wave.pos) : ""
+                        text: wave.len > 0 ? "-" + bigMusic.clock(wave.len - wave.shownPos) : ""
                         color: Qt.rgba(1, 1, 1, 0.7); font.family: "Adwaita Mono"; font.pixelSize: 12
                     }
                     Row {
@@ -2041,7 +2062,7 @@ ShellRoot {
                     id: bigLyrics
                     anchors.left: parent.left; anchors.right: parent.right
                     y: bottomRow.y + bottomRow.height + 6
-                    height: bigMusic.lyricsOn ? 38 : 0
+                    height: bigMusic.lyricsOn ? 152 : 0
                     active: bigMusic.on && bigMusic.lyricsOn
                     sourceComponent: Component {
                         IslandLyrics {

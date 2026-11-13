@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.17.1
+
+- **Dynamic Island: lyrics list.** `IslandLyrics.qml` shows the lyrics as a scrolling list: the line being
+  sung is big and bright, its words light up as they pass, the lines around it are dimmed and everything
+  glides to the next line. The music card grows taller when lyrics are on.
+- **Scrubbing.** Drag the progress line on the music card to seek; on release it stays where you dropped
+  it until the player catches up (no more jump back).
+- **Ask panel: paste.** `Ctrl+V` (or `Shift+Insert`) attaches a file or image from the clipboard
+  (`clip-attach.sh`); plain text pastes as usual.
+- **Controls fix.** Brightness and volume sliders move only while you drag them. Touchpad inertia no
+  longer makes them drift on their own.
+
 ## 1.17.0
 
 - **Dynamic Island: Argon redesign.** Every panel was redrawn with shared components (`ArgonGlow`,

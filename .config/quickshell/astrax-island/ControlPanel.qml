@@ -89,6 +89,21 @@ Item {
         onExited: { panel.picking = false; focusDelay.restart(); }
     }
     function pick() { if (!pickProc.running && !busy) { panel.picking = true; pickProc.running = true; } }
+    // Ctrl+V: a file or image on the clipboard is attached for real; plain text pastes as usual.
+    Process {
+        id: pasteProc
+        command: ["sh", Quickshell.shellPath("clip-attach.sh")]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const add = text.split("\n").map(s => s.trim()).filter(s => s !== "");
+                if (add.length === 0) { askField.paste(); return; }
+                const all = panel.files.slice();
+                for (const f of add) if (all.indexOf(f) < 0) all.push(f);
+                panel.files = all.slice(0, 6);
+            }
+        }
+    }
+    function pasteClip() { if (!pasteProc.running && !busy) pasteProc.running = true; else if (busy) askField.paste(); }
     function removeFile(f) { panel.files = panel.files.filter(x => x !== f); }
     function baseName(p) { return p.split("/").pop(); }
 
@@ -303,6 +318,7 @@ Item {
             Keys.onEnterPressed: panel.ask(text)
             Keys.onEscapePressed: panel.dismissed()
             Keys.onTabPressed: panel.toggleWho()
+            Keys.onPressed: event => { if ((event.key === Qt.Key_V && (event.modifiers & Qt.ControlModifier)) || (event.key === Qt.Key_Insert && (event.modifiers & Qt.ShiftModifier))) { panel.pasteClip(); event.accepted = true; } }
             Text {
                 anchors.fill: parent; verticalAlignment: Text.AlignVCenter
                 visible: askField.text === ""
