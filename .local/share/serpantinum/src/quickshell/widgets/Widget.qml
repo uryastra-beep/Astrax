@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import "../"
+import "../../../../../../.config/astrax-common/motionblur"
 
 PanelWindow {
     id: root
@@ -20,7 +21,8 @@ PanelWindow {
 
     property var customProps: ({})
 
-    readonly property real auraMargin: 8
+    // room around the widget: the selection outline, and the smear when Blur motion is on for widgets
+    readonly property real auraMargin: MotionBlurSettings.on("widgets") ? 34 : 8
 
     readonly property bool isSelected: typeof DesktopMenuController !== "undefined"
         && DesktopMenuController.isVisible
@@ -193,6 +195,16 @@ PanelWindow {
             root.applyCustomProps();
             root.updateEffectiveSize();
         }
+    }
+
+    // Blur motion: a widget that moves (the layer surface slides) or changes size is smeared along its movement
+    MotionBlur {
+        id: faceBlur
+        target: faceLoader
+        enabled: MotionBlurSettings.on("widgets") && root.visible
+        extraX: root.animX; extraY: root.animY
+        pad: 30; maxBlur: 44; liveContent: true
+        effectTransform: Rotation { origin.x: faceBlur.insetX + faceLoader.width / 2; origin.y: faceBlur.insetY + faceLoader.height / 2; angle: faceLoader.rotation }
     }
 
     Item {

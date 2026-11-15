@@ -91,10 +91,10 @@ ShellRoot {
     }
     Timer { id: cavaRestart; interval: 500; onTriggered: cavaProc.running = true }
 
-    property real t: 0
+    property real t: (Date.now() % 100000000) / 1000   // wall clock: the Liquid Glass copies of the lava stay in sync
     Timer {
         interval: 33; running: true; repeat: true
-        onTriggered: root.t += 0.033
+        onTriggered: root.t = (Date.now() % 100000000) / 1000
     }
 
     Variants {

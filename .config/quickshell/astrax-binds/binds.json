@@ -66,6 +66,12 @@
   "session": "Serpantinum"
  },
  {
+  "keys": "SUPER + SHIFT + C",
+  "desc": "Astrax settings (Liquid Glass, Dock, island...)",
+  "group": "Launchers and apps",
+  "session": "Serpantinum"
+ },
+ {
   "keys": "SUPER + I",
   "desc": "Bind search (this menu)",
   "group": "Launchers and apps",

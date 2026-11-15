@@ -1,6 +1,6 @@
 import QtQuick
 
-// iPhone clock without the date: the same face with showDate off
+// iPhone clock without the date: same face, showDate off
 Item {
     id: wrap
     anchors.fill: parent

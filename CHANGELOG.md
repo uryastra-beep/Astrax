@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.18.0
+
+- **Liquid Glass, iOS 26 style.** A new shared shader family for the Dock, the Dynamic Island and the iPhone
+  clock: blurred backdrop, more vivid colour, per-channel chromatic aberration, thick refraction, a lens
+  over the whole surface and a specular line. The glass samples a clean copy of the desktop (wallpaper +
+  windows, no widgets, dock or island) so it never captures itself. Shared code lives in the new
+  `~/.config/astrax-common/` (`lg/`, `motionblur/`). Still and lava wallpapers are tested; video/gif
+  wallpapers are implemented but untested. Not covered yet: the lock-screen and SDDM clocks.
+- **Astrax settings (`SUPER+SHIFT+C`).** The settings window is now in the repo (it was missing, although the
+  island's hub already opened it). New **Liquid Glass** page (Old / New, refraction, chromatic aberration,
+  lens, edge shine, frost, vividness): changing a value runs `lg-apply.py`, which rebuilds the shaders and
+  reloads the Dock, the island and the clock. It needs `qsb` (`qt6-shadertools`, now installed by
+  `install.sh`). New **Blur motion** page.
+- **Blur motion.** Real motion blur on the Dock icons, the Dynamic Island pill and the desktop widgets
+  (off by default).
+- **iPhone clock.** The glass shows its own copy of the wallpaper. A changing digit now disappears almost at
+  once and the new one is revealed from the bottom up. New **Ticks (iPhone)** widget variant: the changing
+  digit rolls like the iPhone's time-picker drum.
+- **Dock.** New Trash tile: drop files on it to trash them (recoverable), right-click for Empty Trash.
+- **Lava wallpaper.** Its time is the wall clock, so the Liquid Glass copies of the lava match it.
+- Re-apply after a Serpantinum update: `patches/serpantinum-Widget.qml-blur-motion.patch` (new) and
+  `patches/serpantinum-WidgetRegistry.qml-ios-clock.patch` (now also adds the Ticks variant).
+- `assert-install.sh` checks the shared folder, `qsb` and the settings app.
+
 ## 1.17.1
 
 - **Dynamic Island: lyrics list.** `IslandLyrics.qml` shows the lyrics as a scrolling list: the line being

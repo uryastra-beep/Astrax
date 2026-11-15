@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+<linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#fff" stop-opacity=".40"/>
+<stop offset=".5" stop-color="#fff" stop-opacity=".50"/>
+<stop offset=".88" stop-color="#fff" stop-opacity=".66"/>
+<stop offset="1" stop-color="#fff" stop-opacity=".80"/>
+</linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0" stop-color="#fff" stop-opacity=".6"/>
+<stop offset="1" stop-color="#fff" stop-opacity=".3"/>
+</linearGradient>
+<radialGradient id="pg" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfd0d6"/></radialGradient>
+<clipPath id="pc"><rect x="0" y="-10" width="128" height="30"/></clipPath>
+<filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".45"/></filter>
+</defs>
+<path d="M14 19 L27 111 Q28 118 36 118 L92 118 Q100 118 101 111 L114 19 Z" fill="url(#body)"/>
+<path d="M14 19 L27 111 Q28 118 36 118 L92 118 Q100 118 101 111 L114 19" fill="none" stroke="url(#edge)" stroke-width="1.2" filter="url(#soft)"/>
+<path d="M31 112 Q32 115.5 37 115.5 L91 115.5 Q96 115.5 97 112" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round" filter="url(#soft)"/>
+<path d="M13 19 L115 19" stroke="#fff" stroke-opacity=".92" stroke-width="2" stroke-linecap="round"/>
+</svg>

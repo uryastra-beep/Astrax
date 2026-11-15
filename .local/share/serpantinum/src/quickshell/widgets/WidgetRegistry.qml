@@ -687,7 +687,8 @@ QtObject {
                 "lockscreen":     { file: "faces/clock/ClockFaceLockscreen.qml",     icon: "7", label: I18n.t("widgets.variants.lockscreen", "Lockscreen") },
                 "stretched":      { file: "faces/clock/ClockFaceStretched.qml",      icon: "8", label: I18n.t("widgets.variants.stretched", "Stretched") },
                 "ios":            { file: "faces/clock/ClockFaceIOS.qml",            icon: "9", label: I18n.t("widgets.variants.ios", "iPhone") },
-                "iosNoDate":      { file: "faces/clock/ClockFaceIOSNoDate.qml",      icon: "0", label: I18n.t("widgets.variants.iosNoDate", "iPhone (no date)") }
+                "iosNoDate":      { file: "faces/clock/ClockFaceIOSNoDate.qml",      icon: "0", label: I18n.t("widgets.variants.iosNoDate", "iPhone (no date)") },
+                "ticks":          { file: "faces/apple/AppleClockTicksFace.qml",     icon: "T", label: I18n.t("widgets.variants.ticks", "Ticks (iPhone)") }
             }
         },
         "music": {

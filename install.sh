@@ -143,7 +143,7 @@ sudo pacman -S --needed --noconfirm \
     jq socat grim slurp imagemagick ffmpeg util-linux xorg-xhost libnotify \
     wireplumber playerctl cava cmatrix wl-clipboard cliphist fuzzel \
     python python-pillow python-numpy python-gobject python-dbus python-evdev \
-    qt6-multimedia-ffmpeg nautilus gnome-calculator inotify-tools
+    qt6-multimedia-ffmpeg qt6-shadertools nautilus gnome-calculator inotify-tools
 
 # powerlevel10k is in some repos (CachyOS, chaotic-aur) but not in Arch's:
 # take the repo package when there is one, the AUR one otherwise
@@ -230,7 +230,8 @@ cp -r scripts "$HOME/"
 cp .zshrc .p10k.zsh "$HOME/"
 chmod +x "$HOME"/scripts/*.sh "$HOME"/scripts/*.py "$HOME"/scripts/astrax-lyrics-rating "$HOME"/scripts/liner/liner-bridge 2>/dev/null || true
 chmod +x "$HOME"/.config/quickshell/astrax-island/clip-event.sh "$HOME"/.config/quickshell/astrax-island/*.py \
-    "$HOME"/.config/quickshell/astrax-mac-dock/control.py 2>/dev/null || true
+    "$HOME"/.config/quickshell/astrax-mac-dock/control.py \
+    "$HOME"/.config/quickshell/astrax-settings/cfgset.py "$HOME"/.config/astrax-common/lg/lg-apply.py 2>/dev/null || true
 # the macOS-style Dock is a user service: installed here, enabled only when the user turns the
 # Dock on in SUPER+C > macOS Dock (that switch enables and disables the service)
 systemctl --user daemon-reload 2>/dev/null || true

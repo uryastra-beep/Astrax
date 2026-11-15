@@ -19,3 +19,8 @@ end
 hl.bind("SUPER + T", hl.dsp.exec_cmd("qs -c astrax-island ipc call island toggleTranslate"), {
     description = "Dynamic Island: translator"
 })
+
+-- Astrax settings window (starts itself the first time, no autostart needed).
+hl.bind("SUPER + SHIFT + C", hl.dsp.exec_cmd([[sh -c 'qs list --all 2>/dev/null | grep -q "astrax-settings/shell.qml" || { qs -c astrax-settings -d >/tmp/astrax-settings.log 2>&1; sleep 1; }; qs -c astrax-settings ipc call settings toggle']]), {
+    description = "Astrax settings"
+})

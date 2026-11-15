@@ -14,8 +14,8 @@ layout(std140, binding = 0) uniform buf {
     vec4 tint;
 };
 
-layout(binding = 1) uniform sampler2D src;      // screen capture (backdrop)
-layout(binding = 2) uniform sampler2D maskTex;  // digit shape (alpha)
+layout(binding = 1) uniform sampler2D src;      // screen capture (background)
+layout(binding = 2) uniform sampler2D maskTex;  // shape of the digits (alpha)
 
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
@@ -25,7 +25,7 @@ const int STEPS = 10;
 
 float maskAt(vec2 uv)
 {
-    // outside the item = outside the glyph (or an edge touching the limit looks "cut")
+    // outside the item = outside the glyph (otherwise an edge touching the limit looks "cut off")
     if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0;
     return texture(maskTex, uv).a;
 }
@@ -67,7 +67,7 @@ void main()
         if (hit > 0.5) { depth = max(r - 0.5 * bevel / float(STEPS), 0.0); break; }
     }
 
-    // outward normal: toward where there is NO glyph, at a small radius
+    // outward normal: towards where there is NO glyph, at a small radius
     vec2 n = vec2(0.0);
     if (depth < bevel) {
         float rho = depth + 2.0;
@@ -80,15 +80,15 @@ void main()
     }
 
     float u = clamp(depth / bevel, 0.0, 1.0);
-    float bevelMask = 1.0 - smoothstep(0.4, 1.0, u);
+    float bevelMask = 1.0 - 0.3 * smoothstep(0.55, 1.0, u);   // the effect covers the WHOLE digit
 
     // ---- interior: almost transparent glass with a soft tint ----
     vec3 base = backdrop(p);
     vec3 interior = mix(base, vec3(1.0), 0.07);
     interior = mix(interior, tint.rgb, 0.16 * smoothstep(0.0, 1.0, uv.y));
-    interior += vec3(0.10) * pow(1.0 - uv.y, 2.0);   // soft highlight at the top
+    interior += vec3(0.10) * pow(1.0 - uv.y, 2.0);   // brillo suave arriba
 
-    // ---- edge: island-style refraction ----
+    // ---- borde: refraccion tipo isla ----
     vec3 col = interior;
     float edgeAlpha = mix(0.55, 0.9, strength);
     if (depth < bevel) {
@@ -98,17 +98,19 @@ void main()
         vec3 ray = refract(vec3(0.0, 0.0, -1.0), surfaceNormal, 0.6849315);
         float travel = length(ray.xy) / max(abs(ray.z), 0.2);
         float edgeProfile = pow(1.0 - u, 0.62);
-        float thickness = mix(6.0, 44.0, strength);
+        float thickness = mix(14.0, 72.0, strength);
         float bend = travel * thickness * edgeProfile;
         vec2 refracted = p + n * (depth + 3.0 + bend);
 
-        float dispersion = strength * 1.05 * edgeProfile;
+        float dispersion = (2.0 + strength * 8.0) * pow(1.0 - u, 0.45) + 0.6;
         float scatter = mix(0.4, 1.25, u);
         vec3 centerSample = backdrop(refracted);
         vec3 softSample = (backdrop(refracted + tangent * scatter) + backdrop(refracted - tangent * scatter)) * 0.5;
         vec3 e = mix(centerSample, softSample, 0.28);
-        e.r = mix(e.r, backdrop(refracted + n * dispersion).r, 0.65);
-        e.b = mix(e.b, backdrop(refracted - n * dispersion).b, 0.65);
+        // real chromatic aberration: each channel is sampled with its own offset (red outside, blue inside)
+        e.r = backdrop(refracted + n * dispersion * 1.0).r;
+        e.g = mix(e.g, backdrop(refracted).g, 0.5);
+        e.b = backdrop(refracted - n * dispersion * 1.0).b;
 
         float facing = dot(n, vec2(-0.6, -0.8));
         float fresnel = 0.04 + 0.96 * pow(1.0 - surfaceNormal.z, 5.0);
@@ -121,12 +123,12 @@ void main()
              + innerLip * glint * 0.2 + caustic * max(-facing, 0.0) * strength * 0.045);
         col = mix(interior, clamp(e, vec3(0.0), vec3(1.0)), bevelMask);
     }
-    float alpha = cov * mix(0.30, edgeAlpha, bevelMask);
+    float alpha = cov * mix(0.55, edgeAlpha, bevelMask);
     // inner white vignette: light that fades from the edge inwards
     float v = pow(1.0 - u, 1.6) * vignette;
     col = mix(col, vec3(1.0), v * 0.6);
     alpha = max(alpha, cov * v * 0.7);
-    // very thin white outline (sub-pixel): only the antialiasing band of the edge
+    // very thin white outline (sub-pixel): only the edge's antialiasing band
     float line = pow(clamp(4.0 * cov * (1.0 - cov), 0.0, 1.0), 0.7);
     col = mix(col, vec3(1.0), line * outline);
     alpha = max(alpha, cov * line * outline);

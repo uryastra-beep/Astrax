@@ -4,12 +4,10 @@ import Quickshell
 import Quickshell.Wayland
 import "../../../reusables"
 import "../../../"
+import "../../../../../../../../.config/astrax-common/lg"
 
-// iPhone lock screen style clock: date on top + tall stroke digits made of real
-// Liquid Glass (a shader that refracts the captured screen behind the digits).
-// The stroke glyph geometry is the one of ClockFaceStretched.
-// Needs a live ScreencopyView of the screen (some GPU); the date uses the
-// system locale (Qt.locale()).
+// iPhone lock-screen style clock: date on top + tall "glass" digits (translucent gradient fill +
+// rim light + soft shadow). Reuses the stroke-glyph engine of ClockFaceStretched (same geometry).
 Item {
     id: root
     anchors.fill: parent
@@ -22,6 +20,9 @@ Item {
     property real maxAspect: 2.5
     property bool isRound: false
     property bool showDate: true
+    // On the lock screen the glass uses the lock's own blurred background (not the screen capture)
+    property var ctx: null
+    readonly property bool inLock: ctx !== null && ctx !== undefined && ctx.glassSourceItem !== undefined && ctx.glassSourceItem !== null
 
     // always 12h, no leading zero (like the iPhone lock screen)
     readonly property var nowDate: DateTime.now || new Date()
@@ -32,7 +33,7 @@ Item {
 
     readonly property string dateStr: {
         let d = DateTime.now || new Date();
-        let s = Qt.locale().toString(d, "ddd d MMM").replace(/\./g, "");
+        let s = Qt.locale("es_ES").toString(d, "ddd d MMM").replace(/\./g, "");
         return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
@@ -106,7 +107,7 @@ Item {
         return "";
     }
 
-    // one drawn character (a stroke digit, or the colon)
+    // one drawn character (stroke digit, or the colon)
     component GlyphShape: Item {
         id: gs
         property string ch: ""
@@ -147,7 +148,7 @@ Item {
         }
     }
 
-    // row of characters; every position is persistent and only fades
+    // row of characters; each position is persistent and only fades
     // (old -> new) when ITS character changes
     component Glyphs: Row {
         id: glyphs
@@ -170,22 +171,27 @@ Item {
                 width: isColon ? root.colonW : root.cw
                 height: root.areaHeight
 
-                onChChanged: {
-                    if (ch === curCh) return;
-                    prevCh = curCh;
-                    curCh = ch;
-                    fadeAnim.restart();
-                }
-
+                // The old one goes away almost at once (~50 ms); the new one is revealed from the bottom up with a
+                // very soft gradient (~0.7 s), like the iPhone's time change (measured from a 50 % slowed recording).
+                property real oldAlpha: 1
+                NumberAnimation { id: oldOut; target: cell; property: "oldAlpha"; from: 1; to: 0; duration: 60; easing.type: Easing.OutQuad }
                 NumberAnimation {
                     id: fadeAnim
                     target: cell
                     property: "fadeT"
                     from: 0
                     to: 1
-                    duration: 220
-                    easing.type: Easing.InOutQuad
+                    duration: 700
+                    easing.type: Easing.InOutSine
                     onFinished: cell.prevCh = ""
+                }
+                onChChanged: {
+                    if (ch === curCh) return;
+                    prevCh = curCh;
+                    curCh = ch;
+                    oldAlpha = 1;
+                    oldOut.restart();
+                    fadeAnim.restart();
                 }
 
                 GlyphShape {
@@ -193,7 +199,7 @@ Item {
                     ch: cell.prevCh
                     strokeW: glyphs.strokeW
                     col: glyphs.col
-                    opacity: 1 - cell.fadeT
+                    opacity: cell.oldAlpha
                     visible: cell.prevCh !== "" && opacity > 0.001
                 }
                 GlyphShape {
@@ -201,7 +207,12 @@ Item {
                     ch: cell.curCh
                     strokeW: glyphs.strokeW
                     col: glyphs.col
-                    opacity: cell.prevCh !== "" ? cell.fadeT : 1
+                    layer.enabled: cell.prevCh !== ""
+                    layer.effect: ShaderEffect {
+                        property real progress: cell.fadeT
+                        property real band: 0.5
+                        fragmentShader: Qt.resolvedUrl("reveal.frag.qsb")
+                    }
                 }
             }
         }
@@ -231,7 +242,7 @@ Item {
         width: root.contentWidth
         height: root.areaHeight
 
-        // digit shape (opaque) -> mask texture for the shader
+        // shape of the digits (opaque) -> mask texture for the shader
         Glyphs {
             id: maskGlyphs
             anchors.fill: parent
@@ -246,43 +257,74 @@ Item {
             smooth: true
         }
 
-        // Liquid Glass (glass-glyph.frag = the island's glass-soft-blur adapted to
-        // the digit shape): refraction at the edge + translucent interior
+        // Liquid Glass of the island (glass-glyph-lg.frag = glass-soft-blur adapted to
+        // the shape of the digits): refraction at the edge + translucent interior
         ShaderEffect {
             anchors.fill: parent
             opacity: root.glassOn ? 1 : 0
             Behavior on opacity { NumberAnimation { duration: 120 } }
 
-            property var src: backdropTexture
+            property var src: root.useStatic ? wallTex : backdropTexture
             property var maskTex: maskTexture
-            property real strength: 0.7
-            property real band: Math.max(2, Math.min(root.stroke * 0.45, 12 + 0.7 * 18))
-            property real hasBackdrop: snap.hasContent ? 1 : 0
+            property real strength: 0.9
+            property real band: Math.max(3, root.stroke * 0.55)
+            property real hasBackdrop: root.useStatic ? (wall.hasContent ? 1 : 0) : (root.inLock ? 1 : (snap.hasContent ? 1 : 0))
             property real vignette: 0.65
             property real outline: 0.9
             property vector2d size: Qt.vector2d(width, height)
-            property vector2d origin: root.glassOrigin
-            property vector2d screen: Qt.vector2d(snap.width, snap.height)
+            property vector2d origin: root.useStatic ? Qt.vector2d(root.wallMargin, root.wallMargin) : root.glassOrigin
+            property vector2d screen: root.useStatic ? Qt.vector2d(root.wallRegion.width, root.wallRegion.height) : (root.inLock ? Qt.vector2d(root.ctx.width, root.ctx.height) : Qt.vector2d(snap.width, snap.height))
             property color tint: ThemeBackend.mauve
-            fragmentShader: Qt.resolvedUrl("glass-glyph.frag.qsb")
+            fragmentShader: Qt.resolvedUrl("glass-glyph-lg.frag.qsb")
         }
     }
 
-    // ---- backdrop for the glass: a capture of the screen (like the island) ----
+    // ---- background for the glass: screen capture (same as the island) ----
     readonly property var win: QsWindow.window
     property bool glassOn: true
     property bool capturing: false
     property vector2d glassOrigin: Qt.vector2d(0, 0)
 
     function updateOrigin() {
+        if (inLock) {
+            let q = digits.mapToItem(ctx.glassSourceItem, 0, 0);
+            glassOrigin = Qt.vector2d(q.x, q.y);
+            return;
+        }
         if (!win) return;
         let p = digits.mapToItem(null, 0, 0);
         glassOrigin = Qt.vector2d((win.margins.left || 0) + p.x, (win.margins.top || 0) + p.y);
     }
 
+    // ---- wallpaper (still, lava or video): the glass projects ITS copy (only the back part) ----
+    readonly property bool useStatic: !inLock && wall.hasContent
+    readonly property real wallMargin: 80   // the edge refracts up to ~60 px outside the digit
+    readonly property rect wallRegion: Qt.rect(glassOrigin.x - wallMargin, glassOrigin.y - wallMargin,
+                                               digits.width + 2 * wallMargin, digits.height + 2 * wallMargin)
+    WallBackdrop {
+        id: wall
+        screenName: root.win && root.win.screen ? root.win.screen.name : ""
+        width: root.win && root.win.screen ? root.win.screen.width : 1920
+        height: root.win && root.win.screen ? root.win.screen.height : 1080
+        active: !root.inLock && root.visible
+    }
+    ShaderEffectSource {
+        id: wallTex
+        sourceItem: wall
+        sourceRect: root.wallRegion
+        hideSource: true
+        // still: refreshed only for a while after loading/moving (the image loads async, otherwise the texture stays empty); lava/video: always
+        live: wall.animated || wallRefresh.running || !wall.hasContent
+        smooth: true
+        visible: false
+    }
+    Timer { id: wallRefresh; interval: 2500 }
+    Connections { target: wall; function onHasContentChanged() { wallRefresh.restart(); } function onPathChanged() { wallRefresh.restart(); } }
+    onWallRegionChanged: wallRefresh.restart()
+
     ScreencopyView {
         id: snap
-        captureSource: root.win ? root.win.screen : null
+        captureSource: (!root.inLock && !root.useStatic && root.win) ? root.win.screen : null
         live: true
         visible: true
         width: root.win && root.win.screen ? root.win.screen.width : 1
@@ -290,13 +332,13 @@ Item {
     }
     ShaderEffectSource {
         id: backdropTexture
-        sourceItem: snap
-        hideSource: true
+        sourceItem: root.inLock ? root.ctx.glassSourceItem : snap
+        hideSource: !root.inLock
         live: true
         visible: false
     }
 
-    // capture without the glass on (or the glass would see itself)
+    // capture without the glass on (otherwise the glass would see itself)
     function recapture() {
         updateOrigin();
     }

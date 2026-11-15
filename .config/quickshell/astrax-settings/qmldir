@@ -1,0 +1,11 @@
+singleton Theme 1.0 Theme.qml
+singleton Cfg 1.0 Cfg.qml
+Toggle 1.0 Toggle.qml
+Slider 1.0 Slider.qml
+Segmented 1.0 Segmented.qml
+KeyCaps 1.0 KeyCaps.qml
+ActionButton 1.0 ActionButton.qml
+SettingRow 1.0 SettingRow.qml
+SettingGroup 1.0 SettingGroup.qml
+PageView 1.0 PageView.qml
+SideItem 1.0 SideItem.qml

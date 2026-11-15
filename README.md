@@ -239,22 +239,71 @@ cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum
 
 ### iPhone-style clock (widget)
 
-A new variant of Serpantinum's **Clock** widget, in the style of the iPhone lock screen: tall stroke
-digits (12h, no leading zero, rounded tips) with real **Liquid Glass**. A shader (`glass-glyph.frag`,
-the island's `glass-soft-blur` adapted to the shape of the digits) refracts the screen behind them,
-with an inner white vignette and a sub-pixel white outline. Only the digit that changes fades
-(220 ms). Pick **iPhone** (with the date on top) or **iPhone (no date)** in the widget's variant list.
+Two new variants of Serpantinum's **Clock** widget, in the style of the iPhone lock screen. Pick them in the
+widget's variant list.
 
-- It captures the screen live with `ScreencopyView`, which **uses some GPU** while the widget is on screen.
+- **iPhone** / **iPhone (no date)**: tall stroke digits (12h, no leading zero, rounded tips) made of real
+  **Liquid Glass** (see below). The glass projects its own copy of your wallpaper, so it never captures
+  itself. When a digit changes, the old one disappears almost at once and the new one is revealed from
+  the bottom up with a soft gradient (about 0.7 s), like the iPhone.
+- **Ticks (iPhone)**: a near-black square with 60 ticks (a bright trail behind the second hand) and
+  condensed white digits. The digit that changes rolls like the iPhone's time-picker drum (about 0.6 s),
+  clipped inside the card.
+
+Notes:
+
+- The glass uses a screen capture (`ScreencopyView`) of the windows behind it, which **uses some GPU**
+  while the widget is on screen.
 - The date follows your system locale (`Qt.locale()`); to force another one, change `Qt.locale()` in
   `ClockFaceIOS.qml` (e.g. `Qt.locale("es_ES")`).
 - The faces are new files installed with the other overrides. The variant entries live in
-  Serpantinum's `widgets/WidgetRegistry.qml`, which a Serpantinum update overwrites: re-apply them with
-  `patches/serpantinum-WidgetRegistry.qml-ios-clock.patch` (it applies on top of Astrax's registry):
+  Serpantinum's `widgets/WidgetRegistry.qml`, and Blur motion needs `widgets/Widget.qml`. A Serpantinum
+  update overwrites both (and the island's other overrides): re-apply them with the patches, which apply on
+  top of the pinned Serpantinum source:
 
 ```bash
-cd ~/.local/share/serpantinum && patch -p1 < /path/to/Astrax/patches/serpantinum-WidgetRegistry.qml-ios-clock.patch
+cd ~/.local/share/serpantinum
+patch -p1 < /path/to/Astrax/patches/serpantinum-WidgetRegistry.qml-ios-clock.patch
+patch -p1 < /path/to/Astrax/patches/serpantinum-Widget.qml-blur-motion.patch
 ```
+
+### Liquid Glass (iOS 26 style)
+
+One shared shader family for the **Dock**, the **Dynamic Island** (the island glass shows only when
+`island.glass` is on) and the **iPhone clock**: blurred backdrop, more vivid colour, real per-channel
+chromatic aberration, thick refraction, a lens over the whole surface and a specular line.
+
+- The glass samples a **clean copy of the desktop**: your wallpaper plus the windows of that monitor, with
+  no widgets, dock or island, so the glass never captures itself. `WallBackdrop` finds the wallpaper with
+  `serpantinum info wallpaper <screen>` and follows the **lava wallpaper** (the same shader, palette, bass
+  and clock). Still images and lava are tested; **video/gif wallpapers are implemented but untested**. The
+  glass-lava wallpaper (the second WORT) has no copy: you get a dark background or the still image.
+- **Settings > Liquid Glass** (`SUPER+SHIFT+C`): **Old / New** and, in New, refraction, chromatic
+  aberration, lens, edge shine, frost (blur) and vividness (`liquidGlass.{mode,refraction,chromatic,lens,
+  specular,blur,vivid}` in `settings.json`). When one changes, `lg-apply.py` waits 0.7 s to group
+  changes, rebuilds the `.qsb` shaders from `~/.config/astrax-common/lg/src` with those values (or copies
+  `lg/old` in Old mode) and reloads the Dock, the island and the clock. **Changing a value reloads the
+  Dock, the island and Serpantinum's shell, so widgets flicker for a moment.**
+- It needs Qt's shader tool: `qsb6` / `qsb` on your `PATH`, or `/usr/lib/qt6/bin/qsb` (`qt6-shadertools`;
+  the installer adds it). Without it the current shaders stay as they are. The `.qsb` files are compiled
+  with `qsb --glsl "300 es,330" --hlsl 50 --msl 12`; the `.frag` sources are in the repo.
+- Everything shared lives in `~/.config/astrax-common/` (`lg/` and `motionblur/`). Quickshell does not
+  reload files from that folder by itself: touch the `shell.qml` of each config or restart it.
+- Not covered yet: the lock-screen clock (`astrax-lock/ClockDigits.qml`) has no digit-change effect, and
+  the SDDM clock still uses the old shader.
+
+### Blur motion
+
+Real motion blur (a shader, not a fake trail): whatever moves or changes size is smeared along its
+movement, like a camera with the shutter open. At rest nothing changes. It is used on the Dock icons,
+the Dynamic Island pill and the widgets, and each one has its own switch in **Settings > Blur motion** (off by default).
+The effect lives in `~/.config/astrax-common/motionblur/`.
+
+### Astrax settings (`SUPER+SHIFT+C`)
+
+A settings window for the Astrax parts (Dynamic Island, Emoji and Clipboard, Dock, Launcher, Theme,
+Wallpaper, Display, Liquid Glass, Blur motion). It lives in `~/.config/quickshell/astrax-settings/`,
+starts itself the first time and writes the same `~/.config/serpantinum/settings.json` as the rest.
 
 ### Reactive cursor
 
@@ -437,8 +486,9 @@ A separate Dock, independent of Serpantinum's: `~/.config/quickshell/astrax-mac-
 user service `astrax-mac-dock.service`. Turn it on in `SUPER+C` > macOS Dock (that switch also
 enables the service and turns Serpantinum's own Dock off; turning it off restores it). Magnification,
 bounce on launch, dots for running apps, Shift+click for a new instance, right-click to keep / remove
-or close windows, auto-hide, one Dock per screen, optional Liquid Glass. Its settings live in the
-`macDock` key of `settings.json`.
+or close windows, auto-hide, one Dock per screen, optional Liquid Glass and Blur motion. A **Trash** tile
+sits at the end: drop files on it to trash them (`gio trash`, recoverable) and right-click for
+**Empty Trash**. Its settings live in the `macDock` key of `settings.json`.
 
 ### Optional downloads: Apple-style icons and the iPhone bridge
 
@@ -487,6 +537,7 @@ system icons; without the bridge the island still works, it just has no iPhone d
 | `ALT+Tab`, `Menu` | app switcher |
 | `SUPER+M` | small floating Spotify (toggle) |
 | `SUPER+C`, `SUPER+H` | Serpantinum settings |
+| `SUPER+SHIFT+C` | Astrax settings (Liquid Glass, Blur motion, Dock, island...) |
 | `SUPER+W` | wallpaper picker |
 | `SUPER+SHIFT+W` | widgets on/off on the focused screen |
 | `CTRL+SUPER+ALT+G` | hide/show the desktop widgets (gaming) |

@@ -1,0 +1,3 @@
+module AstraxMotionBlur
+singleton MotionBlurSettings 1.0 MotionBlurSettings.qml
+MotionBlur 1.0 MotionBlur.qml

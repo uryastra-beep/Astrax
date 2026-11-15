@@ -7,6 +7,8 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
+import "../../astrax-common/motionblur"
+import "../../astrax-common/lg"
 
 // Astrax Dynamic Island -- pill at the top-center of the focused monitor.
 // Shows notifications, volume / mic / brightness, lock keys, airplane mode,
@@ -814,13 +816,55 @@ ShellRoot {
             }
         }
 
-        // Keep the captured texture aligned with the monitor's (0, 0) origin.
-        ScreencopyView {
+        // Copia "limpia" del escritorio para el vidrio (wallpaper fijo + ventanas de este monitor, sin la isla, widgets ni dock):
+        // asi el vidrio no se captura a si mismo. Coordenadas alineadas con el origen (0, 0) del monitor.
+        Item {
             id: snap
-            captureSource: win.visible && pill.glassOn && root.refraction > 0 ? win.screen : null
-            live: win.visible && pill.glassOn && root.refraction > 0
-            visible: true
             width: win.width; height: win.height
+            readonly property bool active: win.visible && pill.glassOn && root.refraction > 0
+            readonly property bool hasContent: wall.hasContent
+            readonly property var monitor: Hyprland.monitors.values.find(m => win.screen && m.name === win.screen.name)
+            readonly property var winList: {
+                const mon = monitor;
+                if (!mon || !mon.activeWorkspace) return [];
+                const wsId = mon.activeWorkspace.id;
+                const info = mon.lastIpcObject || {};
+                const specialId = info.specialWorkspace ? info.specialWorkspace.id : 0;
+                const list = Hyprland.toplevels.values.filter(tl => {
+                    const cls = tl.wayland ? tl.wayland.appId || "" : "";
+                    if (!tl.wayland || /^(widget-|widget4-|widget5-)/.test(cls) || !tl.workspace) return false;
+                    const o = tl.lastIpcObject || {};
+                    if (!o.size || !o.at || o.mapped === false || o.hidden === true) return false;
+                    return tl.workspace.id === wsId || (specialId !== 0 && tl.workspace.id === specialId);
+                });
+                list.sort((x, y) => {
+                    const ox = x.lastIpcObject, oy = y.lastIpcObject;
+                    const fx = ox.floating ? 1 : 0, fy = oy.floating ? 1 : 0;
+                    if (fx !== fy) return fx - fy;
+                    return (oy.focusHistoryID || 0) - (ox.focusHistoryID || 0);
+                });
+                return list;
+            }
+            WallBackdrop { id: wall; anchors.fill: parent; screenName: win.screen ? win.screen.name : ""; active: snap.active }
+            Repeater {
+                model: snap.winList
+                ScreencopyView {
+                    id: winCap
+                    required property var modelData
+                    readonly property var o: modelData.lastIpcObject || ({})
+                    captureSource: snap.active ? modelData.wayland : null
+                    live: false
+                    x: (o.at ? o.at[0] : 0) - (snap.monitor && snap.monitor.lastIpcObject ? snap.monitor.lastIpcObject.x || 0 : 0)
+                    y: (o.at ? o.at[1] : 0) - (snap.monitor && snap.monitor.lastIpcObject ? snap.monitor.lastIpcObject.y || 0 : 0)
+                    width: o.size ? o.size[0] : 1; height: o.size ? o.size[1] : 1
+                    Timer {
+                        interval: 16
+                        running: snap.active
+                        repeat: true; triggeredOnStart: true
+                        onTriggered: winCap.captureFrame()
+                    }
+                }
+            }
         }
         ShaderEffectSource {
             id: backdropTexture
@@ -870,7 +914,7 @@ ShellRoot {
                     fillColor: pill.glassOn ? notchBack.tint : "#000000"
                     strokeWidth: -1
                     Behavior on fillColor { ColorAnimation { duration: 260 } }
-                    PathSvg { path: "M 0 0 L " + (notchBack.wing + 2) + " 0 L " + (notchBack.wing + 2) + " " + notchBack.wing + " L " + (notchBack.wing - 0.6) + " " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z" }
+                    PathSvg { path: "M 0 0 L " + (notchBack.wing + 2) + " 0 L " + (notchBack.wing + 2) + " " + notchBack.wing + " L " + notchBack.wing + " " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z" }
                 }
             }
             Shape {
@@ -881,7 +925,7 @@ ShellRoot {
                     fillColor: pill.glassOn ? notchBack.tint : "#000000"
                     strokeWidth: -1
                     Behavior on fillColor { ColorAnimation { duration: 260 } }
-                    PathSvg { path: "M " + (notchBack.wing + 2) + " 0 L 0 0 L 0 " + notchBack.wing + " L 2.6 " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 1 " + (notchBack.wing + 2) + " 0.6 Z" }
+                    PathSvg { path: "M " + (notchBack.wing + 2) + " 0 L 0 0 L 0 " + notchBack.wing + " L 2 " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 1 " + (notchBack.wing + 2) + " 0.6 Z" }
                 }
             }
             // Expanded music card: each shoulder takes the colours of the island edge next to it (the left one
@@ -919,8 +963,8 @@ ShellRoot {
                             strokeWidth: -1
                             PathSvg {
                                 path: shoulderTint.isLeft
-                                    ? "M 0 0 L " + (notchBack.wing + 2) + " 0 L " + (notchBack.wing + 2) + " " + notchBack.wing + " L " + (notchBack.wing - 0.6) + " " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z"
-                                    : "M " + (notchBack.wing + 2) + " 0 L 0 0 L 0 " + notchBack.wing + " L 2.6 " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 1 " + (notchBack.wing + 2) + " 0.6 Z"
+                                    ? "M 0 0 L " + (notchBack.wing + 2) + " 0 L " + (notchBack.wing + 2) + " " + notchBack.wing + " L " + notchBack.wing + " " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z"
+                                    : "M " + (notchBack.wing + 2) + " 0 L 0 0 L 0 " + notchBack.wing + " L 2 " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 1 " + (notchBack.wing + 2) + " 0.6 Z"
                             }
                         }
                     }
@@ -981,7 +1025,7 @@ ShellRoot {
                         GradientStop { position: Math.min(1, notchBack.bandSolid / notchBack.wing); color: Qt.rgba(0, 0, 0, notchBack.shoulderPeak) }
                         GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, notchBack.shoulderAlpha) }
                     }
-                    PathSvg { path: "M 0 0 L " + notchBack.wing + " 0 L " + notchBack.wing + " " + notchBack.wing + " L " + (notchBack.wing - 0.6) + " " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z" }
+                    PathSvg { path: "M 0 0 L " + notchBack.wing + " 0 L " + notchBack.wing + " " + notchBack.wing + " L " + notchBack.wing + " " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 0 0 0.6 Z" }
                 }
             }
             Shape {
@@ -998,7 +1042,7 @@ ShellRoot {
                         GradientStop { position: Math.min(1, notchBack.bandSolid / notchBack.wing); color: Qt.rgba(0, 0, 0, notchBack.shoulderPeak) }
                         GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, notchBack.shoulderAlpha) }
                     }
-                    PathSvg { path: "M " + notchBack.wing + " 0 L 0 0 L 0 " + notchBack.wing + " L 0.6 " + notchBack.wing + " A " + (notchBack.wing - 0.6) + " " + (notchBack.wing - 0.6) + " 0 0 1 " + notchBack.wing + " 0.6 Z" }
+                    PathSvg { path: "M " + notchBack.wing + " 0 L 0 0 L 0 " + notchBack.wing + " L 0 " + notchBack.wing + " A " + notchBack.wing + " " + (notchBack.wing - 0.6) + " 0 0 1 " + notchBack.wing + " 0.6 Z" }
                 }
             }
 
@@ -2306,6 +2350,17 @@ ShellRoot {
                     drop.accepted = true;
                 }
             }
+        }
+        // Blur motion: the pill is smeared along its movement while it grows, shrinks and swells (real motion blur)
+        MotionBlur {
+            id: pillBlur
+            target: pill
+            enabled: MotionBlurSettings.on("island")
+            suppressOnResize: true   // while the pill grows or shrinks the effect stays off (it drew a small, offset copy and left the notch shoulders behind)
+            anchorX: 0.5; anchorY: root.notch ? 0 : 0.5
+            pad: 36; maxBlur: 48; liveContent: true
+            fixedSize: Qt.size(pill.availableWidth, 700)
+            effectTransform: Scale { origin.x: pillBlur.insetX + pill.width / 2; origin.y: pillBlur.insetY + pill.scaleOriginY; xScale: pill.bx; yScale: pill.by }
         }
             }
         }

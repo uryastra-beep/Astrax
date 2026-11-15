@@ -1,0 +1,53 @@
+--- a/src/quickshell/widgets/Widget.qml
++++ b/src/quickshell/widgets/Widget.qml
+@@ -2,6 +2,7 @@
+ import Quickshell
+ import Quickshell.Wayland
+ import "../"
++import "../../../../../../.config/astrax-common/motionblur"
+ 
+ PanelWindow {
+     id: root
+@@ -20,7 +21,8 @@
+ 
+     property var customProps: ({})
+ 
+-    readonly property real auraMargin: 8
++    // room around the widget: the selection outline, and the smear when Blur motion is on for widgets
++    readonly property real auraMargin: MotionBlurSettings.on("widgets") ? 34 : 8
+ 
+     readonly property bool isSelected: typeof DesktopMenuController !== "undefined"
+         && DesktopMenuController.isVisible
+@@ -121,11 +123,13 @@
+             return;
+         }
+         let item = faceLoader.item;
++        // no size limit -- same rule as
++        // WidgetRedactor.qml::getConstraints().
+         let c = {
+             minW: item.minWidth !== undefined ? item.minWidth : 10,
+             minH: item.minHeight !== undefined ? item.minHeight : 10,
+-            maxW: item.maxWidth !== undefined ? item.maxWidth : 9999,
+-            maxH: item.maxHeight !== undefined ? item.maxHeight : 9999,
++            maxW: 999999,
++            maxH: 999999,
+             minA: item.minAspect !== undefined ? item.minAspect : 0,
+             maxA: item.maxAspect !== undefined ? item.maxAspect : 9999
+         };
+@@ -193,6 +197,16 @@
+         }
+     }
+ 
++    // Blur motion: a widget that moves (the layer surface slides) or changes size is smeared along its movement
++    MotionBlur {
++        id: faceBlur
++        target: faceLoader
++        enabled: MotionBlurSettings.on("widgets") && root.visible
++        extraX: root.animX; extraY: root.animY
++        pad: 30; maxBlur: 44; liveContent: true
++        effectTransform: Rotation { origin.x: faceBlur.insetX + faceLoader.width / 2; origin.y: faceBlur.insetY + faceLoader.height / 2; angle: faceLoader.rotation }
++    }
++
+     Item {
+         id: auraContainer
+         width: faceLoader.width + (root.auraMargin * 2)

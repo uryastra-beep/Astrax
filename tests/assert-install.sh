@@ -71,12 +71,15 @@ check "liner-bridge is executable" test -x "$HOME/scripts/liner/liner-bridge"
 check "liner-bridge page script installed" test -f "$HOME/scripts/liner/page.bundle.js"
 check "astrax-lyrics-rating linked" [ -x "$HOME/.local/bin/astrax-lyrics-rating" ]
 check "Dynamic Island installed with its compiled shaders" test -s "$HOME/.config/quickshell/astrax-island/glass-soft-blur.frag.qsb" -a -s "$HOME/.config/quickshell/astrax-island/glass-notch3.frag.qsb"
-check "iPhone clock faces installed with their compiled shader" test -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/ClockFaceIOS.qml" -a -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/glass-glyph.frag.qsb"
+check "iPhone clock faces installed with their compiled shader" test -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/ClockFaceIOS.qml" -a -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/glass-glyph-lg.frag.qsb" -a -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/clock/reveal.frag.qsb" -a -s "$HOME/.local/share/serpantinum/src/quickshell/widgets/faces/apple/AppleClockTicksFace.qml"
 check "island clipboard helper is executable" test -x "$HOME/.config/quickshell/astrax-island/clip-event.sh"
 check "island deps present (inotifywait, wl-paste, jq, setpriv)" bash -c "command -v inotifywait wl-paste jq setpriv >/dev/null"
 check "island helpers are executable" test -x "$HOME/.config/quickshell/astrax-island/shelf-store.py" -a -x "$HOME/.config/quickshell/astrax-island/overview-stats.py"
 check "macOS Dock config and service installed" test -s "$HOME/.config/quickshell/astrax-mac-dock/shell.qml" -a -s "$HOME/.config/systemd/user/astrax-mac-dock.service"
 check "macOS Dock service stays disabled until the user turns it on" bash -c '! systemctl --user is-enabled astrax-mac-dock.service >/dev/null 2>&1'
+check "Liquid Glass shared folder installed (shaders, Old/New sources, lg-apply)" bash -c 'd="$HOME/.config/astrax-common"; [ -s "$d/lg/WallBackdrop.qml" ] && [ -s "$d/lg/src/dock.frag" ] && [ -s "$d/lg/old/dock.qsb" ] && [ -x "$d/lg/lg-apply.py" ] && [ -s "$d/motionblur/MotionBlur.qml" ]'
+check "qsb (qt6-shadertools) is available for lg-apply" bash -c 'command -v qsb6 >/dev/null 2>&1 || command -v qsb >/dev/null 2>&1 || [ -x /usr/lib/qt6/bin/qsb ]'
+check "Astrax settings app installed" test -s "$HOME/.config/quickshell/astrax-settings/Pages.js" -a -s "$HOME/.config/quickshell/astrax-settings/shell.qml"
 check "no Apple artwork or iPhone bridge shipped" bash -c '[ ! -e "$HOME/.config/quickshell/astrax-island/apple-icons" ] && [ ! -e "$HOME/.local/lib/iphone-notifications" ]'
 check "Dynamic Island settings tab installed" test -f "$HOME/.local/share/serpantinum/src/quickshell/guide/IslandTab.qml"
 check "astrax-update version" [ "$(bash scripts/astrax-update.sh version)" = "$(tr -d '[:space:]' < VERSION)" ]

@@ -10,6 +10,9 @@ with (path.parent/'.mac-dock.lock').open('a') as lock:
   ident=sys.argv[2];pins=list(cfg.get('apps',[]))
   if ident not in pins:pins.append(ident)
   cfg['apps']=pins
+ elif sys.argv[1]=='order':
+  new=[x for x in json.loads(sys.argv[2]) if isinstance(x,str)];old=list(cfg.get('apps',[]))
+  cfg['apps']=new+[x for x in old if x not in new]
  else:raise SystemExit('Unsupported operation')
  data['macDock']=cfg
  fd,name=tempfile.mkstemp(prefix='.mac-dock-',dir=path.parent)
